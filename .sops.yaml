@@ -1,8 +1,9 @@
 keys:
-  # Replace with caixa's actual age public key, generated on caixa via:
-  #   age-keygen -o /var/lib/sops-nix/key.txt
-  # then take the "public key:" line it prints.
-  - &caixa age1REPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACE
+  # caixa's age public key. The matching private key was generated ahead of
+  # time (not on caixa, since it didn't exist yet) and must be copied to
+  # /var/lib/sops-nix/key.txt on caixa before the first `nixos-rebuild
+  # switch` there. See secrets/README.md.
+  - &caixa age1xhhzemyhg8lc4amzapkf77gsmyvdz277y94jgvspa7r35vtw83qsnss64g
 
 creation_rules:
   - path_regex: secrets/caixa\.yaml$

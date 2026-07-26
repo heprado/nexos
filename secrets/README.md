@@ -1,42 +1,55 @@
 # Secrets
 
 This repo uses [sops-nix](https://github.com/Mic92/sops-nix) with `age`
-encryption. Encrypted files are safe to commit; only the decrypted
-plaintext (which never touches the repo) is sensitive.
+encryption. Encrypted files (like `secrets/caixa.yaml`) are safe to commit;
+only the decrypted plaintext, and the private age key that can decrypt it,
+are sensitive.
 
-## One-time setup on caixa
+## Status
 
-1. Generate caixa's age key (do this on caixa itself, as root):
+caixa's age keypair has already been generated (it doesn't need to happen
+*on* caixa — it's just a keypair, generated wherever is convenient, the same
+way you'd generate an SSH key before a server exists). Its public half is
+already in `.sops.yaml`, and `secrets/caixa.yaml` is already sops-encrypted
+against it.
 
-   ```sh
-   mkdir -p /var/lib/sops-nix
-   age-keygen -o /var/lib/sops-nix/key.txt
+**What's still needed before caixa can decrypt its own secrets:**
+
+1. Copy the private key file you were given (`caixa-key.txt`) onto caixa, at:
+
+   ```
+   /var/lib/sops-nix/key.txt
    ```
 
-   This prints a line like `Public key: age1...` — copy the `age1...` value.
+   Do this any time before the first `nixos-rebuild switch` that uses this
+   flake — e.g. right after first boot, via a USB stick, `scp`, or pasting it
+   in during the install's live session. Permissions should be root-only
+   (`chmod 600`).
 
-2. Put that public key into `.sops.yaml` at the repo root, replacing the
-   `age1REPLACEME...` placeholder.
-
-3. Generate a Tailscale auth key from the
-   [Tailscale admin console](https://login.tailscale.com/admin/settings/keys) —
-   a reusable, tagged key (e.g. `tag:caixa`) is recommended so it survives
-   reinstalls without manual re-auth each time.
-
-4. Encrypt it into `secrets/caixa.yaml` (from the repo root, with `sops`
-   installed):
+2. Replace the placeholder in `secrets/caixa.yaml` with a real Tailscale
+   auth key, generated from the
+   [Tailscale admin console](https://login.tailscale.com/admin/settings/keys)
+   (a reusable, tagged key, e.g. `tag:caixa`, is recommended so it survives
+   reinstalls without manual re-auth). Edit it in place with `sops` — this
+   decrypts, opens your editor, and re-encrypts on save — you need the same
+   `caixa-key.txt` available locally (e.g. also at
+   `~/.config/sops/age/keys.txt`, sops's default lookup path) to do this:
 
    ```sh
    sops secrets/caixa.yaml
    ```
 
-   This opens an editor; replace the `tailscale_authkey: REPLACE_ME`
-   placeholder with the real key, save, and `sops` re-encrypts the file in
-   place using the recipient(s) listed in `.sops.yaml`.
+3. Commit the re-encrypted `secrets/caixa.yaml`.
 
-5. Commit the encrypted `secrets/caixa.yaml`.
+## Rotating the Tailscale key later
 
-## Rotating the key
+Same as step 2 above — `sops secrets/caixa.yaml` decrypts, lets you edit,
+and re-encrypts on save.
 
-Generate a new Tailscale auth key and repeat step 4 — `sops secrets/caixa.yaml`
-decrypts, lets you edit, and re-encrypts on save.
+## Losing the private key
+
+If `caixa-key.txt` / `/var/lib/sops-nix/key.txt` is lost, `secrets/caixa.yaml`
+becomes permanently undecryptable as-is. Recovery: generate a fresh age
+keypair, update `.sops.yaml` with the new public key, and re-encrypt
+`secrets/caixa.yaml` from a plaintext copy of the secret (i.e. you'll need
+to fetch/regenerate the Tailscale auth key again too).
