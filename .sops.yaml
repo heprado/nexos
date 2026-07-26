@@ -1,0 +1,11 @@
+keys:
+  # Replace with caixa's actual age public key, generated on caixa via:
+  #   age-keygen -o /var/lib/sops-nix/key.txt
+  # then take the "public key:" line it prints.
+  - &caixa age1REPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACEMEREPLACE
+
+creation_rules:
+  - path_regex: secrets/caixa\.yaml$
+    key_groups:
+      - age:
+          - *caixa
