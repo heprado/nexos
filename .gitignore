@@ -1,1 +1,5 @@
 .claude/
+
+# Private keys — never commit these. Kept locally only, for distribution
+# to each user and for placing on caixa itself.
+keys/
