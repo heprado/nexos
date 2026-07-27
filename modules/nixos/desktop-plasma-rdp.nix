@@ -1,13 +1,11 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
-  # KDE Plasma over RDP: leonardo and martin (remote, via Tailscale) and
-  # also henrique (via the LAN, or Tailscale if he ever joins it). Any user
-  # with a password can authenticate via xrdp's PAM stack — there's no
-  # per-user allowlist here, this just controls network reachability.
+  # KDE Plasma over RDP: leonardo and martin only, reached via Tailscale.
+  # henrique is explicitly denied (see the PAM rule below) — he uses
+  # wayvnc + Hyprland instead (see wayvnc-hyprland.nix).
   #
   # Note: this always lands in an X11 Plasma session (startplasma-x11), not
-  # Hyprland — xrdp doesn't support Wayland compositors. Henrique's Hyprland
-  # session stays local-console-only via SDDM.
+  # Hyprland — xrdp doesn't support Wayland compositors.
   services.desktopManager.plasma6.enable = true;
 
   services.xrdp = {
@@ -16,11 +14,14 @@
     defaultWindowManager = "${pkgs.kdePackages.plasma-workspace}/bin/startplasma-x11";
   };
 
-  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 3389 ];
+  # Deny henrique specifically at the PAM layer, before password checking
+  # even happens. leonardo and martin fall through to normal pam_unix auth.
+  security.pam.services.xrdp-sesman.rules.auth.deny-henrique = {
+    order = config.security.pam.services.xrdp-sesman.rules.auth.unix.order - 10;
+    control = "requisite";
+    modulePath = "${config.security.pam.package}/lib/security/pam_succeed_if.so";
+    args = [ "user" "!=" "henrique" ];
+  };
 
-  # Also reachable from the LAN. Assumes caixa sits behind a home router/NAT
-  # and isn't directly WAN-exposed — if that's not true, scope this to the
-  # actual LAN interface name instead (check with `ip a` on caixa) via
-  # networking.firewall.interfaces.<name>.allowedTCPPorts.
-  networking.firewall.allowedTCPPorts = [ 3389 ];
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 3389 ];
 }

@@ -7,6 +7,7 @@
     ../../modules/nixos/ssh.nix
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/desktop-plasma-rdp.nix
+    ../../modules/nixos/wayvnc-hyprland.nix
     ../../users/henrique
     ../../users/leonardo
     ../../users/martin
