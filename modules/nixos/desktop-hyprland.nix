@@ -9,4 +9,12 @@
     enable = true;
     wayland.enable = true;
   };
+
+  # Recommended by Noctalia (the shell/bar running in henrique's Hyprland
+  # session, see modules/home/hyprland.nix) for its network/bluetooth/power
+  # widgets to actually have something to report.
+  networking.networkmanager.enable = true;
+  hardware.bluetooth.enable = true;
+  services.power-profiles-daemon.enable = true;
+  services.upower.enable = true;
 }

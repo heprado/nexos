@@ -18,9 +18,14 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, ... }: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, ... }@inputs: {
     nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -32,6 +37,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
         }
       ];
     };
