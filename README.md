@@ -105,7 +105,7 @@ The difference is just how you get to that point.
    nixos-generate-config --no-filesystems --root /mnt
    cp /mnt/etc/nixos/hardware-configuration.nix machines/caixa/hardware-configuration.nix
    ```
-   `--no-filesystems` matters — disko already owns `fileSystems`/`swapDevices`; a generated file that redefines them will conflict.
+   `--no-filesystems` matters — disko already owns `fileSystems`/`swapDevices`; a generated file that redefines them will conflict. Bootloader config (`boot.loader.systemd-boot.enable`, etc.) intentionally lives in `configuration.nix`, not here — this file gets wholesale-replaced by the command above, so anything that mattered would be lost if it lived in this file instead.
 
 8. **Install**:
    ```sh

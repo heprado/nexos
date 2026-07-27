@@ -17,6 +17,12 @@
   programs.zsh.enable = true;
   hardware.graphics.enable = true;
 
+  # Lives here (not hardware-configuration.nix) since that file gets
+  # wholesale-replaced by `nixos-generate-config` output during install,
+  # which would silently drop bootloader config if it lived there.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
   nixpkgs.config.allowUnfreePredicate = pkg:
