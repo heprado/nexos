@@ -5,6 +5,8 @@
     ../../modules/nixos/docker-rootless.nix
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/ssh.nix
+    ../../modules/nixos/desktop-hyprland.nix
+    ../../modules/nixos/desktop-plasma-rdp.nix
     ../../users/henrique
     ../../users/leonardo
     ../../users/martin
@@ -12,6 +14,7 @@
 
   networking.hostName = "caixa";
   programs.zsh.enable = true;
+  hardware.graphics.enable = true;
 
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
