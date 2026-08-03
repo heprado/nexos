@@ -23,11 +23,17 @@
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helium-flake = {
+      url = "github:oxcl/nix-flake-helium-browser";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, helium-flake, ... }@inputs: {
     nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
       modules = [
         ./machines/caixa/configuration.nix
         ./machines/caixa/disko-config.nix

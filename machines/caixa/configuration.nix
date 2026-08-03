@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, inputs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -8,14 +8,30 @@
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/desktop-plasma-rdp.nix
     ../../modules/nixos/wayvnc-hyprland.nix
+    ../../modules/nixos/lan-isolation.nix
     ../../users/henrique
     ../../users/leonardo
     ../../users/martin
   ];
 
+  # Noctalia isn't in the official nixpkgs cache; without this, its
+  # Quickshell/Qt dependencies get compiled from source on every rebuild.
+  nix.settings = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+  };
+
   networking.hostName = "caixa";
   programs.zsh.enable = true;
   hardware.graphics.enable = true;
+
+  i18n.defaultLocale = "pt_BR.UTF-8";
+
+  # Backend dconf needs to actually apply GTK theme settings (see
+  # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
+  programs.dconf.enable = true;
+
+  nixpkgs.overlays = [ inputs.helium-flake.overlays.default ];
 
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
