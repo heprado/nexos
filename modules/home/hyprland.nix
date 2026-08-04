@@ -25,6 +25,9 @@
     pkgs.nwg-look
     pkgs.qt6Packages.qt6ct
     pkgs.feishin
+    # grimblast is Hyprland's own screenshot helper (wraps grim+slurp+hyprctl)
+    # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig).
+    pkgs.grimblast
     # SUPER + / (see the hl.bind below) opens this in a floating foot window.
     # Reads live off `hyprctl binds -j`'s `description` field instead of
     # keeping a separate hardcoded list, so it can't drift out of sync with
@@ -260,6 +263,13 @@
       -- which then needs a scroll to reach again.
       hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Stack the focused window into the previous column" })
       hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Pop the focused window out of its column" })
+
+      -- Screenshots via grimblast (see home.packages): copysave both writes
+      -- the file (to ~/Pictures by default) and copies it to the clipboard,
+      -- with a notification linking to the saved file.
+      hl.bind("Print", hl.dsp.exec_cmd("grimblast --notify copysave area"), { description = "Screenshot: select an area" })
+      hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify copysave screen"), { description = "Screenshot: full screen" })
+      hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"), { description = "Screenshot: active window" })
 
       -- Hold SUPER + drag with LMB/RMB to move/resize the focused window
       -- (mouse:272/273 are the classic hyprlang bindm equivalents in Lua).
