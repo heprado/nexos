@@ -4,10 +4,62 @@
 
   programs.foot.enable = true;
 
+  # Not done via programs.foot.settings: that makes home-manager generate
+  # foot.ini itself, and its font/etc keys would still need to coexist
+  # with the [main] include line the noctalia foot template below wires
+  # in via its apply.sh — simpler to just own foot.ini directly here.
+  # apply.sh only (re)writes this file when its own `include=...noctalia`
+  # line is missing, so pre-populating it ourselves means it's never
+  # touched and this font setting is never clobbered by a theme re-apply.
+  xdg.configFile."foot/foot.ini".text = ''
+    [main]
+    include=~/.config/foot/themes/noctalia
+    font=monospace:size=13
+  '';
+
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
   # templates above actually need to take effect app-wide.
   # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
-  home.packages = [ pkgs.adw-gtk3 pkgs.nwg-look pkgs.qt6Packages.qt6ct ];
+  home.packages = [
+    pkgs.adw-gtk3
+    pkgs.nwg-look
+    pkgs.qt6Packages.qt6ct
+    pkgs.feishin
+    # SUPER + / (see the hl.bind below) opens this in a floating foot window.
+    # Reads live off `hyprctl binds -j`'s `description` field instead of
+    # keeping a separate hardcoded list, so it can't drift out of sync with
+    # the actual binds declared in extraConfig below.
+    (pkgs.writeShellApplication {
+      name = "hypr-cheatsheet";
+      runtimeInputs = [ pkgs.jq pkgs.util-linux pkgs.less ];
+      text = ''
+        hyprctl binds -j | jq -r '
+          def bit_set($m; $b): (($m / $b) | floor) % 2 == 1;
+          def mods($m):
+            [ if bit_set($m; 64) then "Super" else empty end,
+              if bit_set($m; 4) then "Ctrl" else empty end,
+              if bit_set($m; 8) then "Alt" else empty end,
+              if bit_set($m; 1) then "Shift" else empty end
+            ] | join(" + ");
+          def keyname:
+            if .key == "mouse:272" then "Mouse Left"
+            elif .key == "mouse:273" then "Mouse Right"
+            elif .key == "mouse_down" then "Scroll Down"
+            elif .key == "mouse_up" then "Scroll Up"
+            else .key end;
+          [ .[] | select(.description != "") ]
+          | .[]
+          | (mods(.modmask) + " + " + keyname) + "\t" + .description
+        ' | column -t -s $'\t' | less
+      '';
+    })
+  ];
+  # Wallpaper source file lives in the repo (users/henrique/); copied into
+  # ~/Pictures/Wallpapers, which is noctalia's default `wallpaper.directory`,
+  # and set as the startup wallpaper below.
+  home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
+    ../../users/henrique/217060-kagura-gintama-1920x1080.png;
+
   home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
@@ -17,6 +69,7 @@
   programs.noctalia = {
     enable = true;
     systemd.enable = false;
+    settings.wallpaper.default.path = "~/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png";
     settings.theme = {
       mode = "dark";
       source = "custom";
@@ -24,10 +77,18 @@
       templates = {
         # Off by default (opt-in) — enables Noctalia's built-in templates
         # that sync the active palette into GTK3/GTK4 (via a generated
-        # gtk.css) and Qt (via kcolorscheme/qt6ct), so non-Hyprland-native
-        # apps pick up the same henrique palette.
+        # gtk.css), Qt (via kcolorscheme/qt6ct), and foot (via a themes/
+        # fragment wired in through foot.ini's `include`), so non-
+        # Hyprland-native apps pick up the same henrique palette.
         # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
-        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" ];
+        #
+        # foot itself has no live-reload, but that's moot here: the
+        # fragment is only read when a new foot window starts. Must NOT
+        # set programs.foot.settings anywhere — that makes home-manager
+        # symlink a read-only foot.ini from the Nix store, which breaks
+        # this template's apply.sh (it needs to rewrite foot.ini to add
+        # the include line).
+        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "foot" ];
       };
     };
     # Written to ~/.config/noctalia/palettes/henrique.json.
@@ -162,21 +223,59 @@
         input = {
           kb_layout = "br",
         },
+        scrolling = {
+          -- Fraction of screen width per column, [0.1-1.0] -- 0.5 means
+          -- exactly 2 columns fit on screen at once. Combined with stacking
+          -- 2 windows per column (SUPER+C below), that's up to 4 windows
+          -- visible at a time; a 5th+ window lands in its own column
+          -- offscreen, reachable only by scrolling (SUPER+mouse wheel or
+          -- SUPER+left/right) -- this is the layout's default behavior
+          -- already, nothing else needed for that part.
+          column_width = 0.5,
+        },
       })
 
       local mainMod = "SUPER"
-      hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("foot"))
-      hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-      hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
-      hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
-      hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }))
-      hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }))
+      hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("foot"), { description = "Open a terminal" })
+      hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Close the focused window" })
+      hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focus the window to the left" })
+      hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focus the window to the right" })
+      hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focus the window above" })
+      hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), { description = "Focus the window below" })
+
+      -- Switch to workspace 1-5 with SUPER + [1-5].
+      for i = 1, 5 do
+        hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Switch to workspace " .. i })
+      end
 
       -- Scroll wheel moves focus between windows in the scrolling layout
       -- (not bound by the layout itself -- see
       -- https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/#layout-messages).
-      hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"))
-      hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"))
+      hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"), { description = "Focus the next window (scroll)" })
+      hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"), { description = "Focus the previous window (scroll)" })
+
+      -- Build/break the 4-window grid: consume stacks the focused window
+      -- into the previous column (so it shares that column's space with
+      -- what's already there); expel pops it back out into its own column,
+      -- which then needs a scroll to reach again.
+      hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Stack the focused window into the previous column" })
+      hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Pop the focused window out of its column" })
+
+      -- Hold SUPER + drag with LMB/RMB to move/resize the focused window
+      -- (mouse:272/273 are the classic hyprlang bindm equivalents in Lua).
+      hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Move the focused window" })
+      hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize the focused window" })
+
+      -- Keybind cheatsheet: hypr-cheatsheet (see home.packages) reads
+      -- descriptions straight off `hyprctl binds -j`, so it can never drift
+      -- out of sync with the binds actually declared above.
+      hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("foot --app-id hypr-cheatsheet -e hypr-cheatsheet"), { description = "Show this keybind cheatsheet" })
+
+      hl.window_rule({
+        name = "float-hypr-cheatsheet",
+        match = { class = "hypr-cheatsheet" },
+        float = true,
+      })
     '';
   };
 }

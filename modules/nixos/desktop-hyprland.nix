@@ -13,9 +13,21 @@
   services.xserver.xkb.layout = "br";
   console.keyMap = "br-abnt2";
 
-  services.displayManager.sddm = {
+  # Noctalia Greeter (greetd-backed) replaces SDDM as the physical-console
+  # login screen, matching the look of henrique's Noctalia shell. It only
+  # lists Wayland sessions (wayland-sessions/*.desktop) -- no X11 support --
+  # so Plasma is no longer selectable at physical login; leonardo and martin
+  # are unaffected since they only reach Plasma over RDP (xrdp, a separate
+  # path, see desktop-plasma-rdp.nix).
+  services.displayManager.sddm.enable = false;
+  programs.noctalia-greeter = {
     enable = true;
-    wayland.enable = true;
+    settings.session.default = "Hyprland";
+    # Same wallpaper as the Hyprland session (see modules/home/hyprland.nix),
+    # so the login screen matches. "${...}" copies the file into the Nix
+    # store (world-readable) and interpolates its absolute store path --
+    # the toml settings attrset needs a plain string here, not a Nix path.
+    settings.appearance.wallpaper.path = "${../../users/henrique/217060-kagura-gintama-1920x1080.png}";
   };
 
   # Recommended by Noctalia (the shell/bar running in henrique's Hyprland
@@ -25,4 +37,15 @@
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
+
+  # This machine's Intel Bluetooth controller is tagged for USB autosuspend
+  # by systemd's stock hwdb (see 60-autosuspend.rules), and actually
+  # honoring it drops the active BLE connection to henrique's MX Vertical
+  # every time it's idle for ~2s -- visible in the logs as repeated
+  # "logitech-hidpp-device ... hidraw4" re-probes and "ACL packet for
+  # unknown connection handle". Force the Bluetooth radio interface class
+  # (e0/01/01) back to "on" (no autosuspend) to stop the mouse dropping.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="e0", ATTR{bInterfaceSubClass}=="01", ATTR{bInterfaceProtocol}=="01", TEST=="power/control", ATTR{power/control}="on"
+  '';
 }

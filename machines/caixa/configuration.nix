@@ -7,6 +7,7 @@
     ../../modules/nixos/ssh.nix
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/desktop-plasma-rdp.nix
+    ../../modules/nixos/chrony.nix
     ../../modules/nixos/wayvnc-hyprland.nix
     ../../modules/nixos/lan-isolation.nix
     ../../users/henrique
@@ -42,7 +43,7 @@
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
   nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [ "claude-code" ];
+    builtins.elem (lib.getName pkg) [ "claude-code" "discord" ];
 
   home-manager.users.henrique = import ../../users/henrique/home.nix;
   home-manager.users.leonardo = import ../../users/leonardo/home.nix;

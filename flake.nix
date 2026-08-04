@@ -24,13 +24,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     helium-flake = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, helium-flake, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, ... }@inputs: {
     nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
@@ -40,6 +45,7 @@
         home-manager.nixosModules.home-manager
         sops-nix.nixosModules.sops
         disko.nixosModules.disko
+        noctalia-greeter.nixosModules.default
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
