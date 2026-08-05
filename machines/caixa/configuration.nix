@@ -27,6 +27,7 @@
   hardware.graphics.enable = true;
 
   i18n.defaultLocale = "pt_BR.UTF-8";
+  time.timeZone = "America/Sao_Paulo";
 
   # Backend dconf needs to actually apply GTK theme settings (see
   # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
