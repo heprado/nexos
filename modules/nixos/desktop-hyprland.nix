@@ -10,7 +10,10 @@
 
   # ABNT2 keyboard (has ç, /, dead keys, and a numpad) -- without this,
   # SDDM/the console fall back to a US layout where those keys don't map.
-  services.xserver.xkb.layout = "br";
+  # "jp" is a second layout for typing Japanese input; Alt+Shift toggles
+  # between the two (applies to the X server / greeter, so any local user).
+  services.xserver.xkb.layout = "br,jp";
+  services.xserver.xkb.options = "grp:alt_shift_toggle";
   console.keyMap = "br-abnt2";
 
   # Noctalia Greeter (greetd-backed) replaces SDDM as the physical-console
