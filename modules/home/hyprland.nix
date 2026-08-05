@@ -25,9 +25,30 @@
     pkgs.nwg-look
     pkgs.qt6Packages.qt6ct
     pkgs.feishin
+    pkgs.vlc
     # grimblast is Hyprland's own screenshot helper (wraps grim+slurp+hyprctl)
     # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig).
     pkgs.grimblast
+    # wf-recorder is the wlroots-native screen recorder (like grim, made by
+    # the same maintainer) -- toggle-recording below wraps it into a single
+    # start/stop bind (SUPER + R, see hl.bind in extraConfig).
+    pkgs.wf-recorder
+    (pkgs.writeShellApplication {
+      name = "toggle-recording";
+      runtimeInputs = [ pkgs.wf-recorder pkgs.libnotify pkgs.procps pkgs.coreutils ];
+      text = ''
+        if pidof wf-recorder > /dev/null; then
+          pkill -INT wf-recorder
+          notify-send "Screen recording" "Stopped"
+        else
+          mkdir -p "$HOME/Videos"
+          file="$HOME/Videos/recording-$(date +%Y-%m-%d_%H-%M-%S).mp4"
+          notify-send "Screen recording" "Started -> $file"
+          wf-recorder -f "$file" &
+          disown
+        fi
+      '';
+    })
     # SUPER + / (see the hl.bind below) opens this in a floating foot window.
     # Reads live off `hyprctl binds -j`'s `description` field instead of
     # keeping a separate hardcoded list, so it can't drift out of sync with
@@ -270,6 +291,10 @@
       hl.bind("Print", hl.dsp.exec_cmd("grimblast --notify copysave area"), { description = "Screenshot: select an area" })
       hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify copysave screen"), { description = "Screenshot: full screen" })
       hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"), { description = "Screenshot: active window" })
+
+      -- Screen recording via wf-recorder, wrapped in toggle-recording (see
+      -- home.packages) so a single bind both starts and stops it.
+      hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("toggle-recording"), { description = "Start/stop screen recording" })
 
       -- Hold SUPER + drag with LMB/RMB to move/resize the focused window
       -- (mouse:272/273 are the classic hyprlang bindm equivalents in Lua).
