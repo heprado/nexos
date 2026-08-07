@@ -67,7 +67,11 @@
 
     nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
+      # `self` is passed alongside `inputs` (it isn't included in the
+      # @inputs capture above, since it's bound explicitly) so
+      # configuration.nix can register this flake's own path in the Nix
+      # registry -- see nix.registry.nexos there.
+      specialArgs = { inherit inputs self; };
       modules = [
         ./machines/caixa/configuration.nix
         ./machines/caixa/disko-config.nix

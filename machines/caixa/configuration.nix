@@ -1,4 +1,4 @@
-{ lib, inputs, ... }:
+{ lib, inputs, self, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -25,6 +25,11 @@
     # --extra-experimental-features "nix-command flakes" every time.
     experimental-features = [ "nix-command" "flakes" ];
   };
+
+  # Short alias for this flake itself, so the per-language devShell
+  # templates (see flake.nix's `templates` output) can be pulled with
+  # `nix flake init -t nexos#rust` instead of the full repo path.
+  nix.registry.nexos.flake = self;
 
   networking.hostName = "caixa";
   programs.zsh.enable = true;
