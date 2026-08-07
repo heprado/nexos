@@ -8,6 +8,33 @@
   # Hyprland — xrdp doesn't support Wayland compositors.
   services.desktopManager.plasma6.enable = true;
 
+  # These GUI apps are optional extras plasma6 installs by default (see
+  # nixpkgs' plasma6.nix desktop-manager module) -- system-wide, so they'd
+  # otherwise clutter henrique's Hyprland launcher/PATH even though he
+  # never runs Plasma. kwin-x11 is deliberately NOT excluded here: xrdp's
+  # startplasma-x11 (above) needs it to render leonardo/martin's session.
+  environment.plasma6.excludePackages = with pkgs.kdePackages; [
+    konsole
+    kate
+    ktexteditor
+    khelpcenter
+    dolphin
+    baloo-widgets
+    dolphin-plugins
+    gwenview
+    okular
+    ark
+    elisa
+    spectacle
+    ffmpegthumbs
+    krdp
+    plasma-keyboard
+    qtvirtualkeyboard
+    aurorae
+    plasma-browser-integration
+    plasma-workspace-wallpapers
+  ];
+
   services.xrdp = {
     enable = true;
     openFirewall = false;
