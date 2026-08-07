@@ -258,6 +258,15 @@
     # in the actual hyprland-0.56.0 nixpkgs derivation (share/hypr/), not
     # just docs.
     extraConfig = ''
+      -- home.sessionVariables (below) only reaches login shells; apps
+      -- launched via hyprctl dispatch exec or D-Bus activation (most GUI
+      -- launchers, xdg autostart) don't see it. hl.env propagates into the
+      -- systemd user session and D-Bus activation environment instead --
+      -- see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/.
+      -- This is what actually fixes apps complaining
+      -- "QT_QPA_PLATFORMTHEME environment variable is not set".
+      hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+
       hl.on("hyprland.start", function()
         hl.exec_cmd("noctalia")
         hl.exec_cmd("hypr-welcome")
