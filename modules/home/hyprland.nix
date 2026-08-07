@@ -53,6 +53,30 @@
     # Reads live off `hyprctl binds -j`'s `description` field instead of
     # keeping a separate hardcoded list, so it can't drift out of sync with
     # the actual binds declared in extraConfig below.
+    # Login banner pointing at the cheatsheet bind, shown once per session
+    # start (hl.on("hyprland.start", ...) below) with a "don't show again"
+    # button that persists via a marker file in ~/.local/state.
+    (pkgs.writeShellApplication {
+      name = "hypr-welcome";
+      runtimeInputs = [ pkgs.zenity pkgs.coreutils ];
+      text = ''
+        state_file="$HOME/.local/state/hypr-welcome-dismissed"
+        [ -f "$state_file" ] && exit 0
+        mkdir -p "$(dirname "$state_file")"
+
+        choice=""
+        choice=$(zenity --question \
+          --title="Hyprland" \
+          --text="Aperte SUPER + / para ajuda" \
+          --ok-label="OK" \
+          --extra-button="Não mostrar novamente" \
+          2>/dev/null) || true
+
+        if [ "$choice" = "Não mostrar novamente" ]; then
+          touch "$state_file"
+        fi
+      '';
+    })
     (pkgs.writeShellApplication {
       name = "hypr-cheatsheet";
       runtimeInputs = [ pkgs.jq pkgs.util-linux pkgs.less ];
@@ -236,6 +260,7 @@
     extraConfig = ''
       hl.on("hyprland.start", function()
         hl.exec_cmd("noctalia")
+        hl.exec_cmd("hypr-welcome")
       end)
 
       hl.monitor({ output = "", mode = "highrr", position = "auto", scale = "auto" })
