@@ -23,9 +23,9 @@ nexos/
     nixos/                    # system-level (NixOS) modules, each one feature-scoped
       docker-rootless.nix        # rootless Docker, per-user daemons
       ssh.nix                    # key-only SSH (no passwords, no root login)
-      tailscale.nix               # Tailscale client, authkey via sops
+      cloudflared.nix             # Cloudflare Tunnel: SSH/RDP/wayvnc reachable with no open inbound port
       desktop-hyprland.nix        # Hyprland + SDDM, local physical console
-      desktop-plasma-rdp.nix      # KDE Plasma over RDP (xrdp), Tailscale-only, henrique excluded
+      desktop-plasma-rdp.nix      # KDE Plasma over RDP (xrdp), henrique excluded
       wayvnc-hyprland.nix         # wayvnc: remote access to henrique's actual Hyprland session
     home/                     # home-manager modules (per-user environment, not system config)
       claude-code.nix            # installs Claude Code
@@ -44,7 +44,7 @@ nexos/
     rust/ python/ c/ sql/ web/   # each: flake.nix (devShells.default) + .envrc ("use flake")
 
   secrets/
-    caixa.yaml                 # sops-encrypted secrets for caixa (Tailscale authkey, password hashes, etc.)
+    caixa.yaml                 # sops-encrypted secrets for caixa (cloudflared tunnel credentials, password hashes, etc.)
     README.md                  # how the secrets/sops workflow works, in detail
 
   keys/                       # git-ignored. Private keys live here locally: SSH keys, caixa's
@@ -62,8 +62,8 @@ nexos/
 - **Disk**: LUKS-encrypted (interactive passphrase) btrfs via [disko](https://github.com/nix-community/disko), subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
 - **Users**: `henrique` (sudo/wheel), `leonardo`, `martin` — none have SSH password auth, only key-based.
 - **Docker**: rootless, one daemon per user, auto-starts at login (via `linger`).
-- **Tailscale**: joins declaratively via a sops-encrypted authkey.
-- **Desktops**: `henrique` gets Hyprland (with the [Noctalia](https://docs.noctalia.dev) shell) at the physical console, plus remote access to that *same* session over VNC (`wayvnc`, since RDP doesn't support Wayland). `leonardo` and `martin` get KDE Plasma over RDP, reachable via Tailscale.
+- **Remote access**: [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (`cloudflared`) fronts SSH, RDP, and wayvnc — outbound-only from this machine, so no inbound port is ever opened for them. Credentials come from a sops-encrypted tunnel credentials file; see `modules/nixos/cloudflared.nix`.
+- **Desktops**: `henrique` gets Hyprland (with the [Noctalia](https://docs.noctalia.dev) shell) at the physical console, plus remote access to that *same* session over VNC (`wayvnc`, since RDP doesn't support Wayland) via the tunnel. `leonardo` and `martin` get KDE Plasma over RDP, also via the tunnel.
 - **Secrets**: managed with [sops-nix](https://github.com/Mic92/sops-nix) + `age`; see `secrets/README.md` for the full secrets workflow (rotating keys, adding new secrets, etc).
 
 ## Installing
@@ -121,7 +121,7 @@ The difference is just how you get to that point.
 
 9. **Reboot into caixa.** From here on, log in as henrique (Hyprland, physical console) or SSH in with the appropriate private key from `keys/`.
 
-10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real Tailscale authkey, real password hashes, etc. should already be in `secrets/caixa.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
+10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real cloudflared tunnel credentials, real password hashes, etc. should already be in `secrets/caixa.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
 
 ### Option B — Adopting this config on an already-running NixOS system
 

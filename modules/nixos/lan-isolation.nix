@@ -3,9 +3,13 @@
   # Restricts every physical/LAN interface to "vertical" traffic only: the
   # default gateway (and, through it, the internet) is reachable, but
   # nothing else on the same local subnet is -- no lateral/peer traffic,
-  # in either direction. Tailscale (tailscale0) and loopback are
-  # deliberately excluded: Tailscale is peer-to-peer by design, and this
-  # is how remote access to this host actually works.
+  # in either direction. Loopback is excluded since it's needed for
+  # things like cloudflared forwarding to local services (see
+  # cloudflared.nix) -- no interface-specific exception is needed for
+  # that, unlike the old Tailscale setup: cloudflared is outbound-only
+  # (egresses through the gateway, already allowed below) and inbound
+  # traffic arrives already de-tunneled over loopback, never as a new
+  # inbound connection on a physical/LAN interface.
   #
   # Interfaces and their gateway/subnet are discovered at firewall
   # (re)start time via `ip route`/`ip addr`, not hardcoded, since they're
@@ -14,7 +18,7 @@
     for ifpath in /sys/class/net/*; do
       iface="$(basename "$ifpath")"
       case "$iface" in
-        lo|tailscale*|docker*|veth*|br-*|virbr*|wg*) continue ;;
+        lo|docker*|veth*|br-*|virbr*|wg*) continue ;;
       esac
 
       for spec in "4 iptables" "6 ip6tables"; do
@@ -44,7 +48,7 @@
     for ifpath in /sys/class/net/*; do
       iface="$(basename "$ifpath")"
       case "$iface" in
-        lo|tailscale*|docker*|veth*|br-*|virbr*|wg*) continue ;;
+        lo|docker*|veth*|br-*|virbr*|wg*) continue ;;
       esac
 
       for spec in "4 iptables" "6 ip6tables"; do

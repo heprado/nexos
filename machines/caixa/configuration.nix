@@ -3,7 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/docker-rootless.nix
-    ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/cloudflared.nix
     ../../modules/nixos/ssh.nix
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/desktop-plasma-rdp.nix

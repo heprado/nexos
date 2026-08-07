@@ -51,8 +51,10 @@ in
     };
   };
 
-  # Same reachability as RDP: Tailscale always, plus LAN (assumes caixa
-  # isn't directly WAN-exposed -- see the note in desktop-plasma-rdp.nix).
-  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 5900 ];
+  # Primary remote path is now the Cloudflare Tunnel
+  # (hyprland.heprado.com.br -- see cloudflared.nix), which reaches this
+  # over loopback and needs no firewall rule. This LAN-wide opening is
+  # kept as-is for direct local access (assumes caixa isn't directly
+  # WAN-exposed) -- unrelated to the Tailscale->cloudflared swap.
   networking.firewall.allowedTCPPorts = [ 5900 ];
 }

@@ -1,8 +1,9 @@
 { config, pkgs, ... }:
 {
-  # KDE Plasma over RDP: leonardo and martin only, reached via Tailscale.
-  # henrique is explicitly denied (see the PAM rule below) — he uses
-  # wayvnc + Hyprland instead (see wayvnc-hyprland.nix).
+  # KDE Plasma over RDP: leonardo and martin only, reached via the
+  # Cloudflare Tunnel (kde.heprado.com.br -- see cloudflared.nix), not a
+  # directly-opened port. henrique is explicitly denied (see the PAM rule
+  # below) — he uses wayvnc + Hyprland instead (see wayvnc-hyprland.nix).
   #
   # Note: this always lands in an X11 Plasma session (startplasma-x11), not
   # Hyprland — xrdp doesn't support Wayland compositors.
@@ -50,5 +51,7 @@
     args = [ "user" "!=" "henrique" ];
   };
 
-  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 3389 ];
+  # No inbound firewall rule needed for 3389 -- cloudflared (see
+  # cloudflared.nix) connects to it over loopback, which bypasses nixos-fw
+  # entirely. Not opened on the LAN/WAN interface at all anymore.
 }

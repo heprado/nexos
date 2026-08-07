@@ -26,13 +26,13 @@ against it.
    in during the install's live session. Permissions should be root-only
    (`chmod 600`).
 
-2. Replace the placeholder in `secrets/caixa.yaml` with a real Tailscale
-   auth key, generated from the
-   [Tailscale admin console](https://login.tailscale.com/admin/settings/keys)
-   (a reusable, tagged key, e.g. `tag:caixa`, is recommended so it survives
-   reinstalls without manual re-auth). Edit it in place with `sops` — this
-   decrypts, opens your editor, and re-encrypts on save — you need the same
-   `caixa-key.txt` available locally (e.g. also at
+2. Add the Cloudflare Tunnel's `credentials.json` content (written by
+   `cloudflared tunnel create` to `~/.cloudflared/<tunnel-id>.json`, or
+   downloadable from the Zero Trust dashboard for that tunnel) as the
+   `cloudflared_tunnel_credentials` key in `secrets/caixa.yaml` — paste the
+   whole JSON file content as the value. Edit it in place with `sops` —
+   this decrypts, opens your editor, and re-encrypts on save — you need
+   the same `caixa-key.txt` available locally (e.g. also at
    `~/.config/sops/age/keys.txt`, sops's default lookup path) to do this:
 
    ```sh
@@ -41,7 +41,7 @@ against it.
 
 3. Commit the re-encrypted `secrets/caixa.yaml`.
 
-## Rotating the Tailscale key later
+## Rotating the Cloudflare Tunnel credentials later
 
 Same as step 2 above — `sops secrets/caixa.yaml` decrypts, lets you edit,
 and re-encrypts on save.
@@ -52,4 +52,4 @@ If `caixa-key.txt` / `/var/lib/sops-nix/key.txt` is lost, `secrets/caixa.yaml`
 becomes permanently undecryptable as-is. Recovery: generate a fresh age
 keypair, update `.sops.yaml` with the new public key, and re-encrypt
 `secrets/caixa.yaml` from a plaintext copy of the secret (i.e. you'll need
-to fetch/regenerate the Tailscale auth key again too).
+the Cloudflare Tunnel's `credentials.json` again too).
