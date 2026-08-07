@@ -8,6 +8,8 @@
     ../../modules/home/helium.nix
     ../../modules/home/telegram.nix
     ../../modules/home/discord.nix
+    ../../modules/home/direnv.nix
+    ../../modules/home/neovim.nix
   ];
 
   home.stateVersion = "24.05";

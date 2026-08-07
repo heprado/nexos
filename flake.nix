@@ -36,6 +36,35 @@
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, ... }@inputs: {
+    # Per-language devShells for henrique's actual project repos (not
+    # this one) -- `nix flake init -t .#<name>` drops in a flake.nix +
+    # .envrc so direnv auto-activates the right compiler/LSP/formatter
+    # per project, instead of installing every language globally via
+    # home-manager. See modules/home/neovim.nix, which expects these
+    # LSP binaries on PATH rather than at a fixed store path.
+    templates = {
+      rust = {
+        path = ./templates/rust;
+        description = "Rust devShell: rustc, cargo, rust-analyzer, clippy, rustfmt";
+      };
+      python = {
+        path = ./templates/python;
+        description = "Python devShell: python3, basedpyright, ruff";
+      };
+      c = {
+        path = ./templates/c;
+        description = "C devShell: gcc, clang-tools (clangd), gnumake, gdb";
+      };
+      sql = {
+        path = ./templates/sql;
+        description = "SQL devShell: sqls language server";
+      };
+      web = {
+        path = ./templates/web;
+        description = "JavaScript/TypeScript devShell: node, typescript, typescript-language-server, eslint, prettier";
+      };
+    };
+
     nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
