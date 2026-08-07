@@ -66,10 +66,10 @@
               if bit_set($m; 1) then "Shift" else empty end
             ] | join(" + ");
           def keyname:
-            if .key == "mouse:272" then "Mouse Left"
-            elif .key == "mouse:273" then "Mouse Right"
-            elif .key == "mouse_down" then "Scroll Down"
-            elif .key == "mouse_up" then "Scroll Up"
+            if .key == "mouse:272" then "Botão esquerdo do mouse"
+            elif .key == "mouse:273" then "Botão direito do mouse"
+            elif .key == "mouse_down" then "Scroll para baixo"
+            elif .key == "mouse_up" then "Scroll para cima"
             else .key end;
           [ .[] | select(.description != "") ]
           | .[]
@@ -260,51 +260,51 @@
       })
 
       local mainMod = "SUPER"
-      hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("foot"), { description = "Open a terminal" })
-      hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Close the focused window" })
-      hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focus the window to the left" })
-      hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focus the window to the right" })
-      hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focus the window above" })
-      hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), { description = "Focus the window below" })
+      hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("foot"), { description = "Abrir um terminal" })
+      hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Fechar a janela em foco" })
+      hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focar a janela à esquerda" })
+      hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focar a janela à direita" })
+      hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focar a janela acima" })
+      hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), { description = "Focar a janela abaixo" })
 
       -- Switch to workspace 1-5 with SUPER + [1-5].
       for i = 1, 5 do
-        hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Switch to workspace " .. i })
+        hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Ir para a área de trabalho " .. i })
       end
 
       -- Scroll wheel moves focus between windows in the scrolling layout
       -- (not bound by the layout itself -- see
       -- https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/#layout-messages).
-      hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"), { description = "Focus the next window (scroll)" })
-      hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"), { description = "Focus the previous window (scroll)" })
+      hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"), { description = "Focar a próxima janela (scroll)" })
+      hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"), { description = "Focar a janela anterior (scroll)" })
 
       -- Build/break the 4-window grid: consume stacks the focused window
       -- into the previous column (so it shares that column's space with
       -- what's already there); expel pops it back out into its own column,
       -- which then needs a scroll to reach again.
-      hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Stack the focused window into the previous column" })
-      hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Pop the focused window out of its column" })
+      hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Empilhar a janela em foco na coluna anterior" })
+      hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Tirar a janela em foco da coluna" })
 
       -- Screenshots via grimblast (see home.packages): copysave both writes
       -- the file (to ~/Pictures by default) and copies it to the clipboard,
       -- with a notification linking to the saved file.
-      hl.bind("Print", hl.dsp.exec_cmd("grimblast --notify copysave area"), { description = "Screenshot: select an area" })
-      hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify copysave screen"), { description = "Screenshot: full screen" })
-      hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"), { description = "Screenshot: active window" })
+      hl.bind("Print", hl.dsp.exec_cmd("grimblast --notify copysave area"), { description = "Captura de tela: selecionar uma área" })
+      hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify copysave screen"), { description = "Captura de tela: tela inteira" })
+      hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"), { description = "Captura de tela: janela ativa" })
 
       -- Screen recording via wf-recorder, wrapped in toggle-recording (see
       -- home.packages) so a single bind both starts and stops it.
-      hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("toggle-recording"), { description = "Start/stop screen recording" })
+      hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("toggle-recording"), { description = "Iniciar/parar gravação de tela" })
 
       -- Hold SUPER + drag with LMB/RMB to move/resize the focused window
       -- (mouse:272/273 are the classic hyprlang bindm equivalents in Lua).
-      hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Move the focused window" })
-      hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize the focused window" })
+      hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true, description = "Mover a janela em foco" })
+      hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Redimensionar a janela em foco" })
 
       -- Keybind cheatsheet: hypr-cheatsheet (see home.packages) reads
       -- descriptions straight off `hyprctl binds -j`, so it can never drift
       -- out of sync with the binds actually declared above.
-      hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("foot --app-id hypr-cheatsheet -e hypr-cheatsheet"), { description = "Show this keybind cheatsheet" })
+      hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("foot --app-id hypr-cheatsheet -e hypr-cheatsheet"), { description = "Mostrar esta folha de atalhos" })
 
       hl.window_rule({
         name = "float-hypr-cheatsheet",
