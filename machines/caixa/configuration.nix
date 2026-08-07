@@ -21,6 +21,9 @@
   nix.settings = {
     extra-substituters = [ "https://noctalia.cachix.org" ];
     extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+    # So `nix flake ...`/`nix build ...` etc. work without having to pass
+    # --extra-experimental-features "nix-command flakes" every time.
+    experimental-features = [ "nix-command" "flakes" ];
   };
 
   networking.hostName = "caixa";
