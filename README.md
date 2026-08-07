@@ -31,11 +31,17 @@ nexos/
       claude-code.nix            # installs Claude Code
       zoxide.nix                 # zoxide + zsh integration
       hyprland.nix               # Hyprland session config + Noctalia shell
+      neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
+      direnv.nix                 # direnv + nix-direnv, so per-project devShells auto-activate
 
   users/
     <name>/
       default.nix              # NixOS account: shell, groups, SSH authorized_keys, password hash
       home.nix                 # home-manager config for this user: which modules/home/*.nix apply
+
+  templates/                  # per-language Nix devShells, meant to be dropped into OTHER
+                               # project repos (not used here) via `nix flake init -t`
+    rust/ python/ c/ sql/ web/   # each: flake.nix (devShells.default) + .envrc ("use flake")
 
   secrets/
     caixa.yaml                 # sops-encrypted secrets for caixa (Tailscale authkey, password hashes, etc.)
@@ -138,6 +144,46 @@ Use this if caixa (or a machine that will become caixa) already has *some* NixOS
    ```
 
    Since this repo's SSH module disables password auth, make sure you have a working key-based session (or physical/console access) *before* this switch takes effect — otherwise you could lock yourself out of SSH access with no way back in except the physical console.
+
+## Using the devShell templates
+
+`henrique`'s Neovim (`modules/home/neovim.nix`) is deliberately generic:
+LSP client, treesitter, completion, telescope, gitsigns — but **no**
+per-language LSP servers or compilers/runtimes installed globally. Those
+come from a per-project Nix devShell instead, so each project only pulls
+in the toolchain it actually needs. The `templates/` folder in this repo
+holds one such devShell per language (`rust`, `python`, `c`, `sql`,
+`web` for JS/TS) — meant to be dropped into your *other* project repos,
+not used inside `nexos` itself.
+
+1. **Drop the template into your project** (once per project):
+   ```sh
+   cd ~/my-project
+   nix flake init -t nexos#rust   # or #python, #c, #sql, #web
+   ```
+   `nexos` here is a short alias for this flake, registered via
+   `nix.registry.nexos` in `machines/caixa/configuration.nix` — without
+   that, you'd need the full path (`nix flake init -t /home/henrique/codigos/nexos#rust`).
+
+   If the project already has its own `flake.nix`, `nix flake init` will
+   refuse to overwrite it — copy the template's `devShells` block into
+   your existing flake by hand instead.
+
+2. **Authorize direnv** (also once per project — it's a safety prompt,
+   since a `.envrc` can run arbitrary code):
+   ```sh
+   direnv allow
+   ```
+
+3. **That's it.** From then on, `cd`-ing into the project auto-activates
+   the devShell (you'll see `direnv: loading ...`), putting that
+   language's compiler/LSP/formatter on `PATH` — and Neovim picks up the
+   right LSP automatically when opened from inside the project. Leaving
+   the directory removes them from `PATH` again.
+
+   Prefer not to use direnv for a given project? Skip the `.envrc` and
+   run `nix develop` manually instead — same effect, but only for that
+   shell session, and you have to re-run it every new terminal.
 
 ## Verifying before you trust it on real hardware
 
