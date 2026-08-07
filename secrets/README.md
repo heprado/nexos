@@ -26,11 +26,11 @@ against it.
    in during the install's live session. Permissions should be root-only
    (`chmod 600`).
 
-2. Add the Cloudflare Tunnel's `credentials.json` content (written by
-   `cloudflared tunnel create` to `~/.cloudflared/<tunnel-id>.json`, or
-   downloadable from the Zero Trust dashboard for that tunnel) as the
-   `cloudflared_tunnel_credentials` key in `secrets/caixa.yaml` — paste the
-   whole JSON file content as the value. Edit it in place with `sops` —
+2. Add the Cloudflare Tunnel's token (Zero Trust dashboard → Networks →
+   Tunnels → this tunnel → Configure — it's the long string after
+   `--token` in the install command shown there) as the
+   `cloudflared_tunnel_token` key in `secrets/caixa.yaml`. Edit it in
+   place with `sops` —
    this decrypts, opens your editor, and re-encrypts on save — you need
    the same `caixa-key.txt` available locally (e.g. also at
    `~/.config/sops/age/keys.txt`, sops's default lookup path) to do this:
@@ -52,4 +52,4 @@ If `caixa-key.txt` / `/var/lib/sops-nix/key.txt` is lost, `secrets/caixa.yaml`
 becomes permanently undecryptable as-is. Recovery: generate a fresh age
 keypair, update `.sops.yaml` with the new public key, and re-encrypt
 `secrets/caixa.yaml` from a plaintext copy of the secret (i.e. you'll need
-the Cloudflare Tunnel's `credentials.json` again too).
+the Cloudflare Tunnel's token again too).

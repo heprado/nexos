@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   # Replaces Tailscale as the remote-access path (see the removed
   # tailscale.nix). cloudflared makes an outbound-only connection to
@@ -8,31 +8,40 @@
   # nixos-fw entirely (loopback is exempt) and is untouched by
   # lan-isolation.nix's peer-traffic blocking.
   #
-  # WARNING: none of the three hostnames below have an authentication
+  # This is a token-based ("remotely-managed") tunnel, not the
+  # credentials.json ("locally-managed") kind -- NixOS's own
+  # services.cloudflared module only supports the latter, so this is a
+  # hand-rolled systemd unit instead. Because it's remotely-managed, the
+  # ingress rules (which public hostname maps to which local service)
+  # are NOT declared here -- they live in the Cloudflare Zero Trust
+  # dashboard, under this tunnel's "Public Hostname" tab. Configure:
+  #   ssh.heprado.com.br      -> ssh://localhost:22
+  #   kde.heprado.com.br      -> tcp://localhost:3389   (RDP, see desktop-plasma-rdp.nix)
+  #   hyprland.heprado.com.br -> tcp://localhost:5900   (wayvnc, see wayvnc-hyprland.nix)
+  #
+  # WARNING: none of the three hostnames above have an authentication
   # layer of their own beyond whatever runs on the other end (SSH keys;
   # xrdp/PAM; wayvnc's password). If Cloudflare Access policies aren't
-  # configured for these hostnames in the Zero Trust dashboard, anyone
-  # who discovers the hostname can attempt to connect straight through --
-  # this is especially risky for RDP. Set up Access policies (or WARP-only
-  # enrollment) for ssh.heprado.com.br / kde.heprado.com.br /
-  # hyprland.heprado.com.br before relying on this as the only path in.
-  services.cloudflared = {
-    enable = true;
-    tunnels."b47dfcda-a469-457b-88f4-ef3326c8c506" = {
-      credentialsFile = config.sops.secrets.cloudflared_tunnel_credentials.path;
-      default = "http_status:404";
-      ingress = {
-        "ssh.heprado.com.br" = "ssh://localhost:22";
-        # KDE Plasma over RDP (leonardo/martin) -- see desktop-plasma-rdp.nix.
-        "kde.heprado.com.br" = "tcp://localhost:3389";
-        # wayvnc, henrique's actual Hyprland session -- see wayvnc-hyprland.nix.
-        "hyprland.heprado.com.br" = "tcp://localhost:5900";
-      };
+  # configured for these hostnames in the dashboard, anyone who
+  # discovers the hostname can attempt to connect straight through --
+  # this is especially risky for RDP.
+  systemd.services.cloudflared-tunnel = {
+    description = "Cloudflare Tunnel (token-based)";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      DynamicUser = true;
+      LoadCredential = "token:${config.sops.secrets.cloudflared_tunnel_token.path}";
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token-file %d/token";
+      Restart = "on-failure";
+      RestartSec = 5;
     };
   };
 
-  # Full credentials.json content from the tunnel (`cloudflared tunnel
-  # create` writes it to ~/.cloudflared/<tunnel-id>.json) -- add via
-  # `sops secrets/caixa.yaml`, see secrets/README.md.
-  sops.secrets.cloudflared_tunnel_credentials = { };
+  # The tunnel token from the Zero Trust dashboard (Networks > Tunnels >
+  # this tunnel > Configure > it's the long string after "--token" in
+  # the install command shown there) -- add via `sops secrets/caixa.yaml`,
+  # see secrets/README.md.
+  sops.secrets.cloudflared_tunnel_token = { };
 }
