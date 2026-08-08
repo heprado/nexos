@@ -52,26 +52,32 @@ in
   };
 
   # Second wayvnc instance, dedicated to novnc-hyprland.nix's
-  # websockify->browser path. noVNC's RFB client (rfb.js) only implements
-  # VeNCrypt's unencrypted "Plain" auth subtype -- it never does a TLS
-  # handshake inside the RFB channel -- so it can't negotiate with the TLS
-  # cert/key configured above, which forces wayvnc to offer TLS-wrapped
-  # VeNCrypt subtypes instead of Plain. Rather than dropping TLS from the
-  # main instance (which native VNC clients on port 5900 rely on), this
-  # second instance skips private_key_file/certificate_file entirely (so it
-  # offers Plain, which noVNC supports) and binds to 127.0.0.1 only -- it's
-  # never reachable over the LAN/WAN, just from websockify running locally
-  # on the same host. Transport encryption for its browser clients comes
-  # from the outer WSS/HTTPS connection (terminated at the Cloudflare edge)
-  # instead of from wayvnc itself.
+  # websockify->browser path. Skips private_key_file/certificate_file (see
+  # the main instance above) since the browser's transport encryption
+  # already comes from the outer WSS/HTTPS connection, terminated at the
+  # Cloudflare edge -- not from wayvnc itself. Binds to 127.0.0.1 only,
+  # never reachable over the LAN/WAN, just from websockify running locally.
+  #
+  # Without TLS/RSA-AES configured, neatvnc (wayvnc's RFB library) does NOT
+  # fall back to classic password-only VNCAuth (security type 2, which
+  # noVNC supports) -- it treats that as "broken crypto" (DES-based) and
+  # skips it unless explicitly allowed, offering only RA2(5)/UnixLogon(129)
+  # instead, neither of which noVNC implements (verified: connecting
+  # straight to 127.0.0.1:5901, bypassing the tunnel/WSS entirely, offered
+  # exactly those two and nothing else). relax_encryption+allow_broken_crypto
+  # opts back into VNCAuth -- same mechanism as the "DES Authentication
+  # (Legacy)" case in wayvnc's own README, there for the same reason
+  # (clients, like noVNC or macOS Screen Sharing, that only speak the
+  # classic scheme). username is dropped since VNCAuth is password-only.
   sops.templates."wayvnc-novnc-config" = {
     owner = "henrique";
     content = ''
       address=127.0.0.1
       port=5901
       enable_auth=true
-      username=henrique
       password=${config.sops.placeholder.henrique_vnc_password}
+      relax_encryption=true
+      allow_broken_crypto=true
     '';
   };
 
