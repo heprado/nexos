@@ -81,7 +81,11 @@ in
     partOf = [ "hyprland-session.target" ];
     wantedBy = [ "hyprland-session.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config=${config.sops.templates."wayvnc-novnc-config".path}";
+      # -S: wayvnc's control socket defaults to a fixed path under
+      # XDG_RUNTIME_DIR -- without an explicit alternate here, this
+      # instance refuses to start ("Another wayvnc process is already
+      # running") because the main wayvnc instance above already owns it.
+      ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config=${config.sops.templates."wayvnc-novnc-config".path} --socket=%t/wayvncctl-novnc";
       Restart = "on-failure";
       RestartSec = 2;
     };
