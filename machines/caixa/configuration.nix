@@ -9,6 +9,7 @@
     ../../modules/nixos/desktop-plasma-rdp.nix
     ../../modules/nixos/chrony.nix
     ../../modules/nixos/wayvnc-hyprland.nix
+    ../../modules/nixos/novnc-hyprland.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/ai.nix
     ../../users/henrique
