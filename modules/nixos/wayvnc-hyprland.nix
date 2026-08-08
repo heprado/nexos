@@ -44,6 +44,12 @@ in
     unitConfig.ConditionUser = "henrique";
     partOf = [ "hyprland-session.target" ];
     wantedBy = [ "hyprland-session.target" ];
+    # Restarts wayvnc whenever this module's config content changes (e.g.
+    # a future edit here), not just on rebuild -- otherwise a rebuild/switch
+    # only re-renders the config file on disk without the already-running
+    # process picking up the change (bit us once already, see the
+    # wayvnc-novnc instance below).
+    restartTriggers = [ config.sops.templates."wayvnc-config".content ];
     serviceConfig = {
       ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config=${config.sops.templates."wayvnc-config".path}";
       Restart = "on-failure";
@@ -86,6 +92,10 @@ in
     unitConfig.ConditionUser = "henrique";
     partOf = [ "hyprland-session.target" ];
     wantedBy = [ "hyprland-session.target" ];
+    # See the main wayvnc service's restartTriggers comment above -- this
+    # is exactly the bug that made the VNCAuth fix above not take effect
+    # until a manual `systemctl --user restart wayvnc-novnc`.
+    restartTriggers = [ config.sops.templates."wayvnc-novnc-config".content ];
     serviceConfig = {
       # -S: wayvnc's control socket defaults to a fixed path under
       # XDG_RUNTIME_DIR -- without an explicit alternate here, this
