@@ -51,6 +51,42 @@ in
     };
   };
 
+  # Second wayvnc instance, dedicated to novnc-hyprland.nix's
+  # websockify->browser path. noVNC's RFB client (rfb.js) only implements
+  # VeNCrypt's unencrypted "Plain" auth subtype -- it never does a TLS
+  # handshake inside the RFB channel -- so it can't negotiate with the TLS
+  # cert/key configured above, which forces wayvnc to offer TLS-wrapped
+  # VeNCrypt subtypes instead of Plain. Rather than dropping TLS from the
+  # main instance (which native VNC clients on port 5900 rely on), this
+  # second instance skips private_key_file/certificate_file entirely (so it
+  # offers Plain, which noVNC supports) and binds to 127.0.0.1 only -- it's
+  # never reachable over the LAN/WAN, just from websockify running locally
+  # on the same host. Transport encryption for its browser clients comes
+  # from the outer WSS/HTTPS connection (terminated at the Cloudflare edge)
+  # instead of from wayvnc itself.
+  sops.templates."wayvnc-novnc-config" = {
+    owner = "henrique";
+    content = ''
+      address=127.0.0.1
+      port=5901
+      enable_auth=true
+      username=henrique
+      password=${config.sops.placeholder.henrique_vnc_password}
+    '';
+  };
+
+  systemd.user.services.wayvnc-novnc = {
+    description = "wayvnc (no TLS, localhost-only) for the noVNC/websockify browser path";
+    unitConfig.ConditionUser = "henrique";
+    partOf = [ "hyprland-session.target" ];
+    wantedBy = [ "hyprland-session.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config=${config.sops.templates."wayvnc-novnc-config".path}";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+  };
+
   # Primary remote path is now the Cloudflare Tunnel
   # (remote.heprado.com.br -- see cloudflared.nix), which reaches this
   # over loopback and needs no firewall rule. This LAN-wide opening is

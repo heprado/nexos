@@ -13,15 +13,20 @@ in
 {
   # Adds browser-based (HTTPS, no native VNC client needed) access to
   # henrique's Hyprland session, on top of the existing wayvnc (see
-  # wayvnc-hyprland.nix) -- wayvnc itself stays exactly as-is and keeps
-  # working for native VNC clients (TigerVNC etc) on port 5900.
+  # wayvnc-hyprland.nix) -- the main wayvnc instance stays exactly as-is
+  # and keeps working for native VNC clients (TigerVNC etc) on port 5900.
   #
   # KasmVNC was considered instead but ruled out: it's a fork of TigerVNC's
   # Xvnc, fundamentally an X11 server with no Wayland/wlroots capture
   # support, so it can't attach to a real Hyprland session. websockify +
   # noVNC achieves the same practical goal (a plain HTTPS URL, opened in
-  # any browser, no client install) by just proxying WebSocket <-> wayvnc's
-  # existing raw VNC TCP port -- wayvnc itself is untouched.
+  # any browser, no client install) by proxying WebSocket <-> raw VNC TCP.
+  #
+  # Proxies to the SECOND wayvnc instance on 127.0.0.1:5901 (see
+  # wayvnc-hyprland.nix's wayvnc-novnc service), not the main TLS-enabled
+  # one on 5900 -- noVNC's RFB client only supports VeNCrypt's unencrypted
+  # "Plain" auth subtype and can't negotiate the TLS-wrapped subtypes the
+  # main instance is forced into by its cert/key config.
   #
   # TLS is NOT terminated here: the Cloudflare Tunnel already does that
   # (see cloudflared.nix) for the `https://remote.heprado.com.br`
@@ -34,7 +39,7 @@ in
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       DynamicUser = true;
-      ExecStart = "${pkgs.python3Packages.websockify}/bin/websockify --web=${novncWebRoot} 0.0.0.0:6080 localhost:5900";
+      ExecStart = "${pkgs.python3Packages.websockify}/bin/websockify --web=${novncWebRoot} 0.0.0.0:6080 127.0.0.1:5901";
       Restart = "on-failure";
       RestartSec = 2;
     };
