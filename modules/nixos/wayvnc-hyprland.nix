@@ -67,20 +67,28 @@ in
   # Without TLS/RSA-AES configured, neatvnc (wayvnc's RFB library) does NOT
   # fall back to classic password-only VNCAuth (security type 2, which
   # noVNC supports) -- it treats that as "broken crypto" (DES-based) and
-  # skips it unless explicitly allowed, offering only RA2(5)/UnixLogon(129)
-  # instead, neither of which noVNC implements (verified: connecting
-  # straight to 127.0.0.1:5901, bypassing the tunnel/WSS entirely, offered
-  # exactly those two and nothing else). relax_encryption+allow_broken_crypto
-  # opts back into VNCAuth -- same mechanism as the "DES Authentication
-  # (Legacy)" case in wayvnc's own README, there for the same reason
-  # (clients, like noVNC or macOS Screen Sharing, that only speak the
-  # classic scheme). username is dropped since VNCAuth is password-only.
+  # skips it unless explicitly allowed, offering only ARD(30)/RA2(5)/
+  # UnixLogon(129) instead (verified: connecting straight to
+  # 127.0.0.1:5901, bypassing the tunnel/WSS entirely). relax_encryption+
+  # allow_broken_crypto opts back into VNCAuth too -- same mechanism as the
+  # "DES Authentication (Legacy)" case in wayvnc's own README.
+  #
+  # username IS kept here (unlike an earlier version of this file):
+  # noVNC's rfb.js fully implements ARD (Apple Remote Desktop, Diffie-
+  # Hellman based, type 30) -- which wayvnc already offers unconditionally,
+  # no rsa_private_key_file needed -- and ARD supports real username+
+  # password, unlike VNCAuth. wayvnc's own auth callback
+  # (authenticate_user() in src/main.c) checks the submitted username
+  # against this `username` field for any scheme that carries one (ARD
+  # included), so without it set, ARD logins would only match an empty
+  # username.
   sops.templates."wayvnc-novnc-config" = {
     owner = "henrique";
     content = ''
       address=127.0.0.1
       port=5901
       enable_auth=true
+      username=henrique
       password=${config.sops.placeholder.henrique_vnc_password}
       relax_encryption=true
       allow_broken_crypto=true
