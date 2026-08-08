@@ -34,6 +34,10 @@
     aurorae
     plasma-browser-integration
     plasma-workspace-wallpapers
+    # Only pulled in because fwupd.service is enabled (see plasma6.nix's
+    # own conditional); excluding it here still works regardless of why it
+    # would've been added.
+    discover
   ];
 
   services.xrdp = {

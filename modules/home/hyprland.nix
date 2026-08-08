@@ -126,6 +126,13 @@
     Type=Application
     NoDisplay=true
   '';
+  # kwalletmanager itself is also "required" (kwallet/kwallet-pam provide a
+  # helper service leonardo/martin's Plasma sessions need) -- same mask.
+  home.file.".local/share/applications/org.kde.kwalletmanager.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    NoDisplay=true
+  '';
 
   home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
