@@ -1,4 +1,15 @@
 { pkgs, ... }:
+let
+  # pkgs.novnc's webroot has no index.html (only vnc.html), so hitting the
+  # bare https://remote.heprado.com.br/ falls through to websockify's
+  # static-file directory listing instead of the actual client. Serve a
+  # copy of the webroot with an index.html -> vnc.html redirect added.
+  novncWebRoot = pkgs.runCommand "novnc-web-root" { } ''
+    mkdir -p "$out"
+    cp -r ${pkgs.novnc}/share/webapps/novnc/. "$out"/
+    ln -s vnc.html "$out"/index.html
+  '';
+in
 {
   # Adds browser-based (HTTPS, no native VNC client needed) access to
   # henrique's Hyprland session, on top of the existing wayvnc (see
@@ -23,7 +34,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       DynamicUser = true;
-      ExecStart = "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/webapps/novnc 0.0.0.0:6080 localhost:5900";
+      ExecStart = "${pkgs.python3Packages.websockify}/bin/websockify --web=${novncWebRoot} 0.0.0.0:6080 localhost:5900";
       Restart = "on-failure";
       RestartSec = 2;
     };
