@@ -15,15 +15,15 @@
   # ingress rules (which public hostname maps to which local service)
   # are NOT declared here -- they live in the Cloudflare Zero Trust
   # dashboard, under this tunnel's "Public Hostname" tab. Configure:
-  #   ssh.heprado.com.br      -> ssh://localhost:22
-  #   kde.heprado.com.br      -> tcp://localhost:3389   (RDP, see desktop-plasma-rdp.nix)
-  #   hyprland.heprado.com.br -> http://localhost:6080  (noVNC/websockify in front
-  #                                                       of wayvnc, see
-  #                                                       novnc-hyprland.nix --
-  #                                                       browser-based HTTPS
-  #                                                       access, no VNC client
-  #                                                       needed; TLS terminates
-  #                                                       here at the tunnel)
+  #   ssh.heprado.com.br    -> ssh://localhost:22
+  #   kde.heprado.com.br    -> tcp://localhost:3389   (RDP, see desktop-plasma-rdp.nix)
+  #   remote.heprado.com.br -> http://localhost:6080  (noVNC/websockify in front
+  #                                                     of wayvnc, see
+  #                                                     novnc-hyprland.nix --
+  #                                                     browser-based HTTPS
+  #                                                     access, no VNC client
+  #                                                     needed; TLS terminates
+  #                                                     here at the tunnel)
   #
   # WARNING: none of the three hostnames above have an authentication
   # layer of their own beyond whatever runs on the other end (SSH keys;

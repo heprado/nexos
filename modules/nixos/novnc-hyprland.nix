@@ -13,7 +13,7 @@
   # existing raw VNC TCP port -- wayvnc itself is untouched.
   #
   # TLS is NOT terminated here: the Cloudflare Tunnel already does that
-  # (see cloudflared.nix) for the `https://hyprland.heprado.com.br`
+  # (see cloudflared.nix) for the `https://remote.heprado.com.br`
   # hostname -- its Public Hostname ingress needs to point at
   # `http://localhost:6080` (not `tcp://localhost:5900` like before) for
   # this to be reachable through the tunnel.

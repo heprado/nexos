@@ -52,7 +52,7 @@ in
   };
 
   # Primary remote path is now the Cloudflare Tunnel
-  # (hyprland.heprado.com.br -- see cloudflared.nix), which reaches this
+  # (remote.heprado.com.br -- see cloudflared.nix), which reaches this
   # over loopback and needs no firewall rule. This LAN-wide opening is
   # kept as-is for direct local access (assumes caixa isn't directly
   # WAN-exposed) -- unrelated to the Tailscale->cloudflared swap.
