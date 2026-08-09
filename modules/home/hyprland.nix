@@ -11,15 +11,13 @@
   # Colors are the henrique customPalette's dark.terminal.* values
   # (below), inlined by hand instead of noctalia's "foot" builtin_id
   # template (deliberately NOT in templates.builtin_ids below): that
-  # template is upstream-broken -- it emits a "[colors-dark]" section,
-  # but foot.ini(5) only recognizes "[colors]", so foot silently ignored
-  # the whole file and always fell back to its own built-in colors. It
-  # also always renders the "default" (not mode-aware dark/light)
-  # variant, which is why switching noctalia to light theme changed
-  # nothing here either way. Means this won't live-update on theme
-  # changes (foot has no live-reload for color config anyway, so that's
-  # moot until the next foot window) or automatically track dark/light
-  # mode -- if noctalia ever fixes the template upstream, switch back.
+  # template always renders the ".default" palette variant, not the
+  # active dark/light mode, which is why switching noctalia to light
+  # theme changed nothing in foot either way -- an upstream bug. Means
+  # this won't live-update on theme changes (foot has no live-reload for
+  # color config anyway, so that's moot until the next foot window) or
+  # automatically track dark/light mode -- if noctalia ever fixes the
+  # template upstream, switch back.
   xdg.configFile."foot/foot.ini".text = ''
     [main]
     # A Nerd Font specifically (not a fallback list) -- nvim-web-devicons,
@@ -30,7 +28,7 @@
     # tends to misalign cell width/baseline instead.
     font=JetBrainsMono Nerd Font:size=13
 
-    [colors]
+    [colors-dark]
     foreground=fffcf8
     background=1c1e1e
     regular0=1c1e1e
@@ -203,10 +201,10 @@
         # apps pick up the same henrique palette.
         # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
         #
-        # Deliberately NOT "foot": that builtin template is upstream-broken
-        # (wrong section name, not mode-aware) -- see the comment on
-        # xdg.configFile."foot/foot.ini" above, which inlines the same
-        # colors by hand instead.
+        # Deliberately NOT "foot": that builtin template always renders the
+        # ".default" palette variant, ignoring dark/light mode -- see the
+        # comment on xdg.configFile."foot/foot.ini" above, which inlines
+        # the same colors by hand instead.
         #
         # "hyprland" renders ~/.config/hypr/noctalia.lua (border/groupbar
         # colors driven by the active palette). Its apply.sh can't append
