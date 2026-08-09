@@ -339,6 +339,16 @@
             },
             text_color = "0xff1c1e1e",          -- mOnPrimary, on the blue active tab
             text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant, on the dark inactive tabs
+            -- col.active/col.inactive above only paint a thin 3px
+            -- indicator strip (indicator_height) at the bottom of each
+            -- tab -- NOT the area behind the title text (per
+            -- CHyprGroupBarDecoration.cpp, undocumented on the wiki).
+            -- That area is only filled if `gradients` is on, which
+            -- reuses those same col.active/inactive values to paint a
+            -- (here effectively solid, since they're single colors, not
+            -- multi-stop) texture behind the title -- otherwise it's
+            -- fully transparent and the wallpaper shows through it.
+            gradients = true,
             -- Opaque tab colors above aren't enough on their own: by
             -- default Hyprland leaves a 2px gap around the whole bar
             -- (gaps_out) and between each tab (gaps_in) that nothing
