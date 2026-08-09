@@ -326,8 +326,8 @@
         group = {
           groupbar = {
             col = {
-              border_active = "0xff51afef",   -- mPrimary
-              border_inactive = "0xff282c34", -- mSurfaceVariant
+              active = "0xff51afef",   -- mPrimary
+              inactive = "0xff282c34", -- mSurfaceVariant
             },
             text_color = "0xff1c1e1e",          -- mOnPrimary, on the blue active tab
             text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant, on the dark inactive tabs
