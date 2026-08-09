@@ -344,12 +344,17 @@
       hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"), { description = "Focar a próxima janela (scroll)" })
       hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"), { description = "Focar a janela anterior (scroll)" })
 
-      -- Build/break the 4-window grid: consume stacks the focused window
-      -- into the previous column (so it shares that column's space with
-      -- what's already there); expel pops it back out into its own column,
-      -- which then needs a scroll to reach again.
-      hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Empilhar a janela em foco na coluna anterior" })
-      hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Tirar a janela em foco da coluna" })
+      -- Build/break the 4-window grid, acting on the FOCUSED window itself
+      -- (no need to pre-select the neighboring column first). This is
+      -- "consume_or_expel", not the plain "consume"/"expel" messages --
+      -- it's undocumented on the wiki, only in ScrollingAlgorithm.cpp: it
+      -- toggles based on the focused window's current state. If it's
+      -- standalone, it merges into the adjacent column (stacks below
+      -- what's already there); if it's already stacked, it pops back out
+      -- into its own column instead (which then needs a scroll to reach
+      -- again).
+      hl.bind(mainMod .. " + C", hl.dsp.layout("consume_or_expel prev"), { description = "Empilhar/desempilhar a janela em foco com a coluna anterior" })
+      hl.bind(mainMod .. " + X", hl.dsp.layout("consume_or_expel next"), { description = "Empilhar/desempilhar a janela em foco com a próxima coluna" })
 
       -- Screenshots via grimblast (see home.packages): copysave both writes
       -- the file (to ~/Pictures by default) and copies it to the clipboard,
