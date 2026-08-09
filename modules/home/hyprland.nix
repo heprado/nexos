@@ -5,15 +5,23 @@
   programs.foot.enable = true;
 
   # Not done via programs.foot.settings: that makes home-manager generate
-  # foot.ini itself, and its font/etc keys would still need to coexist
-  # with the [main] include line the noctalia foot template below wires
-  # in via its apply.sh — simpler to just own foot.ini directly here.
-  # apply.sh only (re)writes this file when its own `include=...noctalia`
-  # line is missing, so pre-populating it ourselves means it's never
-  # touched and this font setting is never clobbered by a theme re-apply.
+  # foot.ini itself, which would fight with us owning the file directly
+  # below -- simpler to just own foot.ini directly here.
+  #
+  # Colors are the henrique customPalette's dark.terminal.* values
+  # (below), inlined by hand instead of noctalia's "foot" builtin_id
+  # template (deliberately NOT in templates.builtin_ids below): that
+  # template is upstream-broken -- it emits a "[colors-dark]" section,
+  # but foot.ini(5) only recognizes "[colors]", so foot silently ignored
+  # the whole file and always fell back to its own built-in colors. It
+  # also always renders the "default" (not mode-aware dark/light)
+  # variant, which is why switching noctalia to light theme changed
+  # nothing here either way. Means this won't live-update on theme
+  # changes (foot has no live-reload for color config anyway, so that's
+  # moot until the next foot window) or automatically track dark/light
+  # mode -- if noctalia ever fixes the template upstream, switch back.
   xdg.configFile."foot/foot.ini".text = ''
     [main]
-    include=~/.config/foot/themes/noctalia
     # A Nerd Font specifically (not a fallback list) -- nvim-web-devicons,
     # lualine, and blink.cmp's nerd_font_variant (all in neovim.nix) render
     # icon glyphs that only exist in Nerd Font builds, and those glyphs are
@@ -21,6 +29,29 @@
     # patched font itself. A separate fallback font for just the icons
     # tends to misalign cell width/baseline instead.
     font=JetBrainsMono Nerd Font:size=13
+
+    [colors]
+    foreground=fffcf8
+    background=1c1e1e
+    regular0=1c1e1e
+    regular1=ff6b5a
+    regular2=98be65
+    regular3=f2c481
+    regular4=51afef
+    regular5=dc8ef3
+    regular6=46d9ff
+    regular7=bbc2cf
+    bright0=2e323a
+    bright1=ff7665
+    bright2=a9cf76
+    bright3=f2c481
+    bright4=47a5e5
+    bright5=c678dd
+    bright6=4db5bd
+    bright7=f0f6fc
+    selection-foreground=2d3138
+    selection-background=fffcf8
+    cursor=1c1e1e bbc2cf
   '';
 
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
@@ -168,24 +199,21 @@
       templates = {
         # Off by default (opt-in) — enables Noctalia's built-in templates
         # that sync the active palette into GTK3/GTK4 (via a generated
-        # gtk.css), Qt (via kcolorscheme/qt6ct), and foot (via a themes/
-        # fragment wired in through foot.ini's `include`), so non-
-        # Hyprland-native apps pick up the same henrique palette.
+        # gtk.css) and Qt (via kcolorscheme/qt6ct), so non-Hyprland-native
+        # apps pick up the same henrique palette.
         # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
         #
-        # foot itself has no live-reload, but that's moot here: the
-        # fragment is only read when a new foot window starts. Must NOT
-        # set programs.foot.settings anywhere — that makes home-manager
-        # symlink a read-only foot.ini from the Nix store, which breaks
-        # this template's apply.sh (it needs to rewrite foot.ini to add
-        # the include line).
+        # Deliberately NOT "foot": that builtin template is upstream-broken
+        # (wrong section name, not mode-aware) -- see the comment on
+        # xdg.configFile."foot/foot.ini" above, which inlines the same
+        # colors by hand instead.
         #
         # "hyprland" renders ~/.config/hypr/noctalia.lua (border/groupbar
-        # colors driven by the active palette) but, same read-only-symlink
-        # issue as foot, its apply.sh can't append the require("noctalia")
-        # line into our hyprland.lua -- so that line is added by hand in
-        # extraConfig below instead of relying on apply.sh for it.
-        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "foot" "hyprland" ];
+        # colors driven by the active palette). Its apply.sh can't append
+        # the require("noctalia") line into our hyprland.lua (home-manager
+        # symlinks it read-only from the store) -- so that line is added by
+        # hand in extraConfig below instead of relying on apply.sh for it.
+        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "hyprland" ];
       };
     };
     # Written to ~/.config/noctalia/palettes/henrique.json.
