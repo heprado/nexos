@@ -26,6 +26,12 @@
     pkgs.qt6Packages.qt6ct
     pkgs.feishin
     pkgs.vlc
+    inputs.tuxManager.packages.${pkgs.system}.default
+    # Remote VDI access. The tarball can't be fetched automatically (Citrix's
+    # EULA requires a manual, logged-in download); see the comment on
+    # nixpkgs.config.allowUnfreePredicate in machines/caixa/configuration.nix
+    # and the nix-prefetch-url step described there before this will build.
+    pkgs.citrix-workspace
     # grimblast is Hyprland's own screenshot helper (wraps grim+slurp+hyprctl)
     # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig).
     pkgs.grimblast

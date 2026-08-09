@@ -53,8 +53,16 @@
 
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
+  #
+  # citrix-workspace additionally requires the actual install tarball to be
+  # downloaded by hand and registered in the store first (Citrix's EULA
+  # forbids nixpkgs from fetching it directly) -- see the comment next to
+  # pkgs.citrix-workspace in modules/home/hyprland.nix. "linuxx64" (not
+  # "citrix-workspace") is the requireFile src derivation's own name --
+  # lib.getName strips its version off "linuxx64-<ver>.tar.gz" -- so both
+  # names need to be allowed.
   nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [ "claude-code" "discord" ];
+    builtins.elem (lib.getName pkg) [ "claude-code" "discord" "citrix-workspace" "linuxx64" ];
 
   home-manager.users.henrique = import ../../users/henrique/home.nix;
   home-manager.users.leonardo = import ../../users/leonardo/home.nix;
