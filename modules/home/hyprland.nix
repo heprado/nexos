@@ -384,7 +384,15 @@
             -- the bar's outer edges (round_only_edges' default) would leave
             -- the middle tabs square-cornered -- round every tab instead.
             -- "rounding" is the indicator strip, "gradient_rounding" is the
-            -- title-area fill enabled above.
+            -- title-area fill enabled above. They need to match: the
+            -- indicator is the SAME col.active/inactive color as the
+            -- gradient fill above it (same source values, per
+            -- CHyprGroupBarDecoration.cpp), so a mismatched radius is what
+            -- makes it read as a separate black box glued to the bottom of
+            -- the tab instead of part of the same pill. Hyprland has no
+            -- per-corner (top-only) rounding here, this is the closest.
+            rounding = 8,
+            round_only_edges = false,
             gradient_rounding = 8,
             gradient_round_only_edges = false,
             -- Default font_size is 8px, barely legible; height (default 14)
