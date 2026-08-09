@@ -323,6 +323,14 @@
         input = {
           kb_layout = "br",
         },
+        misc = {
+          -- What Hyprland paints behind everything (gaps, the sliver
+          -- between groupbar tabs, etc.) before any window content -- the
+          -- default (0xff111111) still lets an unstable/changing wallpaper
+          -- show through those gaps. Pinned to mSurface instead of relying
+          -- on the wallpaper for it.
+          background_color = "0xff1c1e1e", -- mSurface
+        },
         group = {
           groupbar = {
             col = {
