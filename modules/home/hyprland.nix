@@ -378,7 +378,9 @@
             -- gradients (above) actually fill each tab solid, so the
             -- wallpaper showing in those gaps reads as intentional spacing,
             -- not a rendering bug.
-            gaps_out = 4,
+            -- gaps_out (and keep_upper_gap below) also eat directly into
+            -- the window's content area -- see keep_upper_gap comment.
+            gaps_out = 2,
             gaps_in = 1,
             -- With tabs no longer touching (gaps_in above), rounding only
             -- the bar's outer edges (round_only_edges' default) would leave
@@ -395,10 +397,20 @@
             round_only_edges = false,
             gradient_rounding = 0,
             gradient_round_only_edges = false,
-            -- Default font_size is 8px, barely legible; height (default 14)
-            -- bumped along with it so the bigger text isn't clipped.
+            -- Default font_size is 8px, barely legible; height bumped
+            -- along with it so the bigger text isn't clipped -- but every
+            -- pixel here (plus gaps_out and indicator_height above) is
+            -- reserved from the window's own content area, on top of the
+            -- window itself, not overlaid on it (no Hyprland option for
+            -- that) -- a grouped window with a visible bar is always
+            -- shorter inside than an ungrouped one by this total. Kept as
+            -- small as still legible: 16, not the original 20.
             font_size = 12,
-            height = 20,
+            height = 16,
+            -- Default true: reserves a SECOND gaps_out-sized strip above
+            -- the bar (on top of the window) purely for spacing. Not
+            -- needed with gaps_out already covering the tab-to-window gap.
+            keep_upper_gap = false,
           },
         },
         scrolling = {
