@@ -353,22 +353,23 @@
             -- multi-stop) texture behind the title -- otherwise it's
             -- fully transparent and the wallpaper shows through it.
             gradients = true,
-            -- Opaque tab colors above aren't enough on their own: by
-            -- default Hyprland leaves a 2px gap around the whole bar
-            -- (gaps_out) and between each tab (gaps_in) that nothing
-            -- paints over, so the wallpaper shows through those seams
-            -- regardless of tab color. Zero them out so the bar is one
-            -- continuous solid strip.
+            -- gaps_out stays 0 (nothing paints the outer margin, so any
+            -- value there just reveals the wallpaper). gaps_in puts a real
+            -- gap between tabs -- deliberate now that col.active/inactive +
+            -- gradients (above) actually fill each tab solid, so the
+            -- wallpaper showing in that gap reads as intentional spacing,
+            -- not a rendering bug.
             gaps_out = 0,
-            gaps_in = 0,
-            -- Rounds only the outer edges of the whole bar (round_only_edges
-            -- defaults to true), not each individual tab -- with gaps_in = 0
-            -- above the tabs touch, so this reads as one rounded pill
-            -- instead of a row of separate rounded chips. "rounding" is the
-            -- indicator strip, "gradient_rounding" is the title-area fill
-            -- enabled above.
+            gaps_in = 6,
+            -- With tabs no longer touching (gaps_in above), rounding only
+            -- the bar's outer edges (round_only_edges' default) would leave
+            -- the middle tabs square-cornered -- round every tab instead.
+            -- "rounding" is the indicator strip, "gradient_rounding" is the
+            -- title-area fill enabled above.
             rounding = 8,
+            round_only_edges = false,
             gradient_rounding = 8,
+            gradient_round_only_edges = false,
             -- Default font_size is 8px, barely legible; height (default 14)
             -- bumped along with it so the bigger text isn't clipped.
             font_size = 12,
