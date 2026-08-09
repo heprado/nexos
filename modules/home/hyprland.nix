@@ -338,6 +338,23 @@
         hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Ir para a área de trabalho " .. i })
       end
 
+      -- Group the next N windows (starting at the focused one, moving
+      -- rightward through columns) into a single tabbed view: only one is
+      -- visible at a time. "into_or_create_group r" wraps the
+      -- moveintoorcreategroup dispatcher, which merges the active window
+      -- into its right-hand neighbor's group (creating one if it doesn't
+      -- exist yet) -- calling it repeatedly grows the group one column at
+      -- a time. Dispatcher objects can't be called directly, only via
+      -- hl.dispatch() -- see LuaBindingsDispatcherUtils.cpp in Hyprland's
+      -- source, this isn't documented on the wiki.
+      for _, n in ipairs({ 2, 4, 6 }) do
+        hl.bind(mainMod .. " + SHIFT + " .. n, function()
+          for _ = 1, n - 1 do
+            hl.dispatch(hl.dsp.window.move({ into_or_create_group = "r" }))
+          end
+        end, { description = "Agrupar as próximas " .. n .. " janelas em uma view" })
+      end
+
       -- Scroll wheel moves focus between windows in the scrolling layout
       -- (not bound by the layout itself -- see
       -- https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/#layout-messages).
