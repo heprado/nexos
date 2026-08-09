@@ -333,6 +333,10 @@
         },
         group = {
           groupbar = {
+            -- Hide the bar entirely once expel/consume_or_expel (SUPER+C/X
+            -- and SUPER+SHIFT/ALT+2/4/6 above) whittles a group down to its
+            -- last window -- a one-tab bar is just clutter at that point.
+            disable_when_only = true,
             col = {
               active = "0xff51afef",   -- mPrimary
               inactive = "0xff282c34", -- mSurfaceVariant
