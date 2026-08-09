@@ -309,9 +309,29 @@
       hl.config({
         general = {
           layout = "scrolling",
+          -- Hyprland's own default active-window border is opaque white
+          -- (0xffffffff), which happens to be the exact same white as the
+          -- groupbar's default tab title text below -- an active window
+          -- that's also the focused tab in a group renders unreadable
+          -- white-on-white. Pin both to the henrique palette (customPalettes
+          -- above) instead of relying on Hyprland's own defaults.
+          col = {
+            active_border = "0xff51afef",   -- mPrimary
+            inactive_border = "0xff3f444a", -- mOutline
+          },
         },
         input = {
           kb_layout = "br",
+        },
+        group = {
+          groupbar = {
+            col = {
+              border_active = "0xff51afef",   -- mPrimary
+              border_inactive = "0xff282c34", -- mSurfaceVariant
+            },
+            text_color = "0xff1c1e1e",          -- mOnPrimary, on the blue active tab
+            text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant, on the dark inactive tabs
+          },
         },
         scrolling = {
           -- Fraction of screen width per column, [0.1-1.0] -- 0.5 means
@@ -338,21 +358,34 @@
         hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Ir para a área de trabalho " .. i })
       end
 
-      -- Group the next N windows (starting at the focused one, moving
-      -- rightward through columns) into a single tabbed view: only one is
-      -- visible at a time. "into_or_create_group r" wraps the
-      -- moveintoorcreategroup dispatcher, which merges the active window
-      -- into its right-hand neighbor's group (creating one if it doesn't
-      -- exist yet) -- calling it repeatedly grows the group one column at
-      -- a time. Dispatcher objects can't be called directly, only via
-      -- hl.dispatch() -- see LuaBindingsDispatcherUtils.cpp in Hyprland's
-      -- source, this isn't documented on the wiki.
+      -- Grid: pull the next N-1 columns (starting after the focused window,
+      -- moving rightward) into the current column, so all N windows share
+      -- the column's space and are visible at once -- same mechanism as
+      -- the SUPER+C single-step consume above, just repeated. Dispatcher
+      -- objects can't be called directly, only via hl.dispatch().
       for _, n in ipairs({ 2, 4, 6 }) do
         hl.bind(mainMod .. " + SHIFT + " .. n, function()
           for _ = 1, n - 1 do
+            hl.dispatch(hl.dsp.layout("consume"))
+          end
+        end, { description = "Empilhar as próximas " .. n .. " janelas num grid" })
+      end
+
+      -- Tabs: group the next N windows (starting at the focused one, moving
+      -- rightward through columns) into a single tabbed view instead: only
+      -- one is visible at a time. "into_or_create_group r" wraps the
+      -- moveintoorcreategroup dispatcher, which merges the active window
+      -- into its right-hand neighbor's group (creating one if it doesn't
+      -- exist yet) -- calling it repeatedly grows the group one column at
+      -- a time. Undocumented on the wiki, only in
+      -- LuaBindingsDispatcherUtils.cpp/ConfigActions.cpp in Hyprland's
+      -- source.
+      for _, n in ipairs({ 2, 4, 6 }) do
+        hl.bind(mainMod .. " + ALT + " .. n, function()
+          for _ = 1, n - 1 do
             hl.dispatch(hl.dsp.window.move({ into_or_create_group = "r" }))
           end
-        end, { description = "Agrupar as próximas " .. n .. " janelas em uma view" })
+        end, { description = "Agrupar as próximas " .. n .. " janelas em abas" })
       end
 
       -- Scroll wheel moves focus between windows in the scrolling layout
