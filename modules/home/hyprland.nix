@@ -391,9 +391,9 @@
             -- makes it read as a separate black box glued to the bottom of
             -- the tab instead of part of the same pill. Hyprland has no
             -- per-corner (top-only) rounding here, this is the closest.
-            rounding = 8,
+            rounding = 0,
             round_only_edges = false,
-            gradient_rounding = 8,
+            gradient_rounding = 0,
             gradient_round_only_edges = false,
             -- Default font_size is 8px, barely legible; height (default 14)
             -- bumped along with it so the bigger text isn't clipped.
