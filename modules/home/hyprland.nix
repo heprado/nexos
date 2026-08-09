@@ -339,6 +339,14 @@
             },
             text_color = "0xff1c1e1e",          -- mOnPrimary, on the blue active tab
             text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant, on the dark inactive tabs
+            -- Opaque tab colors above aren't enough on their own: by
+            -- default Hyprland leaves a 2px gap around the whole bar
+            -- (gaps_out) and between each tab (gaps_in) that nothing
+            -- paints over, so the wallpaper shows through those seams
+            -- regardless of tab color. Zero them out so the bar is one
+            -- continuous solid strip.
+            gaps_out = 0,
+            gaps_in = 0,
           },
         },
         scrolling = {
