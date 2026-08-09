@@ -14,7 +14,13 @@
   xdg.configFile."foot/foot.ini".text = ''
     [main]
     include=~/.config/foot/themes/noctalia
-    font=monospace:size=13
+    # A Nerd Font specifically (not a fallback list) -- nvim-web-devicons,
+    # lualine, and blink.cmp's nerd_font_variant (all in neovim.nix) render
+    # icon glyphs that only exist in Nerd Font builds, and those glyphs are
+    # sized/baselined to sit in exactly one terminal cell only within the
+    # patched font itself. A separate fallback font for just the icons
+    # tends to misalign cell width/baseline instead.
+    font=JetBrainsMono Nerd Font:size=13
   '';
 
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
@@ -24,6 +30,11 @@
     pkgs.adw-gtk3
     pkgs.nwg-look
     pkgs.qt6Packages.qt6ct
+    # Provides the "JetBrainsMono Nerd Font" family foot.ini (below) uses --
+    # nothing in this config previously installed any Nerd Font at all, so
+    # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
+    # as tofu boxes.
+    pkgs.nerd-fonts.jetbrains-mono
     pkgs.feishin
     pkgs.vlc
     inputs.tuxManager.packages.${pkgs.stdenv.hostPlatform.system}.default
