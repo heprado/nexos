@@ -168,7 +168,13 @@
         # symlink a read-only foot.ini from the Nix store, which breaks
         # this template's apply.sh (it needs to rewrite foot.ini to add
         # the include line).
-        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "foot" ];
+        #
+        # "hyprland" renders ~/.config/hypr/noctalia.lua (border/groupbar
+        # colors driven by the active palette) but, same read-only-symlink
+        # issue as foot, its apply.sh can't append the require("noctalia")
+        # line into our hyprland.lua -- so that line is added by hand in
+        # extraConfig below instead of relying on apply.sh for it.
+        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "foot" "hyprland" ];
       };
     };
     # Written to ~/.config/noctalia/palettes/henrique.json.
@@ -306,19 +312,22 @@
 
       hl.monitor({ output = "", mode = "highrr", position = "auto", scale = "auto" })
 
+      -- Applies the henrique palette (customPalettes above) to
+      -- general.col.active_border/inactive_border and
+      -- group.col.border_*/groupbar.col.* -- see the "hyprland" builtin_ids
+      -- entry above for why this is a manual require() instead of the
+      -- usual apply.sh-appended one. Guarded: on a brand new machine this
+      -- runs before noctalia has ever rendered ~/.config/hypr/noctalia.lua,
+      -- and a failed top-level require would otherwise take down the whole
+      -- Hyprland config.
+      local ok, noctaliaTheme = pcall(require, "noctalia")
+      if ok then
+        noctaliaTheme.apply_theme()
+      end
+
       hl.config({
         general = {
           layout = "scrolling",
-          -- Hyprland's own default active-window border is opaque white
-          -- (0xffffffff), which happens to be the exact same white as the
-          -- groupbar's default tab title text below -- an active window
-          -- that's also the focused tab in a group renders unreadable
-          -- white-on-white. Pin both to the henrique palette (customPalettes
-          -- above) instead of relying on Hyprland's own defaults.
-          col = {
-            active_border = "0xff51afef",   -- mPrimary
-            inactive_border = "0xff3f444a", -- mOutline
-          },
         },
         input = {
           kb_layout = "br",
@@ -337,12 +346,16 @@
             -- and SUPER+SHIFT/ALT+2/4/6 above) whittles a group down to its
             -- last window -- a one-tab bar is just clutter at that point.
             disable_when_only = true,
-            col = {
-              active = "0xff51afef",   -- mPrimary
-              inactive = "0xff282c34", -- mSurfaceVariant
-            },
-            text_color = "0xff1c1e1e",          -- mOnPrimary, on the blue active tab
-            text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant, on the dark inactive tabs
+            -- col.active/col.inactive come from the noctalia "hyprland"
+            -- template applied above (mSecondary/mSurface), not hardcoded
+            -- here.
+            -- mOnPrimary/mOnSurfaceVariant, not mOnSecondary/mOnSurface
+            -- (the "correct" pair for the template's col.active/inactive
+            -- above) -- both still read fine against those, and the
+            -- palette doesn't expose text_color as a templated field
+            -- anyway.
+            text_color = "0xff1c1e1e",          -- mOnPrimary
+            text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant
             -- col.active/col.inactive above only paint a thin 3px
             -- indicator strip (indicator_height) at the bottom of each
             -- tab -- NOT the area behind the title text (per
@@ -353,21 +366,18 @@
             -- multi-stop) texture behind the title -- otherwise it's
             -- fully transparent and the wallpaper shows through it.
             gradients = true,
-            -- gaps_out stays 0 (nothing paints the outer margin, so any
-            -- value there just reveals the wallpaper). gaps_in puts a real
-            -- gap between tabs -- deliberate now that col.active/inactive +
+            -- gaps_out/gaps_in put a real gap around/between tabs --
+            -- deliberate now that the template's col.active/inactive +
             -- gradients (above) actually fill each tab solid, so the
-            -- wallpaper showing in that gap reads as intentional spacing,
+            -- wallpaper showing in those gaps reads as intentional spacing,
             -- not a rendering bug.
-            gaps_out = 0,
-            gaps_in = 6,
+            gaps_out = 4,
+            gaps_in = 1,
             -- With tabs no longer touching (gaps_in above), rounding only
             -- the bar's outer edges (round_only_edges' default) would leave
             -- the middle tabs square-cornered -- round every tab instead.
             -- "rounding" is the indicator strip, "gradient_rounding" is the
             -- title-area fill enabled above.
-            rounding = 8,
-            round_only_edges = false,
             gradient_rounding = 8,
             gradient_round_only_edges = false,
             -- Default font_size is 8px, barely legible; height (default 14)
