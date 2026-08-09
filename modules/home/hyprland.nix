@@ -66,7 +66,6 @@
     pkgs.nerd-fonts.jetbrains-mono
     pkgs.feishin
     pkgs.vlc
-    inputs.tuxManager.packages.${pkgs.stdenv.hostPlatform.system}.default
     # Remote VDI access. The tarball can't be fetched automatically (Citrix's
     # EULA requires a manual, logged-in download); see the comment on
     # nixpkgs.config.allowUnfreePredicate in machines/caixa/configuration.nix
