@@ -366,6 +366,13 @@
             -- multi-stop) texture behind the title -- otherwise it's
             -- fully transparent and the wallpaper shows through it.
             gradients = true,
+            -- The indicator strip itself (the thin bar below the filled
+            -- gradient/title area, colored via col.active/inactive from the
+            -- noctalia template -- mSurface reads as near-black) is
+            -- redundant now that gradients fill each tab solid, and looks
+            -- like a stray black bar under a rounded pill. Hyprland's own
+            -- min for this is 1px (indicator_height), it can't go to 0.
+            indicator_height = 1,
             -- gaps_out/gaps_in put a real gap around/between tabs --
             -- deliberate now that the template's col.active/inactive +
             -- gradients (above) actually fill each tab solid, so the
