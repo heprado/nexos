@@ -361,6 +361,14 @@
             -- continuous solid strip.
             gaps_out = 0,
             gaps_in = 0,
+            -- Rounds only the outer edges of the whole bar (round_only_edges
+            -- defaults to true), not each individual tab -- with gaps_in = 0
+            -- above the tabs touch, so this reads as one rounded pill
+            -- instead of a row of separate rounded chips. "rounding" is the
+            -- indicator strip, "gradient_rounding" is the title-area fill
+            -- enabled above.
+            rounding = 8,
+            gradient_rounding = 8,
             -- Default font_size is 8px, barely legible; height (default 14)
             -- bumped along with it so the bigger text isn't clipped.
             font_size = 12,
