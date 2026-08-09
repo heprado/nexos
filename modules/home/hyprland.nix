@@ -347,6 +347,10 @@
             -- continuous solid strip.
             gaps_out = 0,
             gaps_in = 0,
+            -- Default font_size is 8px, barely legible; height (default 14)
+            -- bumped along with it so the bigger text isn't clipped.
+            font_size = 12,
+            height = 20,
           },
         },
         scrolling = {
