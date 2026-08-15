@@ -33,14 +33,9 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    tuxManager = {
-      url = "github:benapetr/TuxManager/";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, tuxManager, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, ... }@inputs: {
     # Per-language devShells for henrique's actual project repos (not
     # this one) -- `nix flake init -t .#<name>` drops in a flake.nix +
     # .envrc so direnv auto-activates the right compiler/LSP/formatter

@@ -15,10 +15,7 @@
 
   # Noctalia Greeter (greetd-backed) replaces SDDM as the physical-console
   # login screen, matching the look of henrique's Noctalia shell. It only
-  # lists Wayland sessions (wayland-sessions/*.desktop) -- no X11 support --
-  # so Plasma is no longer selectable at physical login; leonardo and martin
-  # are unaffected since they only reach Plasma over RDP (xrdp, a separate
-  # path, see desktop-plasma-rdp.nix).
+  # lists Wayland sessions (wayland-sessions/*.desktop) -- no X11 support.
   services.displayManager.sddm.enable = false;
   programs.noctalia-greeter = {
     enable = true;

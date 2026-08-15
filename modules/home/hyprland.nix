@@ -5,16 +5,51 @@
   programs.foot.enable = true;
 
   # Not done via programs.foot.settings: that makes home-manager generate
-  # foot.ini itself, and its font/etc keys would still need to coexist
-  # with the [main] include line the noctalia foot template below wires
-  # in via its apply.sh — simpler to just own foot.ini directly here.
-  # apply.sh only (re)writes this file when its own `include=...noctalia`
-  # line is missing, so pre-populating it ourselves means it's never
-  # touched and this font setting is never clobbered by a theme re-apply.
+  # foot.ini itself, which would fight with us owning the file directly
+  # below -- simpler to just own foot.ini directly here.
+  #
+  # Colors are the henrique customPalette's dark.terminal.* values
+  # (below), inlined by hand instead of noctalia's "foot" builtin_id
+  # template (deliberately NOT in templates.builtin_ids below): that
+  # template always renders the ".default" palette variant, not the
+  # active dark/light mode, which is why switching noctalia to light
+  # theme changed nothing in foot either way -- an upstream bug. Means
+  # this won't live-update on theme changes (foot has no live-reload for
+  # color config anyway, so that's moot until the next foot window) or
+  # automatically track dark/light mode -- if noctalia ever fixes the
+  # template upstream, switch back.
   xdg.configFile."foot/foot.ini".text = ''
     [main]
-    include=~/.config/foot/themes/noctalia
-    font=monospace:size=13
+    # A Nerd Font specifically (not a fallback list) -- nvim-web-devicons,
+    # lualine, and blink.cmp's nerd_font_variant (all in neovim.nix) render
+    # icon glyphs that only exist in Nerd Font builds, and those glyphs are
+    # sized/baselined to sit in exactly one terminal cell only within the
+    # patched font itself. A separate fallback font for just the icons
+    # tends to misalign cell width/baseline instead.
+    font=JetBrainsMono Nerd Font:size=13
+
+    [colors-dark]
+    foreground=fffcf8
+    background=1c1e1e
+    regular0=1c1e1e
+    regular1=ff6b5a
+    regular2=98be65
+    regular3=f2c481
+    regular4=51afef
+    regular5=dc8ef3
+    regular6=46d9ff
+    regular7=bbc2cf
+    bright0=2e323a
+    bright1=ff7665
+    bright2=a9cf76
+    bright3=f2c481
+    bright4=47a5e5
+    bright5=c678dd
+    bright6=4db5bd
+    bright7=f0f6fc
+    selection-foreground=2d3138
+    selection-background=fffcf8
+    cursor=1c1e1e bbc2cf
   '';
 
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
@@ -24,9 +59,15 @@
     pkgs.adw-gtk3
     pkgs.nwg-look
     pkgs.qt6Packages.qt6ct
+    # Provides the "JetBrainsMono Nerd Font" family foot.ini (below) uses --
+    # nothing in this config previously installed any Nerd Font at all, so
+    # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
+    # as tofu boxes.
+    pkgs.nerd-fonts.jetbrains-mono
     pkgs.feishin
     pkgs.vlc
-    inputs.tuxManager.packages.${pkgs.system}.default
+    pkgs.btop
+    pkgs.hyfetch
     # Remote VDI access. The tarball can't be fetched automatically (Citrix's
     # EULA requires a manual, logged-in download); see the comment on
     # nixpkgs.config.allowUnfreePredicate in machines/caixa/configuration.nix
@@ -114,32 +155,6 @@
   home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
     ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
-  # systemsettings and plasma-systemmonitor are "required" plasma6 packages
-  # in nixpkgs -- unlike konsole/dolphin/etc (see excludePackages in
-  # desktop-plasma-rdp.nix), they can't be removed from the package set at
-  # all, so their .desktop files always land in XDG_DATA_DIRS. Masked here
-  # instead, via the standard XDG override mechanism (same basename in
-  # XDG_DATA_HOME wins over the system-wide one; NoDisplay=true drops it
-  # from the launcher while leaving the underlying app installed/launchable
-  # for leonardo/martin's Plasma sessions).
-  home.file.".local/share/applications/kdesystemsettings.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-  home.file.".local/share/applications/org.kde.plasma-systemmonitor.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-  # kwalletmanager itself is also "required" (kwallet/kwallet-pam provide a
-  # helper service leonardo/martin's Plasma sessions need) -- same mask.
-  home.file.".local/share/applications/org.kde.kwalletmanager.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-
   home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
@@ -157,18 +172,21 @@
       templates = {
         # Off by default (opt-in) — enables Noctalia's built-in templates
         # that sync the active palette into GTK3/GTK4 (via a generated
-        # gtk.css), Qt (via kcolorscheme/qt6ct), and foot (via a themes/
-        # fragment wired in through foot.ini's `include`), so non-
-        # Hyprland-native apps pick up the same henrique palette.
+        # gtk.css) and Qt (via kcolorscheme/qt6ct), so non-Hyprland-native
+        # apps pick up the same henrique palette.
         # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
         #
-        # foot itself has no live-reload, but that's moot here: the
-        # fragment is only read when a new foot window starts. Must NOT
-        # set programs.foot.settings anywhere — that makes home-manager
-        # symlink a read-only foot.ini from the Nix store, which breaks
-        # this template's apply.sh (it needs to rewrite foot.ini to add
-        # the include line).
-        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "foot" ];
+        # Deliberately NOT "foot": that builtin template always renders the
+        # ".default" palette variant, ignoring dark/light mode -- see the
+        # comment on xdg.configFile."foot/foot.ini" above, which inlines
+        # the same colors by hand instead.
+        #
+        # "hyprland" renders ~/.config/hypr/noctalia.lua (border/groupbar
+        # colors driven by the active palette). Its apply.sh can't append
+        # the require("noctalia") line into our hyprland.lua (home-manager
+        # symlinks it read-only from the store) -- so that line is added by
+        # hand in extraConfig below instead of relying on apply.sh for it.
+        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "hyprland" ];
       };
     };
     # Written to ~/.config/noctalia/palettes/henrique.json.
@@ -306,12 +324,94 @@
 
       hl.monitor({ output = "", mode = "highrr", position = "auto", scale = "auto" })
 
+      -- Applies the henrique palette (customPalettes above) to
+      -- general.col.active_border/inactive_border and
+      -- group.col.border_*/groupbar.col.* -- see the "hyprland" builtin_ids
+      -- entry above for why this is a manual require() instead of the
+      -- usual apply.sh-appended one. Guarded: on a brand new machine this
+      -- runs before noctalia has ever rendered ~/.config/hypr/noctalia.lua,
+      -- and a failed top-level require would otherwise take down the whole
+      -- Hyprland config.
+      local ok, noctaliaTheme = pcall(require, "noctalia")
+      if ok then
+        noctaliaTheme.apply_theme()
+      end
+
       hl.config({
         general = {
           layout = "scrolling",
         },
         input = {
           kb_layout = "br",
+        },
+        misc = {
+          -- What Hyprland paints behind everything (gaps, the sliver
+          -- between groupbar tabs, etc.) before any window content -- the
+          -- default (0xff111111) still lets an unstable/changing wallpaper
+          -- show through those gaps. Pinned to mSurface instead of relying
+          -- on the wallpaper for it.
+          background_color = "0xff1c1e1e", -- mSurface
+        },
+        group = {
+          groupbar = {
+            -- Hide the bar entirely once expel/consume_or_expel (SUPER+C/X
+            -- and SUPER+SHIFT/ALT+2/4/6 above) whittles a group down to its
+            -- last window -- a one-tab bar is just clutter at that point.
+            disable_when_only = true,
+            -- col.active/col.inactive come from the noctalia "hyprland"
+            -- template applied above (mSecondary/mSurface), not hardcoded
+            -- here.
+            -- mOnPrimary/mOnSurfaceVariant, not mOnSecondary/mOnSurface
+            -- (the "correct" pair for the template's col.active/inactive
+            -- above) -- both still read fine against those, and the
+            -- palette doesn't expose text_color as a templated field
+            -- anyway.
+            text_color = "0xff1c1e1e",          -- mOnPrimary
+            text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant
+            -- col.active/col.inactive above only paint a thin 3px
+            -- indicator strip (indicator_height) at the bottom of each
+            -- tab -- NOT the area behind the title text (per
+            -- CHyprGroupBarDecoration.cpp, undocumented on the wiki).
+            -- That area is only filled if `gradients` is on, which
+            -- reuses those same col.active/inactive values to paint a
+            -- (here effectively solid, since they're single colors, not
+            -- multi-stop) texture behind the title -- otherwise it's
+            -- fully transparent and the wallpaper shows through it.
+            gradients = true,
+            -- The indicator strip itself (the thin bar below the filled
+            -- gradient/title area, colored via col.active/inactive from the
+            -- noctalia template -- mSurface reads as near-black) is
+            -- redundant now that gradients fill each tab solid, and looks
+            -- like a stray black bar under a rounded pill. Hyprland's own
+            -- min for this is 1px (indicator_height), it can't go to 0.
+            indicator_height = 1,
+            -- gaps_out/gaps_in put a real gap around/between tabs --
+            -- deliberate now that the template's col.active/inactive +
+            -- gradients (above) actually fill each tab solid, so the
+            -- wallpaper showing in those gaps reads as intentional spacing,
+            -- not a rendering bug.
+            gaps_out = 4,
+            gaps_in = 1,
+            -- With tabs no longer touching (gaps_in above), rounding only
+            -- the bar's outer edges (round_only_edges' default) would leave
+            -- the middle tabs square-cornered -- round every tab instead.
+            -- "rounding" is the indicator strip, "gradient_rounding" is the
+            -- title-area fill enabled above. They need to match: the
+            -- indicator is the SAME col.active/inactive color as the
+            -- gradient fill above it (same source values, per
+            -- CHyprGroupBarDecoration.cpp), so a mismatched radius is what
+            -- makes it read as a separate black box glued to the bottom of
+            -- the tab instead of part of the same pill. Hyprland has no
+            -- per-corner (top-only) rounding here, this is the closest.
+            rounding = 0,
+            round_only_edges = false,
+            gradient_rounding = 0,
+            gradient_round_only_edges = false,
+            -- Default font_size is 8px, barely legible; height (default 14)
+            -- bumped along with it so the bigger text isn't clipped.
+            font_size = 12,
+            height = 20,
+          },
         },
         scrolling = {
           -- Fraction of screen width per column, [0.1-1.0] -- 0.5 means
@@ -338,18 +438,53 @@
         hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }), { description = "Ir para a área de trabalho " .. i })
       end
 
+      -- Grid: pull the next N-1 columns (starting after the focused window,
+      -- moving rightward) into the current column, so all N windows share
+      -- the column's space and are visible at once -- same mechanism as
+      -- the SUPER+C single-step consume above, just repeated. Dispatcher
+      -- objects can't be called directly, only via hl.dispatch().
+      for _, n in ipairs({ 2, 4, 6 }) do
+        hl.bind(mainMod .. " + SHIFT + " .. n, function()
+          for _ = 1, n - 1 do
+            hl.dispatch(hl.dsp.layout("consume"))
+          end
+        end, { description = "Empilhar as próximas " .. n .. " janelas num grid" })
+      end
+
+      -- Tabs: group the next N windows (starting at the focused one, moving
+      -- rightward through columns) into a single tabbed view instead: only
+      -- one is visible at a time. "into_or_create_group r" wraps the
+      -- moveintoorcreategroup dispatcher, which merges the active window
+      -- into its right-hand neighbor's group (creating one if it doesn't
+      -- exist yet) -- calling it repeatedly grows the group one column at
+      -- a time. Undocumented on the wiki, only in
+      -- LuaBindingsDispatcherUtils.cpp/ConfigActions.cpp in Hyprland's
+      -- source.
+      for _, n in ipairs({ 2, 4, 6 }) do
+        hl.bind(mainMod .. " + ALT + " .. n, function()
+          for _ = 1, n - 1 do
+            hl.dispatch(hl.dsp.window.move({ into_or_create_group = "r" }))
+          end
+        end, { description = "Agrupar as próximas " .. n .. " janelas em abas" })
+      end
+
       -- Scroll wheel moves focus between windows in the scrolling layout
       -- (not bound by the layout itself -- see
       -- https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/#layout-messages).
       hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus r"), { description = "Focar a próxima janela (scroll)" })
       hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus l"), { description = "Focar a janela anterior (scroll)" })
 
-      -- Build/break the 4-window grid: consume stacks the focused window
-      -- into the previous column (so it shares that column's space with
-      -- what's already there); expel pops it back out into its own column,
-      -- which then needs a scroll to reach again.
-      hl.bind(mainMod .. " + C", hl.dsp.layout("consume"), { description = "Empilhar a janela em foco na coluna anterior" })
-      hl.bind(mainMod .. " + X", hl.dsp.layout("expel"), { description = "Tirar a janela em foco da coluna" })
+      -- Build/break the 4-window grid, acting on the FOCUSED window itself
+      -- (no need to pre-select the neighboring column first). This is
+      -- "consume_or_expel", not the plain "consume"/"expel" messages --
+      -- it's undocumented on the wiki, only in ScrollingAlgorithm.cpp: it
+      -- toggles based on the focused window's current state. If it's
+      -- standalone, it merges into the adjacent column (stacks below
+      -- what's already there); if it's already stacked, it pops back out
+      -- into its own column instead (which then needs a scroll to reach
+      -- again).
+      hl.bind(mainMod .. " + C", hl.dsp.layout("consume_or_expel prev"), { description = "Empilhar/desempilhar a janela em foco com a coluna anterior" })
+      hl.bind(mainMod .. " + X", hl.dsp.layout("consume_or_expel next"), { description = "Empilhar/desempilhar a janela em foco com a próxima coluna" })
 
       -- Screenshots via grimblast (see home.packages): copysave both writes
       -- the file (to ~/Pictures by default) and copies it to the clipboard,
