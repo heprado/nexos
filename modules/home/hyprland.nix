@@ -155,32 +155,6 @@
   home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
     ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
-  # systemsettings and plasma-systemmonitor are "required" plasma6 packages
-  # in nixpkgs -- unlike konsole/dolphin/etc (see excludePackages in
-  # desktop-plasma-rdp.nix), they can't be removed from the package set at
-  # all, so their .desktop files always land in XDG_DATA_DIRS. Masked here
-  # instead, via the standard XDG override mechanism (same basename in
-  # XDG_DATA_HOME wins over the system-wide one; NoDisplay=true drops it
-  # from the launcher while leaving the underlying app installed/launchable
-  # for leonardo/martin's Plasma sessions).
-  home.file.".local/share/applications/kdesystemsettings.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-  home.file.".local/share/applications/org.kde.plasma-systemmonitor.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-  # kwalletmanager itself is also "required" (kwallet/kwallet-pam provide a
-  # helper service leonardo/martin's Plasma sessions need) -- same mask.
-  home.file.".local/share/applications/org.kde.kwalletmanager.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    NoDisplay=true
-  '';
-
   home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 

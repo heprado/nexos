@@ -6,15 +6,12 @@
     ../../modules/nixos/cloudflared.nix
     ../../modules/nixos/ssh.nix
     ../../modules/nixos/desktop-hyprland.nix
-    ../../modules/nixos/desktop-plasma-rdp.nix
     ../../modules/nixos/chrony.nix
     ../../modules/nixos/wayvnc-hyprland.nix
     ../../modules/nixos/novnc-hyprland.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/ai.nix
     ../../users/henrique
-    ../../users/leonardo
-    ../../users/martin
   ];
 
   # Noctalia isn't in the official nixpkgs cache; without this, its
@@ -65,8 +62,6 @@
     builtins.elem (lib.getName pkg) [ "claude-code" "discord" "citrix-workspace" "linuxx64" ];
 
   home-manager.users.henrique = import ../../users/henrique/home.nix;
-  home-manager.users.leonardo = import ../../users/leonardo/home.nix;
-  home-manager.users.martin = import ../../users/martin/home.nix;
 
   sops.defaultSopsFile = ../../secrets/caixa.yaml;
   # Generate on caixa with `age-keygen`, then record the public key in
