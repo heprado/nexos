@@ -1,5 +1,9 @@
 { ... }:
 {
+  home.packages = [
+    rtk.packages
+  ];
+
   # Managed policy for Claude Code: read by any user running `claude` on
   # this machine, with the highest precedence of all CLAUDE.md locations
   # (loads before ~/.claude/CLAUDE.md and any project CLAUDE.md). This is
