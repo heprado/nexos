@@ -158,6 +158,20 @@
   home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
+  # Without this, the cursor theme only ever exists as a live dconf/nwg-look
+  # setting -- nothing propagates it to Hyprland's own (wlroots) cursor
+  # renderer, so any compositor restart (e.g. after nixos-rebuild switch)
+  # reverts to Hyprland's built-in default arrow. hyprcursor.enable adds
+  # HYPRCURSOR_THEME/HYPRCURSOR_SIZE alongside XCURSOR_THEME/XCURSOR_SIZE,
+  # since Hyprland prefers the hyprcursor format when available.
+  home.pointerCursor = {
+    enable = true;
+    package = pkgs.kdePackages.breeze;
+    name = "breeze_cursors";
+    size = 24;
+    hyprcursor.enable = true;
+  };
+
   # Launched from Hyprland's Lua config itself (hl.on("hyprland.start", ...)
   # below), per <https://docs.noctalia.dev/v5/compositor-settings/hyprland/>
   # — not via systemd.enable, to avoid starting it twice.
@@ -316,6 +330,15 @@
       -- This is what actually fixes apps complaining
       -- "QT_QPA_PLATFORMTHEME environment variable is not set".
       hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+
+      -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
+      -- only writes plain home.sessionVariables, which don't reach the
+      -- systemd-activated Hyprland session, so the cursor theme has to be
+      -- re-propagated here too.
+      hl.env("XCURSOR_THEME", "breeze_cursors")
+      hl.env("XCURSOR_SIZE", "24")
+      hl.env("HYPRCURSOR_THEME", "breeze_cursors")
+      hl.env("HYPRCURSOR_SIZE", "24")
 
       hl.on("hyprland.start", function()
         hl.exec_cmd("noctalia")
