@@ -16,7 +16,6 @@
   # are NOT declared here -- they live in the Cloudflare Zero Trust
   # dashboard, under this tunnel's "Public Hostname" tab. Configure:
   #   ssh.heprado.com.br    -> ssh://localhost:22
-  #   kde.heprado.com.br    -> tcp://localhost:3389   (RDP, see desktop-plasma-rdp.nix)
   #   remote.heprado.com.br -> http://localhost:6080  (noVNC/websockify in front
   #                                                     of wayvnc, see
   #                                                     novnc-hyprland.nix --
@@ -25,12 +24,16 @@
   #                                                     needed; TLS terminates
   #                                                     here at the tunnel)
   #
-  # WARNING: none of the three hostnames above have an authentication
-  # layer of their own beyond whatever runs on the other end (SSH keys;
-  # xrdp/PAM; wayvnc's password). If Cloudflare Access policies aren't
-  # configured for these hostnames in the dashboard, anyone who
-  # discovers the hostname can attempt to connect straight through --
-  # this is especially risky for RDP.
+  # kde.heprado.com.br (RDP, leonardo/martin's Plasma sessions) was removed
+  # along with desktop-plasma-rdp.nix and those users -- also remove its
+  # "Public Hostname" mapping from the Zero Trust dashboard by hand, that
+  # part isn't declared here.
+  #
+  # WARNING: neither hostname above has an authentication layer of its own
+  # beyond whatever runs on the other end (SSH keys; wayvnc's password). If
+  # Cloudflare Access policies aren't configured for these hostnames in the
+  # dashboard, anyone who discovers the hostname can attempt to connect
+  # straight through.
   systemd.services.cloudflared-tunnel = {
     description = "Cloudflare Tunnel (token-based)";
     after = [ "network-online.target" ];
