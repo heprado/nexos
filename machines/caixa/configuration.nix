@@ -1,4 +1,4 @@
-{ lib, inputs, self, ... }:
+{ lib, pkgs, inputs, self, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -30,7 +30,28 @@
 
   networking.hostName = "caixa";
   programs.zsh.enable = true;
-  hardware.graphics.enable = true;
+
+  # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
+  # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
+  # to build via NH_OS_FLAKE, set from `flake` below.
+  programs.nh = {
+    enable = true;
+    clean.enable = true;
+    clean.extraArgs = "--keep-since 4d --keep 3";
+    flake = "/home/henrique/codigos/nexos";
+  };
+
+  # caixa's iGPU is a Skylake HD Graphics 530 (i915). intel-media-driver
+  # (iHD) is the modern VAAPI driver for Gen9+ Intel iGPUs -- the legacy
+  # i965 driver mesa falls back to otherwise doesn't support this
+  # generation well. Vulkan (needed for WebGPU in Helium, see
+  # modules/home/helium.nix) comes for free from hardware.graphics.enable
+  # via mesa's ANV driver, no extra package required.
+  hardware.graphics = {
+    enable = true;
+    extraPackages = [ pkgs.intel-media-driver ];
+  };
+  environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
 
   i18n.defaultLocale = "pt_BR.UTF-8";
   time.timeZone = "America/Sao_Paulo";
