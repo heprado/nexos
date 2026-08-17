@@ -26,23 +26,27 @@ let
       # Stop hook payload (stdin JSON) only carries transcript_path/session_id,
       # not the response text itself -- has to be pulled out of the
       # transcript JSONL, where each line is a single content block (not one
-      # line per turn). Walk the file from the end, collecting consecutive
-      # trailing assistant "text" blocks (there can be more than one if the
-      # final turn's answer was split across blocks) until hitting anything
-      # else, which marks the start of this turn's actual response.
+      # line per turn). The file doesn't necessarily end with the response
+      # either: session bookkeeping entries (type "system", "attachment",
+      # etc.) can trail after it, so filter down to user/assistant turns
+      # first, THEN walk from the end collecting consecutive trailing
+      # assistant "text" blocks (there can be more than one if the final
+      # turn's answer was split across blocks) until hitting anything else,
+      # which marks the start of this turn's actual response.
       transcript_path=$(jq -r '.transcript_path // empty')
       [ -n "$transcript_path" ] && [ -f "$transcript_path" ] || exit 0
 
       text=$(jq -s -r '
-        reverse
-        | reduce .[] as $item ({stop:false, texts:[]};
-            if .stop then .
-            elif ($item.type=="assistant" and (($item.message.content // [])[0].type // "")=="text") then
-              .texts += [$item.message.content[0].text]
-            else
-              .stop = true
-            end)
-        | .texts | reverse | join("\n\n")
+        [ .[] | select(.type=="user" or .type=="assistant") ] as $turns
+        | ( $turns | reverse
+            | reduce .[] as $item ({stop:false, texts:[]};
+                if .stop then .
+                elif ($item.type=="assistant" and (($item.message.content // [])[0].type // "")=="text") then
+                  .texts += [$item.message.content[0].text]
+                else
+                  .stop = true
+                end)
+            | .texts | reverse | join("\n\n") )
       ' "$transcript_path")
       [ -n "$text" ] || exit 0
 
@@ -58,7 +62,11 @@ let
       wav=$(mktemp --suffix .wav)
       trap 'rm -f "$wav"' EXIT
       printf '%s' "$clean" | piper --model "${piperVoice}/pt_BR-faber-medium.onnx" --output_file "$wav"
-      pw-play "$wav"
+      # --volume is a stream-relative multiplier on top of whatever the
+      # sink's own volume is currently set to, not an absolute level -- so
+      # 0.5 here means "half however loud the system is right now", which
+      # is what was asked for, without querying/computing the sink volume.
+      pw-play --volume 0.5 "$wav"
     '';
   };
 in
