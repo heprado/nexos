@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   # Local physical console only (henrique). Session appears in SDDM's
   # session picker alongside Plasma; anyone at the physical console can
@@ -38,6 +38,37 @@
   # GUI for pairing/managing devices (agent included, so no more manual
   # `agent on` / `default-agent` dance in bluetoothctl).
   services.blueman.enable = true;
+
+  # Thunar file manager, plus plugins for auto-mounting removable media
+  # (volman), archive extract/create, VCS status overlays, network share
+  # browsing, and audio/image metadata columns. programs.thunar.enable
+  # pulls in programs.xfconf.enable itself (needed for Thunar to persist
+  # its own settings).
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs; [
+      thunar-volman
+      thunar-vcs-plugin
+      thunar-shares-plugin
+      thunar-media-tags-plugin
+      thunar-archive-plugin
+    ];
+  };
+  # thunar-volman (above) needs gvfs to actually auto-mount/eject media and
+  # to give Thunar trash/network-share (sftp, etc.) support.
+  services.gvfs.enable = true;
+
+  # Without an actual icon theme installed, GTK falls back to hicolor's
+  # single generic "text-x-generic" icon for everything (upscaled -- hence
+  # the blurry/pixelated icons in Thunar). Adwaita is GTK's own default
+  # icon-theme name, so just having the package present is enough to pick
+  # it up.
+  environment.systemPackages = [ pkgs.adwaita-icon-theme ];
+
+  # tumbler is the D-Bus thumbnailer service Thunar calls out to for image
+  # (and video/font/etc.) preview thumbnails -- without it, files just show
+  # their mimetype icon, which is what was happening to the .png here too.
+  services.tumbler.enable = true;
 
   # This machine's Intel Bluetooth controller is tagged for USB autosuspend
   # by systemd's stock hwdb (see 60-autosuspend.rules), and actually
