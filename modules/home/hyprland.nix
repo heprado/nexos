@@ -452,6 +452,10 @@
       hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("foot"), { description = "Abrir um terminal" })
       hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"), { description = "Abrir/fechar o launcher de aplicativos" })
       hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Fechar a janela em foco" })
+      -- fullscreen(0) is the classic Hyprland dispatcher's "real" fullscreen
+      -- mode (fills the whole output, hides bars/gaps) -- 1 would be
+      -- "maximize" (fills the layout area only, bars/gaps stay visible).
+      hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen(0), { description = "Tela cheia na janela em foco" })
       hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focar a janela à esquerda" })
       hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focar a janela à direita" })
       hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focar a janela acima" })
