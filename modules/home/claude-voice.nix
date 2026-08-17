@@ -36,18 +36,29 @@ let
       transcript_path=$(jq -r '.transcript_path // empty')
       [ -n "$transcript_path" ] && [ -f "$transcript_path" ] || exit 0
 
-      text=$(jq -s -r '
-        [ .[] | select(.type=="user" or .type=="assistant") ] as $turns
-        | ( $turns | reverse
-            | reduce .[] as $item ({stop:false, texts:[]};
-                if .stop then .
-                elif ($item.type=="assistant" and (($item.message.content // [])[0].type // "")=="text") then
-                  .texts += [$item.message.content[0].text]
-                else
-                  .stop = true
-                end)
-            | .texts | reverse | join("\n\n") )
-      ' "$transcript_path")
+      # The Stop hook fires the instant the turn ends, but the transcript
+      # JSONL write is async -- reading it immediately can race the file
+      # still missing its last-written line(s), so this comes back empty
+      # even though the response text exists moments later. Retry briefly
+      # (up to ~5s, well inside the hook's 30s timeout) instead of giving up
+      # on the first empty read.
+      text=""
+      for _ in $(seq 1 20); do
+        text=$(jq -s -r '
+          [ .[] | select(.type=="user" or .type=="assistant") ] as $turns
+          | ( $turns | reverse
+              | reduce .[] as $item ({stop:false, texts:[]};
+                  if .stop then .
+                  elif ($item.type=="assistant" and (($item.message.content // [])[0].type // "")=="text") then
+                    .texts += [$item.message.content[0].text]
+                  else
+                    .stop = true
+                  end)
+              | .texts | reverse | join("\n\n") )
+        ' "$transcript_path")
+        [ -n "$text" ] && break
+        sleep 0.25
+      done
       [ -n "$text" ] || exit 0
 
       # Piper reads this literally -- strip fenced code blocks entirely
