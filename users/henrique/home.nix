@@ -9,9 +9,11 @@
     ../../modules/home/telegram.nix
     ../../modules/home/discord.nix
     ../../modules/home/direnv.nix
+    ../../modules/home/devenv.nix
     ../../modules/home/neovim.nix
     ../../modules/home/zsh.nix
     ../../modules/home/ai.nix
+    ../../modules/home/claude-voice.nix
     ../../modules/home/zed.nix
   ];
 

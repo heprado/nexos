@@ -35,6 +35,17 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
 
+  # Nothing in this flake enabled an audio server before now -- PipeWire
+  # (with its Pulse/ALSA compat shims) is what pw-play (used by
+  # modules/home/claude-voice.nix's TTS hook, among anything else wanting
+  # sound) and every other desktop app expect to find.
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+  };
+
   # GUI for pairing/managing devices (agent included, so no more manual
   # `agent on` / `default-agent` dance in bluetoothctl).
   services.blueman.enable = true;
