@@ -7,16 +7,20 @@ let
   # next to the .onnx file, so both fetched files have to land in the same
   # derivation output under matching names, not just be independently
   # fetched.
-  piperVoice = pkgs.runCommand "piper-voice-pt_BR-faber-medium" { } ''
+  # "dii" -- there's no official female pt_BR voice in rhasspy/piper-voices
+  # (only male: cadu/edresson/faber/jeff), so this comes from OpenVoiceOS's
+  # community-trained collection instead.
+  # See <https://huggingface.co/collections/OpenVoiceOS/pipertts-voices>.
+  piperVoice = pkgs.runCommand "piper-voice-pt_BR-dii" { } ''
     mkdir -p "$out"
     ln -s ${pkgs.fetchurl {
-      url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx";
-      sha256 = "19ssz4rkmx6abrfw805a7v859p63qiqbvrlg11brq834l3imb1c5";
-    }} "$out/pt_BR-faber-medium.onnx"
+      url = "https://huggingface.co/OpenVoiceOS/pipertts_pt-BR_dii/resolve/main/dii_pt-BR.onnx";
+      sha256 = "0sq83phnzqllfz74rqibwxhgfc8h3jkzxznjw4ibk0klp93s85gv";
+    }} "$out/dii_pt-BR.onnx"
     ln -s ${pkgs.fetchurl {
-      url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx.json";
-      sha256 = "0vqx1baz0y5r0rawp4s8hm4vcjgv0kmlbi1jsxnw6gxfjphlssby";
-    }} "$out/pt_BR-faber-medium.onnx.json"
+      url = "https://huggingface.co/OpenVoiceOS/pipertts_pt-BR_dii/resolve/main/dii_pt-BR.onnx.json";
+      sha256 = "117cf23dhs5ayjyyqpg1841h87mkcnnqm7518ffl8sn9b8lrhs9h";
+    }} "$out/dii_pt-BR.onnx.json"
   '';
 
   claudeSpeak = pkgs.writeShellApplication {
@@ -72,7 +76,7 @@ let
 
       wav=$(mktemp --suffix .wav)
       trap 'rm -f "$wav"' EXIT
-      printf '%s' "$clean" | piper --model "${piperVoice}/pt_BR-faber-medium.onnx" --output_file "$wav"
+      printf '%s' "$clean" | piper --model "${piperVoice}/dii_pt-BR.onnx" --output_file "$wav"
       # --volume is a stream-relative multiplier on top of whatever the
       # sink's own volume is currently set to, not an absolute level -- so
       # 0.5 here means "half however loud the system is right now", which
