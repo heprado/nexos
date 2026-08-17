@@ -450,6 +450,7 @@
 
       local mainMod = "SUPER"
       hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("foot"), { description = "Abrir um terminal" })
+      hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("noctalia msg panel-toggle launcher"), { description = "Abrir/fechar o launcher de aplicativos" })
       hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Fechar a janela em foco" })
       hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), { description = "Focar a janela à esquerda" })
       hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focar a janela à direita" })
