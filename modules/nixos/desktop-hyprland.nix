@@ -35,6 +35,10 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
 
+  # GUI for pairing/managing devices (agent included, so no more manual
+  # `agent on` / `default-agent` dance in bluetoothctl).
+  services.blueman.enable = true;
+
   # This machine's Intel Bluetooth controller is tagged for USB autosuspend
   # by systemd's stock hwdb (see 60-autosuspend.rules), and actually
   # honoring it drops the active BLE connection to henrique's MX Vertical
