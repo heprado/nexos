@@ -49,6 +49,7 @@ let
       # Piper reads this literally -- strip fenced code blocks entirely
       # (nobody wants to hear a diff read aloud) and the common inline
       # markdown markup so it doesn't narrate asterisks/backticks/hashes.
+      # shellcheck disable=SC2016
       clean=$(printf '%s' "$text" \
         | sed '/^```/,/^```/d' \
         | sed -E 's/`[^`]*`/ /g; s/\[([^]]*)\]\([^)]*\)/\1/g; s/[*_#>`-]//g')
