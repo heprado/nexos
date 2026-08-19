@@ -33,9 +33,14 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, nixos-wsl, ... }@inputs: {
     # Per-language devShells for henrique's actual project repos (not
     # this one) -- `nix flake init -t .#<name>` drops in a devenv.nix +
     # devenv.yaml + .envrc so direnv auto-activates the right
@@ -80,6 +85,21 @@
         sops-nix.nixosModules.sops
         disko.nixosModules.disko
         noctalia-greeter.nixosModules.default
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
+        }
+      ];
+    };
+
+    nixosConfigurations.marvin = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = { inherit inputs self; };
+      modules = [
+        ./machines/marvin/configuration.nix
+        nixos-wsl.nixosModules.default
+        home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
