@@ -97,6 +97,12 @@
     pkgs.vlc
     pkgs.btop
     pkgs.hyfetch
+    # Qt GUI for ddcutil -- external-monitor brightness/contrast/color (RGB
+    # gain, color temperature presets, whatever VCP features this monitor
+    # actually reports) over DDC/CI. Needed because Noctalia's own
+    # brightness widget only exposes brightness, not color, even with
+    # brightness.enableDdcSupport on in its settings.json.
+    pkgs.ddcui
     # Remote VDI access. The tarball can't be fetched automatically (Citrix's
     # EULA requires a manual, logged-in download); see the comment on
     # nixpkgs.config.allowUnfreePredicate in machines/caixa/configuration.nix
