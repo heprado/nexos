@@ -68,6 +68,12 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Unset, this falls back to nixpkgs' own default kernel package set,
+  # which tracks an older/more conservative version (6.18) even on
+  # nixpkgs-unstable -- linuxPackages_latest is what actually follows the
+  # newest kernel release packaged for this channel.
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
   #
