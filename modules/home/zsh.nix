@@ -1,5 +1,15 @@
 { ... }:
 {
+  # enableZshIntegration wires up ls/ll/la/lt aliases to eza itself (with
+  # icons/git status columns) -- no need to hand-roll them in
+  # shellAliases below.
+  programs.eza = {
+    enable = true;
+    enableZshIntegration = true;
+    icons = "auto";
+    git = true;
+  };
+
   programs.zsh = {
     enable = true;
     shellAliases = {
