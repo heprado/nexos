@@ -32,23 +32,43 @@
       icon = "nwg-look";
       categories = [ "GTK" "Settings" "DesktopSettings" ];
     };
-    "org.kde.dolphin" = {
+    thunar = {
       name = "Explorador de Arquivos";
-      exec = "dolphin %u";
-      icon = "org.kde.dolphin";
-      categories = [ "Qt" "KDE" "System" "FileTools" "FileManager" ];
+      exec = "thunar %U";
+      icon = "org.xfce.thunar";
+      categories = [ "System" "Core" "GTK" "FileTools" "FileManager" ];
       mimeType = [ "inode/directory" ];
     };
-    # ark stays installed (Dolphin shells out to it for extract/compress),
-    # just hidden from the launcher -- it's not meant to be opened
-    # standalone.
-    "org.kde.ark" = {
-      name = "Ark";
-      exec = "ark %U";
-      icon = "org.kde.ark";
-      noDisplay = true;
-    };
   };
+
+  # Thunar's "Open Terminal Here" (and other exo-open callers) shell out to
+  # `exo-open --launch TerminalEmulator`, which normally resolves via Xfce's
+  # helpers.rc -- but nothing here ever set that up (this desktop has no
+  # xfce4-terminal/xterm providing exo's usual bundled default helper), so
+  # it fell through to exo's dynamic Categories=TerminalEmulator .desktop
+  # scan and *still* came up empty -- foot.desktop's own Categories does
+  # list TerminalEmulator, but that scan depends on XDG_DATA_DIRS reaching
+  # the exo-open child process, which (like XCURSOR_THEME/QT_QPA_PLATFORMTHEME
+  # below) isn't guaranteed for everything Thunar spawns. Registering an
+  # explicit custom helper sidesteps both: helpers.rc points straight at it,
+  # and it lives under ~/.local/share, which GLib always checks regardless
+  # of XDG_DATA_DIRS.
+  xdg.configFile."xfce4/helpers.rc".text = ''
+    TerminalEmulator=custom-foot
+  '';
+  xdg.dataFile."xfce4/helpers/custom-foot.desktop".text = ''
+    [Desktop Entry]
+    Version=1.0
+    Encoding=UTF-8
+    Type=X-XFCE-Helper
+    X-XFCE-Category=TerminalEmulator
+    Name=Foot
+    Comment=Foot terminal emulator
+    Icon=foot
+    Exec=foot
+    Terminal=false
+    StartupNotify=false
+  '';
 
   # Not done via programs.foot.settings: that makes home-manager generate
   # foot.ini itself, which would fight with us owning the file directly
