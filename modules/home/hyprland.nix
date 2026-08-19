@@ -4,6 +4,43 @@
 
   programs.foot.enable = true;
 
+  # Renames how these apps show up in Noctalia's launcher (and any other
+  # XDG-desktop-file-based launcher/dock/menu -- this isn't a launcher
+  # feature, it's a standard XDG override: a user-level .desktop with the
+  # same basename as the system one wins, per $XDG_DATA_DIRS search order
+  # putting ~/.local/share first). Only Name= actually needs to change;
+  # Exec/Icon/etc are copied from each package's real .desktop file so the
+  # override still launches/looks the same otherwise.
+  xdg.desktopEntries = {
+    nvim = {
+      name = "Neovim";
+      genericName = "Text Editor";
+      exec = "nvim %F";
+      icon = "nvim";
+      terminal = true;
+      categories = [ "Utility" "TextEditor" "Development" ];
+    };
+    qt6ct = {
+      name = "Configurações QT";
+      exec = "qt6ct";
+      icon = "preferences-desktop-theme";
+      categories = [ "Settings" "DesktopSettings" "Qt" ];
+    };
+    nwg-look = {
+      name = "Configurações GTK";
+      exec = "nwg-look";
+      icon = "nwg-look";
+      categories = [ "GTK" "Settings" "DesktopSettings" ];
+    };
+    thunar = {
+      name = "Explorador de Arquivos";
+      exec = "thunar %U";
+      icon = "org.xfce.thunar";
+      categories = [ "System" "Core" "GTK" "FileTools" "FileManager" ];
+      mimeType = [ "inode/directory" ];
+    };
+  };
+
   # Thunar's "Open Terminal Here" (and other exo-open callers) shell out to
   # `exo-open --launch TerminalEmulator`, which normally resolves via Xfce's
   # helpers.rc -- but nothing here ever set that up (this desktop has no
