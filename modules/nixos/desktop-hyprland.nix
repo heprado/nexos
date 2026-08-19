@@ -61,36 +61,23 @@
   # does show up here (e.g. an eGPU/dock scenario).
   hardware.i2c.enable = true;
 
-  # Thunar file manager, plus plugins for auto-mounting removable media
-  # (volman), archive extract/create, VCS status overlays, network share
-  # browsing, and audio/image metadata columns. programs.thunar.enable
-  # pulls in programs.xfconf.enable itself (needed for Thunar to persist
-  # its own settings).
-  programs.thunar = {
-    enable = true;
-    plugins = with pkgs; [
-      thunar-volman
-      thunar-vcs-plugin
-      thunar-shares-plugin
-      thunar-media-tags-plugin
-      thunar-archive-plugin
-    ];
-  };
-  # thunar-volman (above) needs gvfs to actually auto-mount/eject media and
-  # to give Thunar trash/network-share (sftp, etc.) support.
-  services.gvfs.enable = true;
+  # Dolphin file manager (replaced Thunar -- see git log). Needed for
+  # Dolphin (via KIO/Solid) to see and auto-mount removable media --
+  # gvfs+thunar-volman's job under Thunar, udisks2's under KDE.
+  services.udisks2.enable = true;
 
   # Without an actual icon theme installed, GTK falls back to hicolor's
   # single generic "text-x-generic" icon for everything (upscaled -- hence
-  # the blurry/pixelated icons in Thunar). Adwaita is GTK's own default
-  # icon-theme name, so just having the package present is enough to pick
-  # it up.
-  environment.systemPackages = [ pkgs.adwaita-icon-theme pkgs.ddcutil pkgs.brightnessctl ];
-
-  # tumbler is the D-Bus thumbnailer service Thunar calls out to for image
-  # (and video/font/etc.) preview thumbnails -- without it, files just show
-  # their mimetype icon, which is what was happening to the .png here too.
-  services.tumbler.enable = true;
+  # the blurry/pixelated icons apps used to show). Adwaita is GTK's own
+  # default icon-theme name, so just having the package present is enough
+  # to pick it up; Breeze (Dolphin/Qt side) is already pulled in via
+  # kdePackages.breeze for the cursor theme in modules/home/hyprland.nix.
+  environment.systemPackages = [ pkgs.adwaita-icon-theme pkgs.ddcutil pkgs.brightnessctl ]
+    # ark: archive extract/create (Thunar's thunar-archive-plugin
+    # equivalent). kio-extras: network shares/trash/other KIO backends
+    # Dolphin browses through (Thunar's gvfs+thunar-volman equivalent).
+    # kdegraphics-thumbnailers/ffmpegthumbs: image/video preview icons.
+    ++ (with pkgs.kdePackages; [ dolphin ark kio-extras kdegraphics-thumbnailers ffmpegthumbs ]);
 
   # This machine's Intel Bluetooth controller is tagged for USB autosuspend
   # by systemd's stock hwdb (see 60-autosuspend.rules), and actually
