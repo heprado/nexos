@@ -39,6 +39,15 @@
       categories = [ "Qt" "KDE" "System" "FileTools" "FileManager" ];
       mimeType = [ "inode/directory" ];
     };
+    # ark stays installed (Dolphin shells out to it for extract/compress),
+    # just hidden from the launcher -- it's not meant to be opened
+    # standalone.
+    "org.kde.ark" = {
+      name = "Ark";
+      exec = "ark %U";
+      icon = "org.kde.ark";
+      noDisplay = true;
+    };
   };
 
   # Not done via programs.foot.settings: that makes home-manager generate
