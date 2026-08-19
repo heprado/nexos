@@ -50,6 +50,17 @@
   # `agent on` / `default-agent` dance in bluetoothctl).
   services.blueman.enable = true;
 
+  # Noctalia's brightness widget had nothing to actually control: this
+  # desktop's monitor is external, so there's no /sys/class/backlight
+  # device at all (that sysfs interface only exists for laptop panels) --
+  # external monitor brightness goes over DDC/CI via the display cable
+  # instead, which needs ddcutil talking to /dev/i2c-*. hardware.i2c also
+  # grants access to any user with a seat (logind uaccess), not just a
+  # udev group, so henrique doesn't need to be added to a group by hand.
+  # brightnessctl is included too, in case a laptop panel/backlight ever
+  # does show up here (e.g. an eGPU/dock scenario).
+  hardware.i2c.enable = true;
+
   # Thunar file manager, plus plugins for auto-mounting removable media
   # (volman), archive extract/create, VCS status overlays, network share
   # browsing, and audio/image metadata columns. programs.thunar.enable
@@ -74,7 +85,7 @@
   # the blurry/pixelated icons in Thunar). Adwaita is GTK's own default
   # icon-theme name, so just having the package present is enough to pick
   # it up.
-  environment.systemPackages = [ pkgs.adwaita-icon-theme ];
+  environment.systemPackages = [ pkgs.adwaita-icon-theme pkgs.ddcutil pkgs.brightnessctl ];
 
   # tumbler is the D-Bus thumbnailer service Thunar calls out to for image
   # (and video/font/etc.) preview thumbnails -- without it, files just show
