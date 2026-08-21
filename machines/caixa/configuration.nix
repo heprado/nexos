@@ -56,6 +56,11 @@
   i18n.defaultLocale = "pt_BR.UTF-8";
   time.timeZone = "America/Sao_Paulo";
 
+  # Mininet (used by ~/codigos/p4-tutorials' devenv, studying P4) needs
+  # this to let the virtual hosts it creates route/forward packets between
+  # each other.
+  boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+
   # Backend dconf needs to actually apply GTK theme settings (see
   # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
   programs.dconf.enable = true;
