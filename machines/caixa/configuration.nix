@@ -31,6 +31,12 @@
   networking.hostName = "caixa";
   programs.zsh.enable = true;
 
+  # udev rules for adb/fastboot -- without this the phone enumerates over
+  # USB but the user has no permission to open the device node, so it
+  # silently doesn't show up in `adb devices`.
+  programs.adb.enable = true;
+  users.users.henrique.extraGroups = [ "adbusers" ];
+
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
   # to build via NH_OS_FLAKE, set from `flake` below.
