@@ -31,11 +31,11 @@
   networking.hostName = "caixa";
   programs.zsh.enable = true;
 
-  # udev rules for adb/fastboot -- without this the phone enumerates over
-  # USB but the user has no permission to open the device node, so it
-  # silently doesn't show up in `adb devices`.
-  programs.adb.enable = true;
-  users.users.henrique.extraGroups = [ "adbusers" ];
+  # adb/fastboot for Android device debugging. Used to also need
+  # programs.adb.enable + the adbusers group for udev permissions, but
+  # systemd 258 grants uaccess to the device node automatically now, so
+  # just the package is enough.
+  environment.systemPackages = [ pkgs.android-tools ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
