@@ -121,10 +121,18 @@
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
   # templates above actually need to take effect app-wide.
   # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
+  #
+  # hyprqt6engine (below, QT_QPA_PLATFORMTHEME) is the actual runtime Qt
+  # theme engine now -- qt6ct is archived upstream and no longer the
+  # active platform theme, but it's kept installed purely as a GUI for
+  # browsing/editing color-scheme files (which hyprqt6engine's own
+  # hyprqt6engine.conf then points at -- see xdg.configFile below). qt6ct
+  # itself never runs as QT_QPA_PLATFORMTHEME anymore.
   home.packages = [
     pkgs.adw-gtk3
     pkgs.nwg-look
     pkgs.qt6Packages.qt6ct
+    inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default
     # Provides the "JetBrainsMono Nerd Font" family foot.ini (below) uses --
     # nothing in this config previously installed any Nerd Font at all, so
     # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
@@ -227,8 +235,18 @@
   home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
     ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
-  home.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
+  home.sessionVariables.QT_QPA_PLATFORMTHEME = "hyprqt6engine";
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
+
+  # hyprqt6engine reads this instead of qt6ct's own qt6ct.conf. Points
+  # color_scheme at the same qt6ct-format file Noctalia's "qt" builtin
+  # template already renders (hyprqt6engine's own docs confirm it accepts
+  # qt6ct-format theme files directly) -- no changes needed to the
+  # programs.noctalia.settings.theme.templates.builtin_ids list above.
+  xdg.configFile."hypr/hyprqt6engine.conf".text = ''
+    [theme]
+    color_scheme=/home/henrique/.config/qt6ct/colors/noctalia.conf
+  '';
 
   # Without this, the cursor theme only ever exists as a live dconf/nwg-look
   # setting -- nothing propagates it to Hyprland's own (wlroots) cursor
@@ -401,7 +419,7 @@
       -- see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/.
       -- This is what actually fixes apps complaining
       -- "QT_QPA_PLATFORMTHEME environment variable is not set".
-      hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+      hl.env("QT_QPA_PLATFORMTHEME", "hyprqt6engine")
 
       -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
       -- only writes plain home.sessionVariables, which don't reach the
