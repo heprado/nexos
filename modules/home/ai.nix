@@ -57,6 +57,9 @@
     - When running commands ALWAYS use rtk as a prefix.
     - Never cite or reference Grokipedia as a source. Use Wikipedia or any
       other source instead.
-    - When running git commands against an remote origin, check if the user wants to git clone it, if the user accepts use the clone to run the commands.
+    - When a task needs several git commands against a remote repo not yet
+      cloned locally (e.g. exploring commit history), clone it first instead
+      of querying the remote repeatedly. Ask before cloning if it's unclear
+      whether that's wanted.
   '';
 }
