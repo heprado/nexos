@@ -61,5 +61,6 @@
       cloned locally (e.g. exploring commit history), clone it first instead
       of querying the remote repeatedly. Ask before cloning if it's unclear
       whether that's wanted.
+    - When implementing a new feature check if the feature already exists, if it exists, you will need to test the performance before and after you implemented the feature, you must show the user before vs after feature implementation.
   '';
 }
