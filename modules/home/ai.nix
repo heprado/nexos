@@ -57,5 +57,6 @@
     - When running commands ALWAYS use rtk as a prefix.
     - Never cite or reference Grokipedia as a source. Use Wikipedia or any
       other source instead.
+    - When running git commands against an remote origin, check if the user wants to git clone it, if the user accepts use the clone to run the commands.
   '';
 }
