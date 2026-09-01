@@ -235,7 +235,19 @@
   home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
     ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
-  home.sessionVariables.QT_QPA_PLATFORMTHEME = "hyprqt6engine";
+  # QT_QPA_PLATFORMTHEME alone isn't enough: most Qt6 apps here (ddcui,
+  # feishin, etc.) aren't built with hyprqt6engine as a buildInput, so
+  # nixpkgs' wrapQtAppsHook never adds its plugin dir to their own
+  # per-binary QT_PLUGIN_PATH wrapper -- some (e.g. ddcui) aren't even
+  # wrapped at all. Without this, Qt falls back to its compiled-in
+  # default plugin path (baked from qtbase's own store path at build
+  # time), which can never see a separately-built package like
+  # hyprqt6engine, so "hyprqt6engine" would silently fail to load as
+  # the platform theme everywhere except its own process.
+  home.sessionVariables = {
+    QT_QPA_PLATFORMTHEME = "hyprqt6engine";
+    QT_PLUGIN_PATH = "${inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default}/lib/qt-6";
+  };
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
   # hyprqt6engine reads this instead of qt6ct's own qt6ct.conf. Points
@@ -420,6 +432,12 @@
       -- This is what actually fixes apps complaining
       -- "QT_QPA_PLATFORMTHEME environment variable is not set".
       hl.env("QT_QPA_PLATFORMTHEME", "hyprqt6engine")
+      -- Same reasoning: without this reaching the systemd/D-Bus session
+      -- too, GUI-launched Qt apps (the vast majority under Hyprland)
+      -- never see QT_PLUGIN_PATH either, so hyprqt6engine's platform
+      -- theme plugin silently fails to load for them even though the
+      -- QT_QPA_PLATFORMTHEME name above is set correctly.
+      hl.env("QT_PLUGIN_PATH", "${inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default}/lib/qt-6")
 
       -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
       -- only writes plain home.sessionVariables, which don't reach the
