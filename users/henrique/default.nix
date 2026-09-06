@@ -4,6 +4,11 @@
     neededForUsers = true;
   };
 
+  # Lets prebuilt, non-Nix-patched Linux binaries run unmodified (e.g. the
+  # Xtensa Rust toolchain espup downloads for ESP32 dev in ~/codigos/clipesp) --
+  # NixOS has no /lib64/ld-linux... for their hardcoded ELF interpreter to find.
+  programs.nix-ld.enable = true;
+
   users.users.henrique = {
     isNormalUser = true;
     shell = pkgs.zsh;
