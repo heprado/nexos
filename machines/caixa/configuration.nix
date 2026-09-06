@@ -85,6 +85,14 @@
   # newest kernel release packaged for this channel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # AHCI defaults the root SSD's SATA link to the aggressive
+  # "mobile"/med_power_with_dipm power policy, which this Silicon
+  # Motion-based drive can't reliably wake from -- the link freezes
+  # (dmesg: "ata1.00: exception ... SErr { CommWake DevExch }") and
+  # gets hard-reset, sometimes mid-write, which can force btrfs to
+  # remount read-only. max_performance (1) disables that LPM state.
+  boot.kernelParams = [ "ahci.mobile_lpm_policy=1" ];
+
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general.
   #
