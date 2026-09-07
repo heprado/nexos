@@ -12,7 +12,9 @@
   users.users.henrique = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" ];
+    # dialout: rw access to /dev/ttyUSB*/ttyACM* serial devices, needed to
+    # flash the ESP32 in ~/codigos/clipesp via espflash/probe-rs.
+    extraGroups = [ "wheel" "dialout" ];
     linger = true;
     # Local SDDM/console login password (separate from SSH, which stays
     # key-only). Hash lives in secrets/caixa.yaml under henrique_password_hash.
