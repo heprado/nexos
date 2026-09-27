@@ -1,13 +1,14 @@
 { ... }:
+let
+  facts = import ./facts.nix;
+in
 {
   disko.devices = {
     disk.main = {
       type = "disk";
-      # PLACEHOLDER -- confirm the real device with `lsblk` on marvin
-      # itself before running disko (this is the new 1 TB SATA SSD, so
-      # /dev/sda is the expected name, but confirm what else is attached).
+      # Picked interactively by install.sh and recorded in facts.nix.
       # Everything on this disk will be wiped.
-      device = "/dev/sda";
+      device = facts.disk;
       content = {
         type = "gpt";
         partitions = {
