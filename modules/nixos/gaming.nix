@@ -18,5 +18,7 @@
     protonup-qt
     # FPS/frametime overlay: `mangohud %command%` in Steam launch options.
     mangohud
+    # Emulator frontend, bundled with every libretro core packaged in nixpkgs.
+    retroarch-full
   ];
 }
