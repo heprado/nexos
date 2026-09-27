@@ -160,7 +160,7 @@
     # nixpkgs pins 26.04.0.105, which Citrix has since pulled from their
     # downloads page -- overridden here to the newest build actually
     # available there (gcc11 linuxx64 tarball) instead of nixpkgs's version.
-    (pkgs.citrix-workspace.overrideAttrs (_: {
+/*    (pkgs.citrix-workspace.overrideAttrs (_: {
       version = "26.08.0.153";
       src = pkgs.requireFile {
         name = "linuxx64-26.08.0.153.tar.gz";
@@ -177,7 +177,7 @@
           nix-prefetch-url file://$PWD/linuxx64-26.08.0.153.tar.gz
         '';
       };
-    }))
+    }))*/
     # grimblast is Hyprland's own screenshot helper (wraps grim+slurp+hyprctl)
     # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig, via the
     # "screenshot" wrapper right below, not grimblast's own --notify).
