@@ -12,7 +12,7 @@ like `caixa` (same user, same module set), minus `cloudflared`, minus
 
 - CPU: Intel Core i7-10750H (6c/12t, up to 5.0 GHz)
 - RAM: 16 GB DDR4-3200 dual channel
-- Storage: NVMe 512 GB (Micron) — disk device will be `/dev/nvme0n1`
+- Storage: SATA SSD 1 TB (new drive) — disk device will be `/dev/sda`
 - GPU: NVIDIA GeForce GTX 1650 (TU117M, Turing) + Intel UHD (Comet Lake-H GT2), hybrid/Optimus
 - Wi-Fi: Intel Wireless-AC 9560
 
@@ -41,7 +41,7 @@ like `caixa` (same user, same module set), minus `cloudflared`, minus
 - Generating a real `henrique_password_hash` or actually creating
   `secrets/marvin.yaml` content — needs the real password, done by hand at
   install time (see Secrets Bootstrap below).
-- Confirming actual PCI bus IDs for PRIME offload, actual NVMe device path,
+- Confirming actual PCI bus IDs for PRIME offload, actual SATA device path,
   and generating the real `hardware-configuration.nix` — all require running
   commands (`lspci`, `lsblk`, `nixos-generate-config`) on marvin itself, so
   they're left as clearly marked placeholders, same pattern caixa already
@@ -175,8 +175,10 @@ gaming-machine-specific, not a caixa capability being ported.
 
 Same shape as caixa's: GPT, 512M ESP, one LUKS partition over btrfs with
 `@` / `@home` / `@nix` / `@swap` subvolumes (8G swapfile), same mount
-options. Only difference: `device = "/dev/nvme0n1";` (placeholder, same as
-caixa's `/dev/sda` placeholder — confirm with `lsblk` before running disko).
+options. `device = "/dev/sda";` (placeholder, same pattern as caixa's own
+`/dev/sda` placeholder — confirm with `lsblk` before running disko; on this
+SATA drive it's very likely correct, but marvin may still enumerate it
+differently depending on what else is attached at install time).
 
 ## `machines/marvin/hardware-configuration.nix` (new)
 

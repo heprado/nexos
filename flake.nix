@@ -103,8 +103,11 @@
       specialArgs = { inherit inputs self; };
       modules = [
         ./machines/marvin/configuration.nix
-        nixos-wsl.nixosModules.default
+        ./machines/marvin/disko-config.nix
         home-manager.nixosModules.home-manager
+        sops-nix.nixosModules.sops
+        disko.nixosModules.disko
+        noctalia-greeter.nixosModules.default
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;

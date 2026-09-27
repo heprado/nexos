@@ -53,3 +53,52 @@ becomes permanently undecryptable as-is. Recovery: generate a fresh age
 keypair, update `.sops.yaml` with the new public key, and re-encrypt
 `secrets/caixa.yaml` from a plaintext copy of the secret (i.e. you'll need
 the Cloudflare Tunnel's token again too).
+
+## Bootstrapping marvin
+
+marvin is a new physical host (see
+`docs/superpowers/specs/2026-09-21-marvin-host-design.md`). Unlike caixa,
+`secrets/marvin.yaml` does not exist yet -- `.sops.yaml` currently has a
+placeholder public key for marvin (`&marvin`) that must be replaced before
+this works. Steps, done by hand (not by this repo's automation):
+
+1. Generate a real age keypair (anywhere, not necessarily on marvin):
+
+   ```sh
+   age-keygen -o keys/marvin-key.txt
+   ```
+
+   `keys/` is gitignored -- this private key file is never committed.
+
+2. Replace the placeholder `&marvin age1PLACEHOLDER...` value in
+   `.sops.yaml` with the real public key printed by `age-keygen` (also
+   found in the comment atop `keys/marvin-key.txt`).
+
+3. Generate the real password hash for henrique's local login on marvin:
+
+   ```sh
+   mkpasswd -m sha-512
+   ```
+
+4. Create `secrets/marvin.yaml` with that hash under
+   `henrique_password_hash`, encrypting it against the now-real `&marvin`
+   key from `.sops.yaml`:
+
+   ```sh
+   sops secrets/marvin.yaml
+   ```
+
+   (sops picks up the recipient from `.sops.yaml`'s `creation_rules` for
+   this path automatically; you need `keys/marvin-key.txt` available
+   locally, e.g. at `~/.config/sops/age/keys.txt`, to open/re-encrypt it
+   again later.)
+
+5. Commit both the updated `.sops.yaml` and the new `secrets/marvin.yaml`.
+
+6. At install time, copy `keys/marvin-key.txt` to
+   `/var/lib/sops-nix/key.txt` on marvin (root-only, `chmod 600`) before
+   the first `nixos-rebuild switch` there.
+
+marvin has no `cloudflared` (see the design spec), so there's no tunnel
+token to add -- only `henrique_password_hash` is needed in
+`secrets/marvin.yaml`.
