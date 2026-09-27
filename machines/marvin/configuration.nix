@@ -63,6 +63,19 @@ in
   boot.loader.systemd-boot.consoleMode = "auto";
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Boot splash: the firmware's own logo (BGRT, Lenovo's) with a spinning
+  # NixOS snowflake under it. The firmware only ever lights up the laptop
+  # panel, so the menu above can't reach the HDMI monitor; Plymouth runs
+  # after the kernel's DRM drivers are up, so it can. The HDMI port is
+  # wired to NVIDIA, so its driver (not just i915) is loaded early in the
+  # initrd for Plymouth to see that output too.
+  boot.plymouth = {
+    enable = true;
+    theme = "nixos-bgrt";
+    themePackages = [ pkgs.nixos-bgrt-plymouth ];
+  };
+  boot.initrd.kernelModules = [ "i915" "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
+
   # Unset, this falls back to nixpkgs' own default kernel package set,
   # which tracks an older/more conservative version (6.18) even on
   # nixpkgs-unstable -- linuxPackages_latest is what actually follows the
