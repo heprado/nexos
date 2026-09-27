@@ -35,7 +35,7 @@
   # programs.adb.enable + the adbusers group for udev permissions, but
   # systemd 258 grants uaccess to the device node automatically now, so
   # just the package is enough.
-  environment.systemPackages = [ pkgs.android-tools ];
+  environment.systemPackages = [ pkgs.android-tools pkgs.unzip];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
@@ -104,7 +104,7 @@
   # lib.getName strips its version off "linuxx64-<ver>.tar.gz" -- so both
   # names need to be allowed.
   nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [ "claude-code" "discord" "citrix-workspace" "linuxx64" ];
+    builtins.elem (lib.getName pkg) [ "claude-code" "discord" "discord-unwrapped" "citrix-workspace" "linuxx64" ];
 
   home-manager.users.henrique = import ../../users/henrique/home.nix;
 

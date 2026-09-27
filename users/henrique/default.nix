@@ -8,6 +8,11 @@
   # Xtensa Rust toolchain espup downloads for ESP32 dev in ~/codigos/clipesp) --
   # NixOS has no /lib64/ld-linux... for their hardcoded ELF interpreter to find.
   programs.nix-ld.enable = true;
+  # projectMSDL (github.com/projectM-visualizer/frontend-sdl-cpp release
+  # tarball, used by noctalia-song-visualizer) is one such prebuilt binary --
+  # `ldd` on it reports these three missing alongside libstdc++, which the
+  # module already provides by default.
+  programs.nix-ld.libraries = with pkgs; [ SDL2 freetype libglvnd ];
 
   users.users.henrique = {
     isNormalUser = true;
