@@ -9,6 +9,7 @@ in
     ../../modules/nixos/ssh.nix
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/chrony.nix
+    ../../modules/nixos/session-stop-timeout.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/gaming.nix
     ../../users/henrique
