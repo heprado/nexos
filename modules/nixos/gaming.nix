@@ -23,5 +23,6 @@
     # Standalone PS2 emulator; more complete and up to date than the
     # libretro port. Run with `nvidia-offload pcsx2-qt` to use the GTX 1650.
     pcsx2
+    eden
   ];
 }

@@ -8,7 +8,7 @@ keys:
   # `age-keygen` (doesn't need to happen on marvin itself), replace this
   # value with the real public key, and save the private half to
   # keys/marvin-key.txt (gitignored). See secrets/README.md.
-  - &marvin age1PLACEHOLDERPLACEHOLDERPLACEHOLDERPLACEHOLDERPLACEHOLDERPLA
+  - &marvin age1vnwf0vr9z9lm02nyvtry9cqsg6857e2cj2u7vxlk88qg85pa9cgq94kmjs
 
 creation_rules:
   - path_regex: secrets/caixa\.yaml$
