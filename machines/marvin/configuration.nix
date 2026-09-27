@@ -84,12 +84,20 @@
 
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general. nvidia-* are needed
-  # for the proprietary driver above, steam* for modules/nixos/gaming.nix.
+  # for the proprietary driver above, steam* and the libretro-* cores
+  # (non-commercial licenses, pulled in by retroarch-full) for
+  # modules/nixos/gaming.nix.
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [
       "claude-code" "discord" "discord-unwrapped" "citrix-workspace" "linuxx64"
       "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced"
       "steam" "steam-unwrapped" "steam-original" "steam-run"
+      "libretro-fbalpha2012" "libretro-fbneo" "libretro-fmsx"
+      "libretro-genesis-plus-gx" "libretro-mame2000" "libretro-mame2003"
+      "libretro-mame2003-plus" "libretro-mame2010" "libretro-mame2015"
+      "libretro-opera" "libretro-picodrive" "libretro-snes9x"
+      "libretro-snes9x2002" "libretro-snes9x2005" "libretro-snes9x2005-plus"
+      "libretro-snes9x2010"
     ];
 
   home-manager.users.henrique = import ../../users/henrique/home.nix;
