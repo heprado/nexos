@@ -20,5 +20,8 @@
     mangohud
     # Emulator frontend, bundled with every libretro core packaged in nixpkgs.
     retroarch-full
+    # Standalone PS2 emulator; more complete and up to date than the
+    # libretro port. Run with `nvidia-offload pcsx2-qt` to use the GTX 1650.
+    pcsx2
   ];
 }
