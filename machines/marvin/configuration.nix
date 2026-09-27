@@ -1,4 +1,7 @@
 { config, lib, pkgs, inputs, self, ... }:
+let
+  facts = import ./facts.nix;
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -74,9 +77,8 @@
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     prime = {
       offload.enable = true;
-      # PLACEHOLDER -- confirm with `lspci | grep -E "VGA|3D"` on marvin itself.
-      intelBusId = "PCI:0:2:0";
-      nvidiaBusId = "PCI:1:0:0";
+      # Detected by install.sh and recorded in facts.nix.
+      inherit (facts) intelBusId nvidiaBusId;
     };
   };
 

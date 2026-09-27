@@ -79,6 +79,13 @@ The difference is just how you get to that point.
 
 ### Option A — Fresh install from a NixOS ISO (using disko)
 
+> **marvin:** `sudo ./machines/marvin/install.sh` does all of the steps
+> below interactively. It picks the disk from an `lsblk` list, detects the
+> PRIME bus IDs and records both in `machines/marvin/facts.nix`, so there's
+> nothing to edit by hand. `--dry-run` shows what it would write without
+> touching any disk. Commit the generated `facts.nix` and
+> `hardware-configuration.nix` afterwards.
+
 1. **Boot the [NixOS installer ISO](https://nixos.org/download)** on the target machine, get networking up (`ip a`, or `nmtui` if using the graphical ISO).
 
 2. **Confirm the real disk device** with `lsblk`, e.g. `/dev/sda` or `/dev/nvme0n1`. Then edit `machines/caixa/disko-config.nix` and replace the placeholder `device = "/dev/sda";` with the real one. **This step matters — disko wipes whatever device you point it at.**
