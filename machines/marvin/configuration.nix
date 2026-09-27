@@ -84,6 +84,32 @@ in
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
+  # Hyprland itself renders on the NVIDIA GPU, even though apps still
+  # default to Intel (PRIME offload above). The HDMI port is wired to the
+  # NVIDIA card, so with Intel as the compositor's renderer every HDMI frame
+  # (1080p@120Hz) had to be copied across GPUs, which made animations crawl
+  # there. Aquamarine uses the first device in AQ_DRM_DEVICES as its
+  # renderer. The cardN numbers aren't stable across boots, and by-path
+  # names contain ':' (AQ_DRM_DEVICES' separator), so udev gives each GPU a
+  # fixed symlink keyed on its PCI address from facts.nix. ID_PATH is
+  # matched exactly so the early-boot simple-framebuffer card (which also
+  # sits under the Intel PCI device) doesn't claim the Intel name.
+  services.udev.extraRules =
+    let
+      # "PCI:1:0:0" (decimal, NixOS format) -> "pci-0000:01:00.0" (hex, udev ID_PATH).
+      idPath = busId:
+        let
+          hex2 = n: lib.toLower (lib.fixedWidthString 2 "0" (lib.toHexString (lib.toInt n)));
+          parts = lib.splitString ":" busId;
+        in
+        "pci-0000:${hex2 (lib.elemAt parts 1)}:${hex2 (lib.elemAt parts 2)}.${lib.elemAt parts 3}";
+    in
+    ''
+      SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-dgpu"
+      SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.intelBusId}", SYMLINK+="dri/intel-igpu"
+    '';
+  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
+
   # claude-code's license is marked "unfree" in nixpkgs; allow just that
   # package rather than unfree packages in general. nvidia-* are needed
   # for the proprietary driver above, steam* and the libretro-* cores

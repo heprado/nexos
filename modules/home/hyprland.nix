@@ -521,6 +521,11 @@
 
       hl.monitor({ output = "", mode = "highrr", position = "auto", scale = "auto" })
 
+      -- Pins workspace 1 to the external HDMI monitor and makes it that
+      -- output's default, so it's what shows up there on login. On a
+      -- machine without HDMI-A-1 the rule just never matches.
+      hl.workspace_rule({ workspace = "1", monitor = "HDMI-A-1", default = true })
+
       -- Applies the henrique palette (customPalettes above) to
       -- general.col.active_border/inactive_border and
       -- group.col.border_*/groupbar.col.* -- see the "hyprland" builtin_ids
