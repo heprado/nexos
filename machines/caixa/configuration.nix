@@ -77,6 +77,11 @@
   # wholesale-replaced by `nixos-generate-config` output during install,
   # which would silently drop bootloader config if it lived there.
   boot.loader.systemd-boot.enable = true;
+  # Asks the firmware for a console mode instead of reusing whatever it
+  # left set up ("keep", the default), so the boot menu is set up on every
+  # connected monitor rather than only the one the firmware picked. Same
+  # as marvin.
+  boot.loader.systemd-boot.consoleMode = "auto";
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Unset, this falls back to nixpkgs' own default kernel package set,

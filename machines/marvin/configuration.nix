@@ -55,6 +55,12 @@ in
   # wholesale-replaced by `nixos-generate-config` output during install,
   # which would silently drop bootloader config if it lived there.
   boot.loader.systemd-boot.enable = true;
+  # The default ("keep") reuses whatever console mode the firmware left
+  # set up, which on marvin is the laptop panel only. Windows' boot manager
+  # did show up on the HDMI monitor (NVIDIA-wired) too, so asking for a mode
+  # explicitly is an attempt to get the firmware to set it on every console
+  # it knows about. Unverified; revert to the default if it doesn't help.
+  boot.loader.systemd-boot.consoleMode = "auto";
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Unset, this falls back to nixpkgs' own default kernel package set,
