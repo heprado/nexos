@@ -148,14 +148,64 @@
     # brightness widget only exposes brightness, not color, even with
     # brightness.enableDdcSupport on in its settings.json.
     pkgs.ddcui
+    # Generic wlroots output tool (implements wlr-output-management-v1) --
+    # lets the Monitor Controls Noctalia plugin's drag-and-drop arrangement
+    # grid read/apply monitor positions without depending on Hyprland's own
+    # hyprctl, so the same plugin code works on Sway/river too.
+    pkgs.wlr-randr
     # Remote VDI access. The tarball can't be fetched automatically (Citrix's
     # EULA requires a manual, logged-in download); see the comment on
     # nixpkgs.config.allowUnfreePredicate in machines/caixa/configuration.nix
     # and the nix-prefetch-url step described there before this will build.
-    pkgs.citrix-workspace
+    # nixpkgs pins 26.04.0.105, which Citrix has since pulled from their
+    # downloads page -- overridden here to the newest build actually
+    # available there (gcc11 linuxx64 tarball) instead of nixpkgs's version.
+    (pkgs.citrix-workspace.overrideAttrs (_: {
+      version = "26.08.0.153";
+      src = pkgs.requireFile {
+        name = "linuxx64-26.08.0.153.tar.gz";
+        sha256 = "17f0nlg18bz2b6qq86i04igm551b54nym41zi13m81906fzgi4h7";
+        message = ''
+          In order to use Citrix Workspace, you need to comply with the Citrix EULA and download
+          the 64-bit binaries, .tar.gz from:
+
+          https://www.citrix.com/downloads/workspace-app/
+
+          Once you have downloaded the file, please use the following command and re-run the
+          installation:
+
+          nix-prefetch-url file://$PWD/linuxx64-26.08.0.153.tar.gz
+        '';
+      };
+    }))
     # grimblast is Hyprland's own screenshot helper (wraps grim+slurp+hyprctl)
-    # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig).
+    # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig, via the
+    # "screenshot" wrapper right below, not grimblast's own --notify).
     pkgs.grimblast
+    # Wayland-native, lightweight image viewer (GIF playback included) for
+    # the "screenshot" notification's click action below.
+    pkgs.imv
+    (pkgs.writeShellApplication {
+      name = "screenshot";
+      runtimeInputs = [ pkgs.grimblast pkgs.imv pkgs.libnotify pkgs.coreutils ];
+      text = ''
+        # grimblast copysave both writes the file and copies it to the
+        # clipboard, echoing the saved path on success -- captured here
+        # instead of using grimblast's own --notify/--openparentdir so the
+        # notification's click action opens imv (an image viewer) rather
+        # than grimblast's built-in "show in file manager" action.
+        file="$(grimblast copysave "$1")"
+
+        (
+          action="$(notify-send --wait --action="default=Abrir visualizador" "Captura de tela" "Salva em $file" -i "$file")"
+          if [ "$action" = "default" ]; then
+            imv "$file" &
+            disown
+          fi
+        ) &
+        disown
+      '';
+    })
     # wf-recorder is the wlroots-native screen recorder (like grim, made by
     # the same maintainer) -- toggle-recording below wraps it into a single
     # start/stop bind (SUPER + R, see hl.bind in extraConfig).
@@ -164,12 +214,28 @@
       name = "toggle-recording";
       runtimeInputs = [ pkgs.wf-recorder pkgs.libnotify pkgs.procps pkgs.coreutils ];
       text = ''
+        state_file="''${XDG_RUNTIME_DIR:-/tmp}/toggle-recording-file"
+
         if pidof wf-recorder > /dev/null; then
           pkill -INT wf-recorder
-          notify-send "Screen recording" "Stopped"
+          file="$(cat "$state_file")"
+          # --wait blocks until the notification is dismissed or its action
+          # clicked, printing which action fired -- "default" is the
+          # freedesktop convention for clicking the notification body
+          # itself, not a separate button. Backgrounded so the keybind
+          # doesn't hang waiting on it.
+          (
+            action="$(notify-send --wait --action="default=Abrir no Thunar" "Screen recording" "Stopped -> $file")"
+            if [ "$action" = "default" ]; then
+              thunar --select "$file" &
+              disown
+            fi
+          ) &
+          disown
         else
           mkdir -p "$HOME/Videos"
           file="$HOME/Videos/recording-$(date +%Y-%m-%d_%H-%M-%S).mp4"
+          echo "$file" > "$state_file"
           notify-send "Screen recording" "Started -> $file"
           wf-recorder -f "$file" &
           disown
@@ -622,12 +688,15 @@
       hl.bind(mainMod .. " + C", hl.dsp.layout("consume_or_expel prev"), { description = "Empilhar/desempilhar a janela em foco com a coluna anterior" })
       hl.bind(mainMod .. " + X", hl.dsp.layout("consume_or_expel next"), { description = "Empilhar/desempilhar a janela em foco com a próxima coluna" })
 
-      -- Screenshots via grimblast (see home.packages): copysave both writes
-      -- the file (to ~/Pictures by default) and copies it to the clipboard,
-      -- with a notification linking to the saved file.
-      hl.bind("Print", hl.dsp.exec_cmd("grimblast --notify copysave area"), { description = "Captura de tela: selecionar uma área" })
-      hl.bind("SHIFT + Print", hl.dsp.exec_cmd("grimblast --notify copysave screen"), { description = "Captura de tela: tela inteira" })
-      hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"), { description = "Captura de tela: janela ativa" })
+      -- Print now goes through noctalia's own screenshot-annotate IPC command
+      -- (freezes the screen, opens the v5.1 region editor with drawing
+      -- annotations; Copy/Save deliver the result and close the editor by
+      -- default) instead of grimblast, to get the annotation toolbar. The
+      -- other two binds stay on grimblast (see home.packages) since noctalia
+      -- doesn't have an "active window" capture equivalent.
+      hl.bind("Print", hl.dsp.exec_cmd("noctalia msg screenshot-annotate"), { description = "Captura de tela: selecionar uma área com anotações" })
+      hl.bind("SHIFT + Print", hl.dsp.exec_cmd("screenshot screen"), { description = "Captura de tela: tela inteira" })
+      hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("screenshot active"), { description = "Captura de tela: janela ativa" })
 
       -- Screen recording via wf-recorder, wrapped in toggle-recording (see
       -- home.packages) so a single bind both starts and stops it.
@@ -646,6 +715,16 @@
       hl.window_rule({
         name = "float-hypr-cheatsheet",
         match = { class = "hypr-cheatsheet" },
+        float = true,
+      })
+
+      -- Without this, projectMSDL (noctalia-song-visualizer's MilkDrop
+      -- window -- migrated off the older projectM-pulseaudio) tiles like
+      -- any other window instead of opening at its own declared size,
+      -- which is what made it look huge.
+      hl.window_rule({
+        name = "float-projectmsdl",
+        match = { class = "projectMSDL" },
         float = true,
       })
     '';

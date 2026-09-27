@@ -86,7 +86,12 @@
   # the blurry/pixelated icons for everything, Thunar included). Adwaita
   # is GTK's own default icon-theme name, so just having the package
   # present is enough to pick it up.
-  environment.systemPackages = [ pkgs.adwaita-icon-theme pkgs.ddcutil pkgs.brightnessctl ];
+  #
+  # projectm_3 ships projectM-pulseaudio, the native MilkDrop-compatible
+  # visualizer the noctalia-song-visualizer plugin shells out to -- it
+  # opens its own OpenGL window and reads system audio via PulseAudio
+  # (over pipewire-pulse) on its own, so no other package is needed for it.
+  environment.systemPackages = [ pkgs.adwaita-icon-theme pkgs.ddcutil pkgs.brightnessctl pkgs.projectm_3 ];
 
   # tumbler is the D-Bus thumbnailer service Thunar calls out to for image
   # (and video/font/etc.) preview thumbnails -- without it, files just
