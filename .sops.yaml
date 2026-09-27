@@ -4,9 +4,18 @@ keys:
   # /var/lib/sops-nix/key.txt on caixa before the first `nixos-rebuild
   # switch` there. See secrets/README.md.
   - &caixa age1xhhzemyhg8lc4amzapkf77gsmyvdz277y94jgvspa7r35vtw83qsnss64g
+  # PLACEHOLDER -- marvin's age public key. Generate a real keypair with
+  # `age-keygen` (doesn't need to happen on marvin itself), replace this
+  # value with the real public key, and save the private half to
+  # keys/marvin-key.txt (gitignored). See secrets/README.md.
+  - &marvin age1PLACEHOLDERPLACEHOLDERPLACEHOLDERPLACEHOLDERPLACEHOLDERPLA
 
 creation_rules:
   - path_regex: secrets/caixa\.yaml$
     key_groups:
       - age:
           - *caixa
+  - path_regex: secrets/marvin\.yaml$
+    key_groups:
+      - age:
+          - *marvin

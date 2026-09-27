@@ -26,6 +26,9 @@
     hashedPasswordFile = config.sops.secrets.henrique_password_hash.path;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINNEELZAtcyd/g3y1gPjgSaxLlN5BZPilFzPTX6UTS2B henrique@caixa"
+      # PLACEHOLDER -- replace with the real public key once it's
+      # generated for/on marvin.
+      "ssh-ed25519 PLACEHOLDER_REPLACE_WITH_REAL_KEY henrique@marvin"
     ];
   };
 }
