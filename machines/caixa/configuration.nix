@@ -61,11 +61,8 @@
   };
   environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
 
-  # Shared monitor with marvin (HDMI): take it over on boot.
-  nexos.takeMonitor = {
-    enable = true;
-    input = "0x0f"; # DisplayPort-1
-  };
+  # Monitors shared with marvin: take them over on boot.
+  nexos.takeMonitor.enable = true;
 
   i18n.defaultLocale = "pt_BR.UTF-8";
   time.timeZone = "America/Sao_Paulo";

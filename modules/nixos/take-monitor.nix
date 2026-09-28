@@ -2,25 +2,17 @@
 let
   cfg = config.nexos.takeMonitor;
 
-  # Switches the shared monitor's input (DDC/CI VCP 0x60) to this host, but
-  # only if it isn't already there, since re-selecting the current input can
-  # make the monitor blank and resync. Retries because right after boot the
-  # GPU's DDC bus may not be up yet, and because the monitor may still be
-  # busy auto-scanning its other inputs.
+  runtimeInputs = with pkgs; [ ddcutil coreutils gnugrep gawk ];
+
   takeMonitor = pkgs.writeShellScript "take-monitor" ''
-    for _ in $(${pkgs.coreutils}/bin/seq 20); do
-      current=$(${pkgs.ddcutil}/bin/ddcutil --sn ${cfg.serial} --terse getvcp 60 2>/dev/null)
-      if [[ $current == *" x${lib.removePrefix "0x" cfg.input}" ]]; then
-        exit 0
-      fi
-      ${pkgs.ddcutil}/bin/ddcutil --sn ${cfg.serial} setvcp 60 ${cfg.input} && exit 0
-      ${pkgs.coreutils}/bin/sleep 1
-    done
-    exit 1
+    export PATH=${lib.makeBinPath runtimeInputs}
+    declare -A overrides=(${lib.concatStrings (lib.mapAttrsToList (serial: code:
+      " [${lib.escapeShellArg serial}]=${lib.escapeShellArg code}") cfg.overrides)} )
+    ${builtins.readFile ./take-monitor.sh}
   '';
 
   unit = {
-    description = "Switch the shared monitor's input to this host";
+    description = "Switch every DDC/CI monitor's input to this host";
     serviceConfig = {
       Type = "oneshot";
       ExecStart = takeMonitor;
@@ -28,25 +20,27 @@ let
   };
 in
 {
-  # caixa and marvin share one monitor (caixa on DisplayPort, marvin on
-  # HDMI). Whichever one boots takes the monitor over, instead of the
-  # monitor's auto input detection sticking with the other one.
+  # caixa and marvin share monitors (e.g. the ASUS VG278: caixa on
+  # DisplayPort, marvin on HDMI). Whichever one boots takes every monitor
+  # it's plugged into over, instead of the monitors' auto input detection
+  # sticking with the other host. See take-monitor.sh for how the input is
+  # picked.
   options.nexos.takeMonitor = {
-    enable = lib.mkEnableOption "switching the shared monitor to this host on boot";
-    serial = lib.mkOption {
-      type = lib.types.str;
-      default = "M3LMQS291655"; # ASUS VG278
-      description = "Monitor serial number, as `ddcutil detect` reports it.";
-    };
-    input = lib.mkOption {
-      type = lib.types.str;
-      example = "0x11";
-      description = "VCP 0x60 input code this host is plugged into (`ddcutil capabilities`).";
+    enable = lib.mkEnableOption "switching every DDC/CI monitor to this host on boot";
+    overrides = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = { "M3LMQS291655" = "0x12"; };
+      description = ''
+        Monitor serial (as `ddcutil detect` reports it) -> VCP 0x60 input code,
+        for monitors with more than one input of the connector type this host
+        uses (e.g. HDMI-1 and HDMI-2), where it can't be worked out.
+      '';
     };
     initrd = lib.mkEnableOption ''
       also doing it from the initrd, as soon as the kernel's DRM/DDC is up,
-      so the Plymouth splash is visible on the monitor too. The GPU driver
-      driving the monitor must also be in boot.initrd.kernelModules
+      so the Plymouth splash is visible on the monitors too. The GPU drivers
+      driving them must also be in boot.initrd.kernelModules
     '';
   };
 
@@ -60,8 +54,8 @@ in
 
     boot.initrd = lib.mkIf cfg.initrd {
       kernelModules = [ "i2c-dev" ];
-      # The script's own interpreter and coreutils too, not just ddcutil.
-      systemd.storePaths = [ takeMonitor pkgs.runtimeShellPackage pkgs.coreutils pkgs.ddcutil ];
+      # The script's own interpreter and tools too, not just the script.
+      systemd.storePaths = [ takeMonitor pkgs.runtimeShellPackage ] ++ runtimeInputs;
       # Only wanted, not ordered before initrd.target, so it never holds up
       # boot; switch-root just stops it if it's still retrying.
       systemd.services.take-monitor = unit // {

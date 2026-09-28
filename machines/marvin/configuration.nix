@@ -84,7 +84,6 @@ in
   # the Plymouth splash shows up there as well.
   nexos.takeMonitor = {
     enable = true;
-    input = "0x11"; # HDMI-1
     initrd = true;
   };
 
