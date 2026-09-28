@@ -8,6 +8,7 @@
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/chrony.nix
     ../../modules/nixos/session-stop-timeout.nix
+    ../../modules/nixos/take-monitor.nix
     ../../modules/nixos/wayvnc-hyprland.nix
     ../../modules/nixos/novnc-hyprland.nix
     ../../modules/nixos/lan-isolation.nix
@@ -59,6 +60,12 @@
     extraPackages = [ pkgs.intel-media-driver ];
   };
   environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
+
+  # Shared monitor with marvin (HDMI): take it over on boot.
+  nexos.takeMonitor = {
+    enable = true;
+    input = "0x0f"; # DisplayPort-1
+  };
 
   i18n.defaultLocale = "pt_BR.UTF-8";
   time.timeZone = "America/Sao_Paulo";

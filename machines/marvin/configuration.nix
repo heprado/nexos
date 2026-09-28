@@ -10,6 +10,7 @@ in
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/chrony.nix
     ../../modules/nixos/session-stop-timeout.nix
+    ../../modules/nixos/take-monitor.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/gaming.nix
     ../../users/henrique
@@ -76,6 +77,16 @@ in
     themePackages = [ pkgs.nixos-bgrt-plymouth ];
   };
   boot.initrd.kernelModules = [ "i915" "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
+
+  # The shared monitor sees no HDMI signal until nvidia-drm is up (~4s in),
+  # so its auto input detection wanders off to caixa's DisplayPort. Pull it
+  # back from the initrd, where nvidia-drm is already loaded (see above), so
+  # the Plymouth splash shows up there as well.
+  nexos.takeMonitor = {
+    enable = true;
+    input = "0x11"; # HDMI-1
+    initrd = true;
+  };
 
   # Unset, this falls back to nixpkgs' own default kernel package set,
   # which tracks an older/more conservative version (6.18) even on
