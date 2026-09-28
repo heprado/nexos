@@ -34,6 +34,8 @@ in
   networking.hostName = "marvin";
   programs.zsh.enable = true;
 
+  environment.systemPackages = [ pkgs.unzip ];
+
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
   # to build via NH_OS_FLAKE, set from `flake` below.
