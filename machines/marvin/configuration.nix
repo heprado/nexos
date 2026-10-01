@@ -188,7 +188,12 @@ in
       "libretro-snes9x2010"
     ];
 
-  home-manager.users.henrique = import ../../users/henrique/home.nix;
+  home-manager.users.henrique = {
+    imports = [ ../../users/henrique/home.nix ];
+    # Quickshell's own CLI (`qs`), for running shell configs by hand.
+    # Noctalia bundles Quickshell but doesn't put it on PATH.
+    home.packages = [ pkgs.quickshell ];
+  };
 
   sops.defaultSopsFile = ../../secrets/marvin.yaml;
   # Generate on marvin with `age-keygen`, then record the public key in
