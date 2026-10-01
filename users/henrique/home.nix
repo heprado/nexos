@@ -9,6 +9,7 @@
     ../../modules/home/helium.nix
     ../../modules/home/telegram.nix
     ../../modules/home/discord.nix
+    ../../modules/home/whatsapp.nix
     ../../modules/home/direnv.nix
     ../../modules/home/devenv.nix
     ../../modules/home/neovim.nix
