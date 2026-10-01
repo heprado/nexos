@@ -34,7 +34,7 @@ nexos/
       cli.nix                    # git, gh, glow, zoxide
       dev.nix                    # direnv + nix-direnv + devenv, so per-project devShells auto-activate
       chat.nix                   # Telegram, Discord, ZapZap (WhatsApp)
-      ai.nix                     # Claude Code + rtk + the Claude Code policy (CLAUDE.md)
+      ai.nix                     # Claude Code + its policy (CLAUDE.md)
       hyprland.nix               # Hyprland session config + Noctalia shell
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
 

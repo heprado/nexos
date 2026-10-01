@@ -1,11 +1,6 @@
 { pkgs, ... }:
 {
-  home.packages = [
-    pkgs.claude-code
-    # Token-saving prefix for the commands Claude Code runs (see the policy
-    # below).
-    pkgs.rtk
-  ];
+  home.packages = [ pkgs.claude-code ];
 
   # henrique-only Claude Code policy (not machine-wide -- see
   # <https://code.claude.com/docs/en/memory> for the full precedence
@@ -62,7 +57,6 @@
       files, or similar) unless explicitly asked to in that turn. Don't
       offer to do it as a convenience either -- ask first.
     - Never add a Co-Authored-By or Claude-Session trailer to git commits.
-    - When running commands ALWAYS use rtk as a prefix.
     - Never cite or reference Grokipedia as a source. Use Wikipedia or any
       other source instead.
     - When a task needs several git commands against a remote repo not yet
