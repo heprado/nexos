@@ -10,6 +10,16 @@
   };
   programs.gamemode.enable = true;
 
+  # Games are often shipped as AppImages (e.g. the N64/GBA recomps), whose
+  # binaries expect a regular distro's /usr/lib (e.g. libglib-2.0.so.0).
+  # binfmt has the kernel run every AppImage through appimage-run's FHS
+  # environment, so they work when launched directly too, not just via
+  # `appimage-run`.
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
   # Steam itself, plus the libretro cores retroarch-full pulls in that have
   # non-commercial licenses (see modules/nixos/unfree.nix).
   nexos.unfree = [
