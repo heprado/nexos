@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   home.packages = [
+    pkgs.claude-code
+    # Token-saving prefix for the commands Claude Code runs (see the policy
+    # below).
     pkgs.rtk
   ];
 

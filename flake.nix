@@ -39,11 +39,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-wsl = {
-      url = "github:nix-community/NixOS-WSL";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Secure Boot for marvin (signed UKIs + systemd-boot). Pinned to a
     # release tag, as upstream recommends, instead of tracking master.
     lanzaboote = {
@@ -52,7 +47,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, nixos-wsl, lanzaboote, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia-greeter, ... }@inputs: {
     # Per-language devShells for henrique's actual project repos (not
     # this one) -- `nix flake init -t .#<name>` drops in a devenv.nix +
     # devenv.yaml + .envrc so direnv auto-activates the right
@@ -83,45 +78,37 @@
       };
     };
 
-    nixosConfigurations.caixa = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      # `self` is passed alongside `inputs` (it isn't included in the
-      # @inputs capture above, since it's bound explicitly) so
-      # configuration.nix can register this flake's own path in the Nix
-      # registry -- see nix.registry.nexos there.
-      specialArgs = { inherit inputs self; };
-      modules = [
-        ./machines/caixa/configuration.nix
-        ./machines/caixa/disko-config.nix
-        home-manager.nixosModules.home-manager
-        sops-nix.nixosModules.sops
-        disko.nixosModules.disko
-        noctalia-greeter.nixosModules.default
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit inputs; };
-        }
-      ];
-    };
-
-    nixosConfigurations.marvin = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = { inherit inputs self; };
-      modules = [
-        ./machines/marvin/configuration.nix
-        ./machines/marvin/disko-config.nix
-        home-manager.nixosModules.home-manager
-        sops-nix.nixosModules.sops
-        disko.nixosModules.disko
-        noctalia-greeter.nixosModules.default
-        lanzaboote.nixosModules.lanzaboote
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit inputs; };
-        }
-      ];
-    };
+    nixosConfigurations =
+      let
+        # Each host is machines/<name>/{configuration,disko-config}.nix
+        # plus the modules every host shares. Host-only flake modules (e.g.
+        # marvin's lanzaboote) are imported from that host's
+        # configuration.nix via `inputs`.
+        mkHost = name: nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          # `self` is passed alongside `inputs` (it isn't included in the
+          # @inputs capture above, since it's bound explicitly) so
+          # modules/nixos/common.nix can register this flake's own path in
+          # the Nix registry -- see nix.registry.nexos there.
+          specialArgs = { inherit inputs self; };
+          modules = [
+            ./machines/${name}/configuration.nix
+            ./machines/${name}/disko-config.nix
+            home-manager.nixosModules.home-manager
+            sops-nix.nixosModules.sops
+            disko.nixosModules.disko
+            noctalia-greeter.nixosModules.default
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = { inherit inputs; };
+            }
+          ];
+        };
+      in
+      {
+        caixa = mkHost "caixa";
+        marvin = mkHost "marvin";
+      };
   };
 }

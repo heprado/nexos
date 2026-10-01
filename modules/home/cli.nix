@@ -1,5 +1,12 @@
-{ ... }:
+{ pkgs, ... }:
 {
+  home.packages = [
+    pkgs.git
+    pkgs.gh
+    # Renders Markdown in the terminal.
+    pkgs.glow
+  ];
+
   programs.zoxide = {
     enable = true;
     enableZshIntegration = true;

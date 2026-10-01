@@ -21,6 +21,8 @@ nexos/
 
   modules/
     nixos/                    # system-level (NixOS) modules, each one feature-scoped
+      common.nix                 # what every host shares (nix settings, locale, nh, kernel, ...) + the modules below they all import
+      unfree.nix                 # nexos.unfree: each module lists the unfree packages it needs
       docker-rootless.nix        # rootless Docker, per-user daemons
       ssh.nix                    # key-only SSH (no passwords, no root login)
       cloudflared.nix             # Cloudflare Tunnel: SSH/RDP/wayvnc reachable with no open inbound port
@@ -29,11 +31,12 @@ nexos/
       wayvnc-hyprland.nix         # wayvnc: remote access to henrique's actual Hyprland session
       novnc-hyprland.nix          # websockify+noVNC: browser/HTTPS front-end for the wayvnc above
     home/                     # home-manager modules (per-user environment, not system config)
-      claude-code.nix            # installs Claude Code
-      zoxide.nix                 # zoxide + zsh integration
+      cli.nix                    # git, gh, glow, zoxide
+      dev.nix                    # direnv + nix-direnv + devenv, so per-project devShells auto-activate
+      chat.nix                   # Telegram, Discord, ZapZap (WhatsApp)
+      ai.nix                     # Claude Code + rtk + the Claude Code policy (CLAUDE.md)
       hyprland.nix               # Hyprland session config + Noctalia shell
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
-      direnv.nix                 # direnv + nix-direnv, so per-project devShells auto-activate
 
   users/
     <name>/
@@ -53,7 +56,7 @@ nexos/
 ```
 
 **The pattern for adding things:**
-- New machine → new folder under `machines/`, add a `nixosConfigurations.<name>` entry in `flake.nix`.
+- New machine → new folder under `machines/` (its `configuration.nix` imports `modules/nixos/common.nix`), add `<name> = mkHost "<name>";` to `nixosConfigurations` in `flake.nix`.
 - New user (on an existing machine) → new folder under `users/`, import it from that machine's `configuration.nix`.
 - New system-wide feature → new file under `modules/nixos/`, imported by whichever machine(s) need it.
 - New personal tool/dotfile → new file under `modules/home/`, imported by whichever user(s) want it.

@@ -1,62 +1,21 @@
-{ config, lib, pkgs, inputs, self, ... }:
+{ config, lib, pkgs, inputs, ... }:
 let
   facts = import ./facts.nix;
 in
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/nixos/docker-rootless.nix
-    ../../modules/nixos/ssh.nix
-    ../../modules/nixos/desktop-hyprland.nix
-    ../../modules/nixos/chrony.nix
-    ../../modules/nixos/session-stop-timeout.nix
-    ../../modules/nixos/take-monitor.nix
-    ../../modules/nixos/lan-isolation.nix
+    ../../modules/nixos/common.nix
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/refind.nix
-    ../../users/henrique
+    inputs.lanzaboote.nixosModules.lanzaboote
   ];
 
-  # Noctalia isn't in the official nixpkgs cache; without this, its
-  # Quickshell/Qt dependencies get compiled from source on every rebuild.
-  nix.settings = {
-    extra-substituters = [ "https://noctalia.cachix.org" ];
-    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
-    # So `nix flake ...`/`nix build ...` etc. work without having to pass
-    # --extra-experimental-features "nix-command flakes" every time.
-    experimental-features = [ "nix-command" "flakes" ];
-  };
-
-  # Short alias for this flake itself, so the per-language devShell
-  # templates (see flake.nix's `templates` output) can be pulled with
-  # `nix flake init -t nexos#rust` instead of the full repo path.
-  nix.registry.nexos.flake = self;
-
   networking.hostName = "marvin";
-  programs.zsh.enable = true;
 
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
   # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).
   environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl ];
-
-  # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
-  # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
-  # to build via NH_OS_FLAKE, set from `flake` below.
-  programs.nh = {
-    enable = true;
-    clean.enable = true;
-    clean.extraArgs = "--keep-since 4d --keep 3";
-    flake = "/home/henrique/codigos/nexos";
-  };
-
-  i18n.defaultLocale = "pt_BR.UTF-8";
-  time.timeZone = "America/Sao_Paulo";
-
-  # Backend dconf needs to actually apply GTK theme settings (see
-  # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
-  programs.dconf.enable = true;
-
-  nixpkgs.overlays = [ inputs.helium-flake.overlays.default ];
 
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
@@ -64,13 +23,13 @@ in
   #
   # Secure Boot via lanzaboote: it still installs systemd-boot, but signs it
   # and each generation's UKI with the keys in pkiBundle, so the NixOS
-  # module's own systemd-boot installer has to be off. The rest of the
-  # systemd-boot options below are still read by lanzaboote (consoleMode
-  # ends up in its loader.conf). Keys are created and enrolled by hand
-  # (`sbctl create-keys`, then `sbctl enroll-keys --microsoft
-  # --firmware-builtin` with the firmware in Setup Mode): Microsoft's keys
-  # keep Windows' boot manager and the NVIDIA GOP option ROM trusted,
-  # Lenovo's factory ones keep its firmware tools working.
+  # module's own systemd-boot installer has to be off. The other
+  # systemd-boot options (common.nix's consoleMode) are still read by
+  # lanzaboote, into its loader.conf. Keys are created and enrolled by hand
+  # (`sbctl create-keys`, then `sbctl enroll-keys --append --microsoft`
+  # with the firmware in Setup Mode): appending keeps the db/KEK/dbx
+  # Windows Update had installed, Microsoft's keys keep Windows' boot
+  # manager and the NVIDIA GOP option ROM trusted.
   boot.loader.systemd-boot.enable = false;
   boot.lanzaboote = {
     enable = true;
@@ -80,13 +39,6 @@ in
     # only two distinct kernel+initrd pairs fit.
     configurationLimit = 2;
   };
-  # The default ("keep") reuses whatever console mode the firmware left
-  # set up, which on marvin is the laptop panel only. Windows' boot manager
-  # did show up on the HDMI monitor (NVIDIA-wired) too, so asking for a mode
-  # explicitly is an attempt to get the firmware to set it on every console
-  # it knows about. Unverified; revert to the default if it doesn't help.
-  boot.loader.systemd-boot.consoleMode = "auto";
-  boot.loader.efi.canTouchEfiVariables = true;
 
   # First boot menu: NixOS (-> systemd-boot's generation list) or Windows,
   # whose boot manager lives on the NVMe's own ESP.
@@ -116,12 +68,6 @@ in
     enable = true;
     initrd = true;
   };
-
-  # Unset, this falls back to nixpkgs' own default kernel package set,
-  # which tracks an older/more conservative version (6.18) even on
-  # nixpkgs-unstable -- linuxPackages_latest is what actually follows the
-  # newest kernel release packaged for this channel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # GPU: NVIDIA GTX 1650 (Turing/TU117) + Intel UHD (Comet Lake-H) hybrid
   # graphics, PRIME offload -- Intel iGPU stays the default renderer
@@ -170,35 +116,14 @@ in
     '';
   environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
 
-  # claude-code's license is marked "unfree" in nixpkgs; allow just that
-  # package rather than unfree packages in general. nvidia-* are needed
-  # for the proprietary driver above, steam* and the libretro-* cores
-  # (non-commercial licenses, pulled in by retroarch-full) for
-  # modules/nixos/gaming.nix.
-  nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [
-      "claude-code" "discord" "discord-unwrapped" "citrix-workspace" "linuxx64"
-      "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced"
-      "steam" "steam-unwrapped" "steam-original" "steam-run"
-      "libretro-fbalpha2012" "libretro-fbneo" "libretro-fmsx"
-      "libretro-genesis-plus-gx" "libretro-mame2000" "libretro-mame2003"
-      "libretro-mame2003-plus" "libretro-mame2010" "libretro-mame2015"
-      "libretro-opera" "libretro-picodrive" "libretro-snes9x"
-      "libretro-snes9x2002" "libretro-snes9x2005" "libretro-snes9x2005-plus"
-      "libretro-snes9x2010"
-    ];
+  # The proprietary driver above (see modules/nixos/unfree.nix).
+  nexos.unfree = [ "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced" ];
 
-  home-manager.users.henrique = {
-    imports = [ ../../users/henrique/home.nix ];
-    # Quickshell's own CLI (`qs`), for running shell configs by hand.
-    # Noctalia bundles Quickshell but doesn't put it on PATH.
-    home.packages = [ pkgs.quickshell ];
-  };
+  # Quickshell's own CLI (`qs`), for running shell configs by hand.
+  # Noctalia bundles Quickshell but doesn't put it on PATH.
+  home-manager.users.henrique.home.packages = [ pkgs.quickshell ];
 
   sops.defaultSopsFile = ../../secrets/marvin.yaml;
-  # Generate on marvin with `age-keygen`, then record the public key in
-  # .sops.yaml at the repo root as marvin's recipient. See secrets/README.md.
-  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
   # Bump to whatever release you actually install; do not change on upgrades.
   system.stateVersion = "24.05";

@@ -12,7 +12,7 @@
 
     # Deliberately no extraPackages for language LSPs/toolchains here --
     # those come from each project's own devShell (see the flake
-    # `templates` output and modules/home/direnv.nix), so a project only
+    # `templates` output and modules/home/dev.nix), so a project only
     # pulls in exactly the languages it actually uses.
     plugins = with pkgs.vimPlugins; [
       nvim-lspconfig
