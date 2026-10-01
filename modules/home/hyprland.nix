@@ -15,7 +15,17 @@ let
     ])).hyprqt6engine;
 in
 {
-  imports = [ inputs.noctalia.homeModules.default ];
+  imports = [
+    inputs.noctalia.homeModules.default
+    inputs.monitor-settings.homeManagerModules.default
+  ];
+
+  # Display arrangement (drag-and-drop canvas, mode, scale, rotation,
+  # adaptive sync) and DDC/CI controls. Positions set there go through
+  # wlr-randr, not hl.monitor below, so they'd be lost at every login --
+  # the module's oneshot user service reapplies the saved layout once
+  # graphical-session.target is up.
+  programs.monitor-settings.enable = true;
 
   programs.foot.enable = true;
 
@@ -155,10 +165,9 @@ in
     # brightness widget only exposes brightness, not color, even with
     # brightness.enableDdcSupport on in its settings.json.
     pkgs.ddcui
-    # Generic wlroots output tool (implements wlr-output-management-v1) --
-    # lets the Monitor Controls Noctalia plugin's drag-and-drop arrangement
-    # grid read/apply monitor positions without depending on Hyprland's own
-    # hyprctl, so the same plugin code works on Sway/river too.
+    # Generic wlroots output tool (implements wlr-output-management-v1),
+    # for inspecting/setting outputs by hand. Monitor Settings (above)
+    # carries its own copy on its wrapper's PATH and doesn't need this.
     pkgs.wlr-randr
     # Remote VDI access. The tarball can't be fetched automatically (Citrix's
     # EULA requires a manual, logged-in download); see the comment on

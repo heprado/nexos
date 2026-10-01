@@ -192,6 +192,26 @@
         "type": "github"
       }
     },
+    "monitor-settings": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790892854,
+        "narHash": "sha256-vOgQKy7eETpHPAr9Gk7sv61ArooFb6D7d+FB/Z+Bs+Y=",
+        "owner": "heprado",
+        "repo": "noctalia-monitor-settings",
+        "rev": "3ec075e67f1e67ec338e0f26e08295ec579bf231",
+        "type": "github"
+      },
+      "original": {
+        "owner": "heprado",
+        "repo": "noctalia-monitor-settings",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1790323409,
@@ -277,6 +297,7 @@
         "home-manager": "home-manager",
         "hyprqt6engine": "hyprqt6engine",
         "lanzaboote": "lanzaboote",
+        "monitor-settings": "monitor-settings",
         "nixpkgs": "nixpkgs",
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
