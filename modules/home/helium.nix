@@ -6,10 +6,8 @@
     enable = true;
     package = pkgs.helium;
 
-    # WebGPU on Linux runs over Vulkan (Dawn); caixa's Skylake HD 530 iGPU
-    # is old enough that Chromium's GPU blocklist disables some
-    # accelerated features on it by default, so force them on explicitly.
-    # VAAPI video decode also needs its own opt-in feature flag.
+    # WebGPU on Linux runs over Vulkan (Dawn), and VAAPI video decode needs
+    # its own opt-in feature flag.
     #
     # --enable-unsafe-webgpu is disabled for now (see git log for why it
     # was added -- a specific WebGPU site). Chrome only auto-enables
@@ -19,7 +17,6 @@
     # below.
     flags = [
       "--enable-features=Vulkan,AcceleratedVideoDecodeLinuxGL"
-      "--ignore-gpu-blocklist"
     ];
   };
 }
