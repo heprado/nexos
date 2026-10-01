@@ -13,6 +13,7 @@ in
     ../../modules/nixos/take-monitor.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/gaming.nix
+    ../../modules/nixos/refind.nix
     ../../users/henrique
   ];
 
@@ -86,6 +87,13 @@ in
   # it knows about. Unverified; revert to the default if it doesn't help.
   boot.loader.systemd-boot.consoleMode = "auto";
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # First boot menu: NixOS (-> systemd-boot's generation list) or Windows,
+  # whose boot manager lives on the NVMe's own ESP.
+  nexos.refind = {
+    enable = true;
+    windowsEsp = "ee46a2aa-aa95-4890-be73-2e631ebe70fa";
+  };
 
   # Boot splash: the firmware's own logo (BGRT, Lenovo's) with a spinning
   # NixOS snowflake under it. The firmware only ever lights up the laptop
