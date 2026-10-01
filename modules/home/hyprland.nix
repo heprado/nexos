@@ -13,6 +13,33 @@ let
       (_: prev: { gcc16Stdenv = prev.stdenv; })
       inputs.hyprqt6engine.overlays.hyprqt6engine-with-deps
     ])).hyprqt6engine;
+
+  # hyprqt6engine is Qt6-only, and QT_QPA_PLATFORMTHEME takes a single
+  # name for both Qt versions (a `a:b` list doesn't help: each Qt only
+  # tries the first entry), so Qt5 apps (vlc, ddcui, projectm) got Qt's
+  # default palette. Same trick Plasma uses -- one theme name answered by
+  # a Qt5 and a Qt6 plugin: qt5ct already answers to "qt6ct" besides its
+  # own name, and this makes it answer to "hyprqt6engine" too. Qt5 apps
+  # then load qt5ct (configured by qt5ct.conf below) under the same
+  # variable that gets Qt6 apps hyprqt6engine. --replace-fail turns a
+  # qt5ct update that moves these lines into a build error instead of a
+  # silently unthemed Qt5.
+  qt5ct = pkgs.libsForQt5.qt5ct.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace src/qt5ct-qtplugin/qt5ct.json \
+        --replace-fail '"qt6ct"' '"qt6ct", "hyprqt6engine"'
+      substituteInPlace src/qt5ct-qtplugin/main.cpp \
+        --replace-fail 'key.toLower() == "qt6ct"' \
+                       'key.toLower() == "qt6ct" || key.toLower() == "hyprqt6engine"'
+    '';
+  });
+
+  # Each Qt only loads plugins built for its own major version, so both
+  # directories can share one QT_PLUGIN_PATH.
+  qtPluginPath = lib.concatStringsSep ":" [
+    "${hyprqt6engine}/lib/qt-6"
+    "${qt5ct}/${pkgs.libsForQt5.qtbase.qtPluginPrefix}"
+  ];
 in
 {
   imports = [
@@ -317,7 +344,7 @@ in
   home.file."Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png".source =
     ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
-  # QT_QPA_PLATFORMTHEME alone isn't enough: most Qt6 apps here (ddcui,
+  # QT_QPA_PLATFORMTHEME alone isn't enough: most Qt apps here (ddcui,
   # feishin, etc.) aren't built with hyprqt6engine as a buildInput, so
   # nixpkgs' wrapQtAppsHook never adds its plugin dir to their own
   # per-binary QT_PLUGIN_PATH wrapper -- some (e.g. ddcui) aren't even
@@ -325,10 +352,11 @@ in
   # default plugin path (baked from qtbase's own store path at build
   # time), which can never see a separately-built package like
   # hyprqt6engine, so "hyprqt6engine" would silently fail to load as
-  # the platform theme everywhere except its own process.
+  # the platform theme everywhere except its own process. The same goes
+  # for the patched qt5ct and Qt5 apps (see qtPluginPath above).
   home.sessionVariables = {
     QT_QPA_PLATFORMTHEME = "hyprqt6engine";
-    QT_PLUGIN_PATH = "${hyprqt6engine}/lib/qt-6";
+    QT_PLUGIN_PATH = qtPluginPath;
   };
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
@@ -344,6 +372,17 @@ in
     theme {
         color_scheme = /home/henrique/.config/qt6ct/colors/noctalia.conf
     }
+  '';
+
+  # The Qt5 side of the same theme: the patched qt5ct (see the let block)
+  # reads this, pointed at the qt5ct copy of the color scheme Noctalia's
+  # "qt" template renders alongside the qt6ct one. Fusion matches the
+  # style Qt6 apps get from hyprqt6engine.
+  xdg.configFile."qt5ct/qt5ct.conf".text = ''
+    [Appearance]
+    color_scheme_path=/home/henrique/.config/qt5ct/colors/noctalia.conf
+    custom_palette=true
+    style=Fusion
   '';
 
   # Without this, the cursor theme only ever exists as a live dconf/nwg-look
@@ -523,7 +562,7 @@ in
       -- never see QT_PLUGIN_PATH either, so hyprqt6engine's platform
       -- theme plugin silently fails to load for them even though the
       -- QT_QPA_PLATFORMTHEME name above is set correctly.
-      hl.env("QT_PLUGIN_PATH", "${hyprqt6engine}/lib/qt-6")
+      hl.env("QT_PLUGIN_PATH", "${qtPluginPath}")
 
       -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
       -- only writes plain home.sessionVariables, which don't reach the
