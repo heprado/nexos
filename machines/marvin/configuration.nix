@@ -35,7 +35,8 @@ in
   programs.zsh.enable = true;
 
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
-  environment.systemPackages = [ pkgs.unzip pkgs.unar ];
+  # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).
+  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
@@ -59,7 +60,25 @@ in
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
   # which would silently drop bootloader config if it lived there.
-  boot.loader.systemd-boot.enable = true;
+  #
+  # Secure Boot via lanzaboote: it still installs systemd-boot, but signs it
+  # and each generation's UKI with the keys in pkiBundle, so the NixOS
+  # module's own systemd-boot installer has to be off. The rest of the
+  # systemd-boot options below are still read by lanzaboote (consoleMode
+  # ends up in its loader.conf). Keys are created and enrolled by hand
+  # (`sbctl create-keys`, then `sbctl enroll-keys --microsoft
+  # --firmware-builtin` with the firmware in Setup Mode): Microsoft's keys
+  # keep Windows' boot manager and the NVIDIA GOP option ROM trusted,
+  # Lenovo's factory ones keep its firmware tools working.
+  boot.loader.systemd-boot.enable = false;
+  boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+    # The ESP is only 512M and each initrd is ~210M (the NVIDIA module and
+    # its GSP firmware are in it, see boot.initrd.kernelModules below), so
+    # only two distinct kernel+initrd pairs fit.
+    configurationLimit = 2;
+  };
   # The default ("keep") reuses whatever console mode the firmware left
   # set up, which on marvin is the laptop panel only. Windows' boot manager
   # did show up on the HDMI monitor (NVIDIA-wired) too, so asking for a mode

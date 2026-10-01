@@ -43,9 +43,16 @@
       url = "github:nix-community/NixOS-WSL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Secure Boot for marvin (signed UKIs + systemd-boot). Pinned to a
+    # release tag, as upstream recommends, instead of tracking master.
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v1.2.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, nixos-wsl, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia, noctalia-greeter, helium-flake, nixos-wsl, lanzaboote, ... }@inputs: {
     # Per-language devShells for henrique's actual project repos (not
     # this one) -- `nix flake init -t .#<name>` drops in a devenv.nix +
     # devenv.yaml + .envrc so direnv auto-activates the right
@@ -108,6 +115,7 @@
         sops-nix.nixosModules.sops
         disko.nixosModules.disko
         noctalia-greeter.nixosModules.default
+        lanzaboote.nixosModules.lanzaboote
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
