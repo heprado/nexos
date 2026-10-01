@@ -1,4 +1,19 @@
-{ inputs, pkgs, ... }:
+{ inputs, pkgs, lib, ... }:
+let
+  # hyprqt6engine is a Qt platform-theme plugin: it's dlopen()ed into
+  # every Qt app, so it has to link against the same libstdc++ they do.
+  # The hyprwm flake builds it (and hyprlang/hyprutils under it) with
+  # gcc16Stdenv, needing GLIBCXX_3.4.36, which nixpkgs' gcc-15 Qt apps
+  # don't have -- the plugin then fails to load everywhere ("version
+  # `GLIBCXX_3.4.36' not found", visible with QT_DEBUG_PLUGINS=1) and Qt
+  # silently falls back to its default palette. Rebuilt here with the
+  # regular stdenv instead; the extended package set is local to this.
+  hyprqt6engine =
+    (pkgs.extend (lib.composeManyExtensions [
+      (_: prev: { gcc16Stdenv = prev.stdenv; })
+      inputs.hyprqt6engine.overlays.hyprqt6engine-with-deps
+    ])).hyprqt6engine;
+in
 {
   imports = [ inputs.noctalia.homeModules.default ];
 
@@ -19,12 +34,6 @@
       icon = "nvim";
       terminal = true;
       categories = [ "Utility" "TextEditor" "Development" ];
-    };
-    qt6ct = {
-      name = "Configurações QT";
-      exec = "qt6ct";
-      icon = "preferences-desktop-theme";
-      categories = [ "Settings" "DesktopSettings" "Qt" ];
     };
     nwg-look = {
       name = "Configurações GTK";
@@ -122,17 +131,15 @@
   # templates above actually need to take effect app-wide.
   # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
   #
-  # hyprqt6engine (below, QT_QPA_PLATFORMTHEME) is the actual runtime Qt
-  # theme engine now -- qt6ct is archived upstream and no longer the
-  # active platform theme, but it's kept installed purely as a GUI for
-  # browsing/editing color-scheme files (which hyprqt6engine's own
-  # hyprqt6engine.conf then points at -- see xdg.configFile below). qt6ct
-  # itself never runs as QT_QPA_PLATFORMTHEME anymore.
+  # hyprqt6engine (below, QT_QPA_PLATFORMTHEME) is the Qt theme engine.
+  # qt6ct isn't installed: it's archived upstream, and its GUI only edits
+  # its own qt6ct.conf, which hyprqt6engine never reads -- theme changes
+  # made there silently did nothing. The Qt colors come from Noctalia's
+  # "qt" template instead (see hyprqt6engine.conf below).
   home.packages = [
     pkgs.adw-gtk3
     pkgs.nwg-look
-    pkgs.qt6Packages.qt6ct
-    inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default
+    hyprqt6engine
     # Provides the "JetBrainsMono Nerd Font" family foot.ini (below) uses --
     # nothing in this config previously installed any Nerd Font at all, so
     # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
@@ -312,18 +319,22 @@
   # the platform theme everywhere except its own process.
   home.sessionVariables = {
     QT_QPA_PLATFORMTHEME = "hyprqt6engine";
-    QT_PLUGIN_PATH = "${inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default}/lib/qt-6";
+    QT_PLUGIN_PATH = "${hyprqt6engine}/lib/qt-6";
   };
   dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
-  # hyprqt6engine reads this instead of qt6ct's own qt6ct.conf. Points
-  # color_scheme at the same qt6ct-format file Noctalia's "qt" builtin
-  # template already renders (hyprqt6engine's own docs confirm it accepts
-  # qt6ct-format theme files directly) -- no changes needed to the
+  # Points color_scheme at the file Noctalia's "qt" builtin template
+  # renders. The template writes it under ~/.config/qt6ct/ in qt6ct's
+  # color-scheme format even with qt6ct itself not installed, and
+  # hyprqt6engine accepts that format directly -- no changes needed to the
   # programs.noctalia.settings.theme.templates.builtin_ids list above.
+  # The *color scheme* file is qt6ct's INI format, but this config file
+  # itself is hyprlang (`theme:color_scheme`): an INI `[theme]` header is
+  # an "Invalid config line" and the whole entry gets dropped.
   xdg.configFile."hypr/hyprqt6engine.conf".text = ''
-    [theme]
-    color_scheme=/home/henrique/.config/qt6ct/colors/noctalia.conf
+    theme {
+        color_scheme = /home/henrique/.config/qt6ct/colors/noctalia.conf
+    }
   '';
 
   # Without this, the cursor theme only ever exists as a live dconf/nwg-look
@@ -503,7 +514,7 @@
       -- never see QT_PLUGIN_PATH either, so hyprqt6engine's platform
       -- theme plugin silently fails to load for them even though the
       -- QT_QPA_PLATFORMTHEME name above is set correctly.
-      hl.env("QT_PLUGIN_PATH", "${inputs.hyprqt6engine.packages.${pkgs.stdenv.system}.default}/lib/qt-6")
+      hl.env("QT_PLUGIN_PATH", "${hyprqt6engine}/lib/qt-6")
 
       -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
       -- only writes plain home.sessionVariables, which don't reach the
