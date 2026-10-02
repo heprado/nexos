@@ -126,18 +126,16 @@ in
   # foot.ini itself, which would fight with us owning the file directly
   # below -- simpler to just own foot.ini directly here.
   #
-  # Colors are the henrique customPalette's dark.terminal.* values
-  # (below), inlined by hand instead of noctalia's "foot" builtin_id
-  # template (deliberately NOT in templates.builtin_ids below): that
-  # template always renders the ".default" palette variant, not the
-  # active dark/light mode, which is why switching noctalia to light
-  # theme changed nothing in foot either way -- an upstream bug. Means
-  # this won't live-update on theme changes (foot has no live-reload for
-  # color config anyway, so that's moot until the next foot window) or
-  # automatically track dark/light mode -- if noctalia ever fixes the
-  # template upstream, switch back.
+  # Colors come from noctalia's "foot" template (templates.builtin_ids
+  # below), which renders the active palette's terminal.* colors -- for
+  # whichever of dark/light mode is active -- into themes/noctalia. Its
+  # apply.sh would add the include line below to foot.ini itself, but
+  # can't write to this read-only (store-linked) file; with the line
+  # already here its check passes and it leaves the file alone. foot only
+  # picks up new colors in newly opened windows.
   xdg.configFile."foot/foot.ini".text = ''
     [main]
+    include=~/.config/foot/themes/noctalia
     # A Nerd Font specifically (not a fallback list) -- nvim-web-devicons,
     # lualine, and blink.cmp's nerd_font_variant (all in neovim.nix) render
     # icon glyphs that only exist in Nerd Font builds, and those glyphs are
@@ -145,29 +143,6 @@ in
     # patched font itself. A separate fallback font for just the icons
     # tends to misalign cell width/baseline instead.
     font=JetBrainsMono Nerd Font:size=13
-
-    [colors-dark]
-    foreground=fffcf8
-    background=1c1e1e
-    regular0=1c1e1e
-    regular1=ff6b5a
-    regular2=98be65
-    regular3=f2c481
-    regular4=51afef
-    regular5=dc8ef3
-    regular6=46d9ff
-    regular7=bbc2cf
-    bright0=2e323a
-    bright1=ff7665
-    bright2=a9cf76
-    bright3=f2c481
-    bright4=47a5e5
-    bright5=c678dd
-    bright6=4db5bd
-    bright7=f0f6fc
-    selection-foreground=2d3138
-    selection-background=fffcf8
-    cursor=1c1e1e bbc2cf
   '';
 
   # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
@@ -455,111 +430,140 @@ in
         # apps pick up the same henrique palette.
         # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
         #
-        # Deliberately NOT "foot": that builtin template always renders the
-        # ".default" palette variant, ignoring dark/light mode -- see the
-        # comment on xdg.configFile."foot/foot.ini" above, which inlines
-        # the same colors by hand instead.
+        # "foot" renders ~/.config/foot/themes/noctalia, included from
+        # foot.ini (see xdg.configFile."foot/foot.ini" above). Its
+        # ".default" variant is the active dark/light mode: noctalia
+        # applies templates with the resolved mode (application_services.cpp).
         #
         # "hyprland" renders ~/.config/hypr/noctalia.lua (border/groupbar
-        # colors driven by the active palette). Its apply.sh can't append
-        # the require("noctalia") line into our hyprland.lua (home-manager
-        # symlinks it read-only from the store) -- so that line is added by
-        # hand in extraConfig below instead of relying on apply.sh for it.
-        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "hyprland" ];
+        # colors and groupbar text, driven by the active palette, plus a
+        # `colors` table the config below reads mSurface from). Its
+        # apply.sh can't append the require("noctalia") line into our
+        # hyprland.lua (home-manager symlinks it read-only from the store)
+        # -- so that line is added by hand in extraConfig below instead of
+        # relying on apply.sh for it.
+        #
+        # So every color comes from customPalettes.henrique below; nothing
+        # here hardcodes one.
+        builtin_ids = [ "gtk3" "gtk4" "qt" "kcolorscheme" "hyprland" "foot" ];
+
+        # Fetched from api.noctalia.dev/templates. Neither applies itself:
+        # - "telegram" renders
+        #   ~/.config/telegram-desktop/themes/noctalia.tdesktop-theme, which
+        #   has to be opened from Telegram (Settings > Chat Settings >
+        #   Choose from file) -- again after palette changes.
+        # - "ungoogled-chromium" renders a theme extension into
+        #   ~/.cache/noctalia/ungoogled-chromium/theme, loaded once in
+        #   Helium (chrome://extensions > Developer mode > Load unpacked);
+        #   it then follows the palette, after a browser restart.
+        # - "discord" renders themes for Vesktop (modules/home/chat.nix)
+        #   into ~/.config/vesktop/themes -- enabled once in Vesktop
+        #   (Settings > Themes). It also writes the same files for other
+        #   Discord client mods (Vencord, BetterDiscord, ...), unused here.
+        enable_community_templates = true;
+        community_ids = [ "telegram" "ungoogled-chromium" "discord" ];
       };
     };
     # Written to ~/.config/noctalia/palettes/henrique.json.
     # See <https://docs.noctalia.dev/v5/theming/#custom_palette>.
     customPalettes.henrique = {
+      # Tama's colors (Gintama): hair #5A9E72, eyes #8B2C45, yukata #4261A1,
+      # apron #EAEAEA, obi #D9A752, the screw in her hair #7D848C. The
+      # backgrounds are the yukata blue darkened (dark) or the apron
+      # (light). On the dark background the eyes and yukata colors are too
+      # dark to read (2.0:1 and 2.8:1), so lightened versions are used
+      # there; magenta/cyan, which the six colors don't have, mix eyes +
+      # yukata and hair + yukata. Every text/terminal color clears 4.5:1
+      # against its background.
       dark = {
-        mPrimary = "#51afef";
-        mOnPrimary = "#1c1e1e";
-        mSecondary = "#f2c481";
-        mOnSecondary = "#1c1e1e";
-        mTertiary = "#98be65";
-        mOnTertiary = "#1c1e1e";
-        mError = "#ff6b5a";
-        mOnError = "#1c1e1e";
-        mSurface = "#1c1e1e";
-        mOnSurface = "#fffcf8";
-        mHover = "#2d3139";
-        mOnHover = "#fffcf8";
-        mSurfaceVariant = "#282c34";
-        mOnSurfaceVariant = "#bbc2cf";
-        mOutline = "#3f444a";
-        mShadow = "#111212";
+        mPrimary = "#5A9E72";
+        mOnPrimary = "#171A21";
+        mSecondary = "#D9A752";
+        mOnSecondary = "#171A21";
+        mTertiary = "#6E8CC8";
+        mOnTertiary = "#171A21";
+        mError = "#D0607A";
+        mOnError = "#171A21";
+        mSurface = "#171A21";
+        mOnSurface = "#EAEAEA";
+        mHover = "#2B3240";
+        mOnHover = "#EAEAEA";
+        mSurfaceVariant = "#20252F";
+        mOnSurfaceVariant = "#B9BEC6";
+        mOutline = "#7D848C";
+        mShadow = "#0C0E12";
         terminal = {
-          background = "#1c1e1e";
-          foreground = "#fffcf8";
-          cursor = "#bbc2cf";
-          cursorText = "#1c1e1e";
-          selectionBg = "#fffcf8";
-          selectionFg = "#2d3138";
+          background = "#171A21";
+          foreground = "#EAEAEA";
+          cursor = "#5A9E72";
+          cursorText = "#171A21";
+          selectionBg = "#4261A1";
+          selectionFg = "#EAEAEA";
           normal = {
-            black = "#1c1e1e";
-            red = "#ff6b5a";
-            green = "#98be65";
-            yellow = "#f2c481";
-            blue = "#51afef";
-            magenta = "#dc8ef3";
-            cyan = "#46d9ff";
-            white = "#bbc2cf";
+            black = "#20252F";
+            red = "#D0607A";
+            green = "#5A9E72";
+            yellow = "#D9A752";
+            blue = "#6E8CC8";
+            magenta = "#B36DA0";
+            cyan = "#4FA6A0";
+            white = "#B9BEC6";
           };
           bright = {
-            black = "#2e323a";
-            red = "#ff7665";
-            green = "#a9cf76";
-            yellow = "#f2c481";
-            blue = "#47a5e5";
-            magenta = "#c678dd";
-            cyan = "#4db5bd";
-            white = "#f0f6fc";
+            black = "#7D848C";
+            red = "#E07D93";
+            green = "#7DBE93";
+            yellow = "#EBC27A";
+            blue = "#93AEE0";
+            magenta = "#CB8DBB";
+            cyan = "#74C4BE";
+            white = "#EAEAEA";
           };
         };
       };
       light = {
-        mPrimary = "#4078f2";
-        mOnPrimary = "#fafafa";
-        mSecondary = "#ea9558";
-        mOnSecondary = "#fafafa";
-        mTertiary = "#50a14f";
-        mOnTertiary = "#fafafa";
-        mError = "#e45649";
-        mOnError = "#fafafa";
-        mSurface = "#f0f0f0";
-        mOnSurface = "#383a42";
-        mSurfaceVariant = "#fafafa";
-        mOnSurfaceVariant = "#2e2e2e";
-        mOutline = "#c6c7c7";
-        mShadow = "#f0f0f0";
-        mHover = "#51afef";
-        mOnHover = "#f0f0f0";
+        mPrimary = "#3A7550";
+        mOnPrimary = "#F5F5F5";
+        mSecondary = "#86601A";
+        mOnSecondary = "#F5F5F5";
+        mTertiary = "#4261A1";
+        mOnTertiary = "#F5F5F5";
+        mError = "#8B2C45";
+        mOnError = "#F5F5F5";
+        mSurface = "#EAEAEA";
+        mOnSurface = "#1E2533";
+        mSurfaceVariant = "#F5F5F5";
+        mOnSurfaceVariant = "#3E4654";
+        mOutline = "#7D848C";
+        mShadow = "#C9CDD3";
+        mHover = "#D9DDE3";
+        mOnHover = "#1E2533";
         terminal = {
-          foreground = "#383a42";
-          background = "#f0f0f0";
-          selectionFg = "#fafafa";
-          selectionBg = "#4078f2";
-          cursorText = "#2e2e2e";
-          cursor = "#c6c7c7";
+          foreground = "#1E2533";
+          background = "#EAEAEA";
+          selectionFg = "#F5F5F5";
+          selectionBg = "#4261A1";
+          cursorText = "#EAEAEA";
+          cursor = "#3A7550";
           normal = {
-            black = "#383a42";
-            red = "#e45649";
-            green = "#50a14f";
-            yellow = "#986801";
-            blue = "#4078f2";
-            magenta = "#a626a4";
-            cyan = "#0184bc";
-            white = "#c6c7c7";
+            black = "#1E2533";
+            red = "#8B2C45";
+            green = "#3A7550";
+            yellow = "#86601A";
+            blue = "#4261A1";
+            magenta = "#7E3F72";
+            cyan = "#2B726D";
+            white = "#7D848C";
           };
           bright = {
-            black = "#2e2e2e";
-            red = "#c85a50";
-            green = "#4db5bd";
-            yellow = "#da8548";
-            blue = "#a0bcf8";
-            magenta = "#b751b6";
-            cyan = "#005478";
-            white = "#f0f0f0";
+            black = "#4A5260";
+            red = "#A3364F";
+            green = "#3C7150";
+            yellow = "#83601E";
+            blue = "#4965A3";
+            magenta = "#8F4C83";
+            cyan = "#2C706B";
+            white = "#B9BEC6";
           };
         };
       };
@@ -648,8 +652,10 @@ in
           -- between groupbar tabs, etc.) before any window content -- the
           -- default (0xff111111) still lets an unstable/changing wallpaper
           -- show through those gaps. Pinned to mSurface instead of relying
-          -- on the wallpaper for it.
-          background_color = "0xff1c1e1e", -- mSurface
+          -- on the wallpaper for it, read from the noctalia template's
+          -- `colors` table so it follows the palette (and dark/light mode);
+          -- left at Hyprland's default if the template isn't rendered yet.
+          background_color = ok and noctaliaTheme.colors.surface or nil,
         },
         group = {
           groupbar = {
@@ -657,16 +663,10 @@ in
             -- and SUPER+SHIFT/ALT+2/4/6 above) whittles a group down to its
             -- last window -- a one-tab bar is just clutter at that point.
             disable_when_only = true,
-            -- col.active/col.inactive come from the noctalia "hyprland"
-            -- template applied above (mSecondary/mSurface), not hardcoded
-            -- here.
-            -- mOnPrimary/mOnSurfaceVariant, not mOnSecondary/mOnSurface
-            -- (the "correct" pair for the template's col.active/inactive
-            -- above) -- both still read fine against those, and the
-            -- palette doesn't expose text_color as a templated field
-            -- anyway.
-            text_color = "0xff1c1e1e",          -- mOnPrimary
-            text_color_inactive = "0xffbbc2cf", -- mOnSurfaceVariant
+            -- col.active/col.inactive and text_color/text_color_inactive
+            -- come from the noctalia "hyprland" template applied above
+            -- (mSecondary/mSurface, mOnSecondary/mOnSurface), not
+            -- hardcoded here.
             -- col.active/col.inactive above only paint a thin 3px
             -- indicator strip (indicator_height) at the bottom of each
             -- tab -- NOT the area behind the title text (per
