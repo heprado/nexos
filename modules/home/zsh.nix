@@ -13,13 +13,18 @@
   programs.zsh = {
     enable = true;
     shellAliases = {
-      # No "#host": nixos-rebuild picks the flake output matching this
-      # machine's hostname, so the same alias is right on caixa and marvin.
-      # It already runs sudo itself -- use `nrs`, not `sudo nrs`.
-      nrs = "sudo nixos-rebuild switch --flake /home/henrique/codigos/nexos";
-      # Lets `sudo nrs` also expand the alias above (sudo isn't a shell
-      # builtin, so it normally can't see aliases) -- a trailing space on
-      # an alias's value tells zsh to alias-expand the *next* word too.
+      # nh finds the flake via programs.nh.flake (modules/nixos/common.nix)
+      # and the output via this machine's hostname, so the same aliases are
+      # right on caixa and marvin. It shows what changed (added/removed/
+      # updated packages) after building, and asks for sudo itself only to
+      # activate -- use `nrs`, not `sudo nrs`.
+      nrs = "nh os switch";
+      # `test`: activates the new config now without making it the boot
+      # default, so a reboot falls back to the previous one.
+      nrt = "nh os test";
+      # Lets `sudo <alias>` also expand aliases (sudo isn't a shell
+      # builtin, so it normally can't see them) -- a trailing space on an
+      # alias's value tells zsh to alias-expand the *next* word too.
       sudo = "sudo ";
     };
 
