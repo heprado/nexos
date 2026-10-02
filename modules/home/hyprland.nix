@@ -1,4 +1,4 @@
-{ inputs, pkgs, lib, ... }:
+{ config, osConfig, inputs, pkgs, lib, ... }:
 let
   # hyprqt6engine is a Qt platform-theme plugin: it's dlopen()ed into
   # every Qt app, so it has to link against the same libstdc++ they do.
@@ -398,6 +398,38 @@ in
     size = 24;
     hyprcursor.enable = true;
   };
+
+  # Noctalia's control center saves its changes to
+  # ~/.local/state/noctalia/settings.toml, layered over the config.toml that
+  # programs.noctalia below generates. That file isn't managed by Nix, so on
+  # every activation (each `nrs`) it's synced with a copy in this repo, to
+  # be committed (one copy per host, since e.g. lockscreen widget positions
+  # depend on its monitors): the newer of the two overwrites the other, so
+  # control-center changes land in the repo and hand edits to the repo copy
+  # (or a git pull) land in ~/.local/state; a missing side (e.g. after a
+  # reinstall, before Noctalia first starts) is filled from the other. The
+  # repo copy is read at activation time from the checkout nh builds
+  # (programs.nh.flake), not from the store, so it can change without a
+  # rebuild.
+  home.activation.noctaliaSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    state="${config.xdg.stateHome}/noctalia/settings.toml"
+    repo="${osConfig.programs.nh.flake}/dotfiles/noctalia/${osConfig.networking.hostName}/settings.toml"
+    # Whichever side was modified last wins; -p keeps that mtime on the
+    # copy, so the next activation sees both equal and does nothing.
+    if [ -f "$state" ] && [ -f "$repo" ]; then
+      if [ "$repo" -nt "$state" ]; then
+        run cp -p "$repo" "$state"
+      elif [ "$state" -nt "$repo" ]; then
+        run cp -p "$state" "$repo"
+      fi
+    elif [ -f "$state" ]; then
+      run mkdir -p "$(dirname "$repo")"
+      run cp -p "$state" "$repo"
+    elif [ -f "$repo" ]; then
+      run mkdir -p "$(dirname "$state")"
+      run cp -p "$repo" "$state"
+    fi
+  '';
 
   # Launched from Hyprland's Lua config itself (hl.on("hyprland.start", ...)
   # below), per <https://docs.noctalia.dev/v5/compositor-settings/hyprland/>
