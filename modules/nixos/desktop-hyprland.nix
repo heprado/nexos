@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   # Local physical console only (henrique). Session appears in SDDM's
   # session picker alongside Plasma; anyone at the physical console can
@@ -25,6 +25,29 @@
     # store (world-readable) and interpolates its absolute store path --
     # the toml settings attrset needs a plain string here, not a Nix path.
     settings.appearance.wallpaper.path = "${../../users/henrique/217060-kagura-gintama-1920x1080.png}";
+    # Same colors as henrique's Noctalia shell: the greeter runs as its own
+    # user before login, so it can't read his palette, but it takes the
+    # same keys in snake_case without the "m" (mOnSurfaceVariant ->
+    # on_surface_variant) -- converted here from customPalettes.henrique in
+    # modules/home/hyprland.nix, so that stays the only place colors are
+    # set. "Synced" is the scheme that uses [appearance.palette].
+    settings.appearance = {
+      scheme = "Synced";
+      theme_mode = "dark";
+      # The Noctalia brand logo on the login screen.
+      hide_logo = true;
+      palette =
+        let
+          dark = config.home-manager.users.henrique.programs.noctalia.customPalettes.henrique.dark;
+          # "mOnSurfaceVariant" -> "on_surface_variant"
+          snake = name:
+            lib.removePrefix "_" (lib.concatMapStrings
+              (c: if c != lib.toLower c then "_" + lib.toLower c else c)
+              (lib.stringToCharacters (lib.removePrefix "m" name)));
+        in
+        lib.mapAttrs' (name: lib.nameValuePair (snake name))
+          (removeAttrs dark [ "terminal" ]);
+    };
   };
 
   # Recommended by Noctalia (the shell/bar running in henrique's Hyprland
