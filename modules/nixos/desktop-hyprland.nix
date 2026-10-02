@@ -17,7 +17,7 @@
   # login screen, matching the look of henrique's Noctalia shell. It only
   # lists Wayland sessions (wayland-sessions/*.desktop) -- no X11 support.
   services.displayManager.sddm.enable = false;
-  programs.noctalia-greeter = {
+  services.displayManager.noctalia-greeter = {
     enable = true;
     settings.session.default = "Hyprland";
     # Same wallpaper as the Hyprland session (see modules/home/hyprland.nix),
