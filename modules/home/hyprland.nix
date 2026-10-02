@@ -47,6 +47,12 @@ in
     inputs.monitor-settings.homeManagerModules.default
   ];
 
+  # home-manager now ships its own programs.noctalia, declaring the same
+  # options as Noctalia's module above. That module disables it itself, but
+  # by its old path ("programs/noctalia.nix"); home-manager moved it to a
+  # directory, so both got loaded ("option ... is already declared").
+  disabledModules = [ "programs/noctalia" ];
+
   # Display arrangement (drag-and-drop canvas, mode, scale, rotation,
   # adaptive sync) and DDC/CI controls. Positions set there go through
   # wlr-randr, not hl.monitor below, so they'd be lost at every login --
