@@ -20,17 +20,8 @@
     binfmt = true;
   };
 
-  # Steam itself, plus the libretro cores retroarch-full pulls in that have
-  # non-commercial licenses (see modules/nixos/unfree.nix).
-  nexos.unfree = [
-    "steam" "steam-unwrapped" "steam-original" "steam-run"
-    "libretro-fbalpha2012" "libretro-fbneo" "libretro-fmsx"
-    "libretro-genesis-plus-gx" "libretro-mame2000" "libretro-mame2003"
-    "libretro-mame2003-plus" "libretro-mame2010" "libretro-mame2015"
-    "libretro-opera" "libretro-picodrive" "libretro-snes9x"
-    "libretro-snes9x2002" "libretro-snes9x2005" "libretro-snes9x2005-plus"
-    "libretro-snes9x2010"
-  ];
+  # Steam (see modules/nixos/unfree.nix).
+  nexos.unfree = [ "steam" "steam-unwrapped" "steam-original" "steam-run" ];
 
   environment.systemPackages = with pkgs; [
     # Non-Steam stores/runners: GOG, Battle.net, emulators, wine in general.
@@ -40,10 +31,8 @@
     protonup-qt
     # FPS/frametime overlay: `mangohud %command%` in Steam launch options.
     mangohud
-    # Emulator frontend, bundled with every libretro core packaged in nixpkgs.
-    retroarch-full
-    # Standalone PS2 emulator; more complete and up to date than the
-    # libretro port. Run with `nvidia-offload pcsx2-qt` to use the GTX 1650.
+    # Standalone PS2 emulator. Run with `nvidia-offload pcsx2-qt` to use
+    # the GTX 1650.
     pcsx2
     eden
   ];
