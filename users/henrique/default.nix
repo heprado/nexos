@@ -14,10 +14,10 @@
   # module already provides by default.
   programs.nix-ld.libraries = with pkgs; [ SDL2 freetype libglvnd ];
 
-  # Unfree packages in henrique's home (modules/home/ai.nix's claude-code,
-  # chat.nix's discord). home-manager uses the system's pkgs, so they're
-  # allowed here (see modules/nixos/unfree.nix).
-  nexos.unfree = [ "claude-code" "discord" "discord-unwrapped" ];
+  # Unfree packages in henrique's home (modules/home/ai.nix's claude-code).
+  # home-manager uses the system's pkgs, so it's allowed here (see
+  # modules/nixos/unfree.nix).
+  nexos.unfree = [ "claude-code" ];
 
   users.users.henrique = {
     isNormalUser = true;

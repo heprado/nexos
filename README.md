@@ -33,7 +33,7 @@ nexos/
     home/                     # home-manager modules (per-user environment, not system config)
       cli.nix                    # git, gh, glow, zoxide
       dev.nix                    # direnv + nix-direnv + devenv, so per-project devShells auto-activate
-      chat.nix                   # Telegram, Discord, ZapZap (WhatsApp)
+      chat.nix                   # Telegram, Vesktop (Discord), ZapZap (WhatsApp)
       ai.nix                     # Claude Code + its policy (CLAUDE.md)
       hyprland.nix               # Hyprland session config + Noctalia shell
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.

@@ -2,9 +2,19 @@
 {
   home.packages = [
     pkgs.telegram-desktop
-    pkgs.discord
+    # Vesktop instead of the official Discord client: it loads CSS themes,
+    # so it follows the Noctalia palette (the "discord" community template
+    # in modules/home/hyprland.nix). Same account and servers.
+    pkgs.vesktop
     # ZapZap: WhatsApp Web in Qt6 WebEngine, native on Wayland. There's no
     # official WhatsApp client for Linux.
     pkgs.zapzap
   ];
+
+  # Noctalia's "telegram" template (modules/home/hyprland.nix) renders into
+  # ~/.config/telegram-desktop/themes, but only once ~/.config/telegram-desktop
+  # exists -- it takes that as "Telegram is installed". Telegram itself
+  # keeps its data in ~/.local/share/TelegramDesktop and never creates it,
+  # so without this the theme was always skipped.
+  xdg.configFile."telegram-desktop/themes/.keep".text = "";
 }
