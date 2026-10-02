@@ -110,5 +110,5 @@ mode = "dark"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "gtk3", "gtk4", "hyprland", "kcolorscheme", "qt" ]
-    enable_community_templates = false
+    builtin_ids = [ "foot", "gtk3", "gtk4", "hyprland", "kcolorscheme", "qt" ]
+    enable_community_templates = true
