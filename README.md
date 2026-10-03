@@ -5,80 +5,155 @@ then by **user** — each machine gets its own directory under `machines/`,
 and each user gets their own directory under `users/`, so adding a new
 machine or a new user later doesn't require restructuring anything.
 
+Two machines today: **caixa** (desktop, also reachable remotely) and
+**marvin** (laptop, dual-booting Windows with Secure Boot on). Both run
+Hyprland with the [Noctalia](https://docs.noctalia.dev) shell for
+`henrique`.
+
 ## Folder structure
 
 ```
 nexos/
-  flake.nix / flake.lock      # inputs (nixpkgs, home-manager, sops-nix, disko) and outputs
+  flake.nix / flake.lock      # inputs (nixpkgs, home-manager, sops-nix, disko, noctalia,
+                              # noctalia-greeter, hyprqt6engine, monitor-settings, helium,
+                              # lanzaboote) and outputs; hosts are built by mkHost
   .sops.yaml                  # sops-nix: which age key(s) can decrypt which secrets files
   .gitignore                  # keeps keys/ (private keys) out of git
 
   machines/
     caixa/
-      configuration.nix          # this machine's top-level config: imports modules + users, hostname, etc.
+      configuration.nix          # what's specific to this machine (GPU, remote access, ...)
       disko-config.nix           # declarative disk partitioning (see below)
       hardware-configuration.nix # hardware-specific bits (CPU, kernel modules) -- NOT filesystems, disko owns those
+    marvin/
+      configuration.nix          # + Secure Boot (lanzaboote), rEFInd, NVIDIA PRIME, gaming
+      disko-config.nix
+      hardware-configuration.nix
+      facts.nix                  # disk + PRIME bus IDs, written by install.sh
+      install.sh                 # interactive fresh install (see Installing)
 
   modules/
     nixos/                    # system-level (NixOS) modules, each one feature-scoped
-      common.nix                 # what every host shares (nix settings, locale, nh, kernel, ...) + the modules below they all import
+      common.nix                 # what every host shares (nix settings, nh, locale, kernel, boot console,
+                                 # sops key, home-manager) + imports the modules every host uses
       unfree.nix                 # nexos.unfree: each module lists the unfree packages it needs
+      desktop-hyprland.nix       # Hyprland + Noctalia greeter (greetd) at the physical console
       docker-rootless.nix        # rootless Docker, per-user daemons
       ssh.nix                    # key-only SSH (no passwords, no root login)
-      cloudflared.nix             # Cloudflare Tunnel: SSH/RDP/wayvnc reachable with no open inbound port
-      desktop-hyprland.nix        # Hyprland + SDDM, local physical console
-      desktop-plasma-rdp.nix      # KDE Plasma over RDP (xrdp), henrique excluded
-      wayvnc-hyprland.nix         # wayvnc: remote access to henrique's actual Hyprland session
-      novnc-hyprland.nix          # websockify+noVNC: browser/HTTPS front-end for the wayvnc above
+      chrony.nix                 # NTP from NIC.br with NTS
+      lan-isolation.nix          # LAN interfaces only reach the gateway, no peer-to-peer traffic
+      take-monitor.nix (+ .sh)   # switches shared DDC/CI monitors to whichever host boots
+      session-stop-timeout.nix   # 10s (not 90s) for stuck login-session processes on shutdown
+      cloudflared.nix            # caixa: Cloudflare Tunnel, SSH/VNC reachable with no open inbound port
+      wayvnc-hyprland.nix        # caixa: remote access to henrique's actual Hyprland session
+      novnc-hyprland.nix         # caixa: websockify+noVNC, browser/HTTPS front-end for the wayvnc above
+      gaming.nix                 # marvin: Steam, Lutris, MangoHud, PCSX2, Eden, AppImages via binfmt
+      refind.nix                 # marvin: rEFInd as the NixOS/Windows picker in front of systemd-boot
     home/                     # home-manager modules (per-user environment, not system config)
       cli.nix                    # git, gh, glow, zoxide
-      dev.nix                    # direnv + nix-direnv + devenv, so per-project devShells auto-activate
+      dev.nix                    # direnv + nix-direnv + devenv, so per-project environments auto-activate
       chat.nix                   # Telegram, Vesktop (Discord), ZapZap (WhatsApp)
+      design.nix                 # Inkscape
       ai.nix                     # Claude Code + its policy (CLAUDE.md)
-      hyprland.nix               # Hyprland session config + Noctalia shell
+      claude-voice.nix           # Claude Code's /voice skill: reads replies aloud, pt_BR piper voice
+      hyprland.nix               # Hyprland session, Noctalia shell + the color palette, foot, GTK/Qt theming
+      helium.nix                 # Helium browser
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
+      zed.nix                    # Zed editor (launched as `IDE`)
+      zsh.nix                    # zsh, prompt, eza, the nrs/nrt aliases
 
   users/
-    <name>/
+    henrique/
       default.nix              # NixOS account: shell, groups, SSH authorized_keys, password hash
       home.nix                 # home-manager config for this user: which modules/home/*.nix apply
 
-  templates/                  # per-language Nix devShells, meant to be dropped into OTHER
-                               # project repos (not used here) via `nix flake init -t`
-    rust/ python/ c/ sql/ web/   # each: flake.nix (devShells.default) + .envrc ("use flake")
+  dotfiles/
+    noctalia/<host>/settings.toml  # Noctalia control-center settings, synced on every rebuild (see below)
+
+  templates/                  # per-language devenv environments, meant to be dropped into OTHER
+                              # project repos (not used here) via `nix flake init -t`
+    rust/ python/ c/ sql/ web/   # each: devenv.nix + devenv.yaml + .envrc
 
   secrets/
-    caixa.yaml                 # sops-encrypted secrets for caixa (cloudflared tunnel credentials, password hashes, etc.)
+    caixa.yaml / marvin.yaml   # sops-encrypted secrets per host (password hashes, tunnel credentials, ...)
     README.md                  # how the secrets/sops workflow works, in detail
 
-  keys/                       # git-ignored. Private keys live here locally: SSH keys, caixa's
-                               # age key, plaintext passwords. Never committed.
+  keys/                       # git-ignored. Private keys live here locally: SSH keys, age keys,
+                              # plaintext passwords. Never committed.
 ```
 
 **The pattern for adding things:**
 - New machine → new folder under `machines/` (its `configuration.nix` imports `modules/nixos/common.nix`), add `<name> = mkHost "<name>";` to `nixosConfigurations` in `flake.nix`.
 - New user (on an existing machine) → new folder under `users/`, import it from that machine's `configuration.nix`.
-- New system-wide feature → new file under `modules/nixos/`, imported by whichever machine(s) need it.
+- New system-wide feature → new file under `modules/nixos/`, imported by `common.nix` (every host) or by whichever machine(s) need it.
 - New personal tool/dotfile → new file under `modules/home/`, imported by whichever user(s) want it.
+- Unfree package → add its name to `nexos.unfree` in the module that uses it.
 
-## What's configured on `caixa`
+## What's configured
+
+On both machines:
 
 - **Disk**: LUKS-encrypted (interactive passphrase) btrfs via [disko](https://github.com/nix-community/disko), subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
-- **Users**: `henrique` (sudo/wheel), `leonardo`, `martin` — none have SSH password auth, only key-based.
+- **User**: `henrique` (sudo/wheel). SSH is key-only, no password auth.
+- **Desktop**: Hyprland with the Noctalia shell, and the Noctalia greeter (on greetd) as the login screen.
 - **Docker**: rootless, one daemon per user, auto-starts at login (via `linger`).
-- **Remote access**: [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (`cloudflared`) fronts SSH, RDP, and VNC — outbound-only from this machine, so no inbound port is ever opened for them. Credentials come from a sops-encrypted tunnel token; see `modules/nixos/cloudflared.nix`.
-- **Desktops**: `henrique` gets Hyprland (with the [Noctalia](https://docs.noctalia.dev) shell) at the physical console, plus remote access to that *same* session over VNC (`wayvnc`, since RDP doesn't support Wayland) via the tunnel — either with a native VNC client (raw TCP, port 5900) or straight from a browser over HTTPS, no client install needed, via a websockify+noVNC front-end (see `modules/nixos/novnc-hyprland.nix`) proxied in front of the same wayvnc. `leonardo` and `martin` get KDE Plasma over RDP, also via the tunnel.
 - **Secrets**: managed with [sops-nix](https://github.com/Mic92/sops-nix) + `age`; see `secrets/README.md` for the full secrets workflow (rotating keys, adding new secrets, etc).
+
+**caixa** additionally:
+
+- **Remote access**: [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (`cloudflared`) fronts SSH and VNC — outbound-only from this machine, so no inbound port is ever opened for them. Credentials come from a sops-encrypted tunnel token; see `modules/nixos/cloudflared.nix`. The VNC side is henrique's *same* Hyprland session (`wayvnc`), either with a native VNC client or straight from a browser over HTTPS via a websockify+noVNC front-end (`modules/nixos/novnc-hyprland.nix`).
+- `net.ipv4.ip_forward` on, for Mininet.
+
+**marvin** additionally:
+
+- **Dual boot with Windows**, each on its own disk and ESP. **rEFInd** is the first menu (NixOS or Windows); NixOS goes on to systemd-boot's list of generations.
+- **Secure Boot** on, via [lanzaboote](https://github.com/nix-community/lanzaboote). The keys live in `/var/lib/sbctl` (**back that directory up**: without it new generations can't be signed). They were enrolled with `sbctl enroll-keys --append --microsoft` on top of the firmware's existing db/KEK/dbx, so Windows (including its 2023 CA) and the NVIDIA option ROM stay trusted.
+- **ESP is only 512M**, and each initrd is ~210M (the NVIDIA driver is in it), so `boot.lanzaboote.configurationLimit = 2`. If a rebuild fails with `No space left on device`, consecutive kernel/driver updates filled it.
+- **NVIDIA PRIME** offload (GTX 1650 + Intel iGPU); Hyprland itself renders on the NVIDIA GPU, since the HDMI port is wired to it.
+- **Gaming**: Steam, Lutris, MangoHud, PCSX2, Eden. AppImages (e.g. game recomps) run directly, through `appimage-run` via binfmt.
+
+## Day to day
+
+| Command | What it does |
+|---|---|
+| `nrs` | `nh os switch`: build this host's config and switch to it (shows what changed) |
+| `nrt` | `nh os test`: switch now, but don't make it the boot default — a reboot goes back |
+| `nix flake update` then `nrs` | update every input (packages); commit `flake.lock` afterwards |
+| `nix flake update nixpkgs` | update only nixpkgs |
+| `sudo nixos-rebuild switch --rollback` | go back to the previous generation |
+
+`nh` finds this flake via `programs.nh.flake` and the host by hostname, and asks for sudo itself — use `nrs`, not `sudo nrs`. `nh clean` also runs periodically, keeping generations from the last 4 days (at least 3).
+
+## Theming
+
+All colors are set in **one place**: `customPalettes.henrique` in `modules/home/hyprland.nix` (Tama's colors, from Gintama; dark and light variants). Noctalia renders them into every other app through its templates:
+
+- builtin: GTK3/GTK4, Qt (hyprqt6engine for Qt6, a patched qt5ct for Qt5), KDE color schemes, Hyprland (borders, groupbar, the background behind windows) and foot;
+- community (fetched from `api.noctalia.dev`): Telegram, Helium (`ungoogled-chromium`) and Vesktop (`discord`).
+
+The greeter runs before login and can't read that palette, so `modules/nixos/desktop-hyprland.nix` converts it into the greeter's own `[appearance.palette]`.
+
+The community templates only write a theme file; each app needs it loaded **once**:
+
+- **Helium**: `chrome://extensions` → Developer mode → Load unpacked → `~/.cache/noctalia/ungoogled-chromium/theme` (restart Helium after palette changes).
+- **Telegram**: Settings → Chat Settings → Choose from file → `~/.config/telegram-desktop/themes/noctalia.tdesktop-theme` (again after palette changes).
+- **Vesktop**: Settings → Themes → enable one of the `noctalia` themes.
+
+If a theme file is missing or stale, `noctalia msg templates-apply` re-renders every template without restarting anything.
+
+### Noctalia control-center settings
+
+What you change in Noctalia's control center is saved to `~/.local/state/noctalia/settings.toml`, layered over the config generated from Nix. Every rebuild syncs it with `dotfiles/noctalia/<host>/settings.toml` in this repo: the newer side wins, and a missing side (e.g. after a reinstall) is filled from the other. So: change things in the control center, rebuild, **commit** the file. Run `nrs` (and commit) before a `git pull` that touches it, or the pulled copy wins.
 
 ## Installing
 
-Either path below ends with the same command:
+Either path below ends with the same command (`<host>` is `caixa` or `marvin`):
 
 ```sh
-sudo nixos-rebuild switch --flake .#caixa
+sudo nixos-rebuild switch --flake .#<host>
 ```
 
-The difference is just how you get to that point.
+The `nrs`/`nrt` aliases only exist once this config has been applied, so use the full command the first time. The difference between the two paths is just how you get to that point.
 
 ### Option A — Fresh install from a NixOS ISO (using disko)
 
@@ -87,7 +162,9 @@ The difference is just how you get to that point.
 > PRIME bus IDs and records both in `machines/marvin/facts.nix`, so there's
 > nothing to edit by hand. `--dry-run` shows what it would write without
 > touching any disk. Commit the generated `facts.nix` and
-> `hardware-configuration.nix` afterwards.
+> `hardware-configuration.nix` afterwards. Secure Boot (see
+> [What's configured](#whats-configured)) needs its keys created and
+> enrolled by hand afterwards, with Secure Boot off until then.
 
 1. **Boot the [NixOS installer ISO](https://nixos.org/download)** on the target machine, get networking up (`ip a`, or `nmtui` if using the graphical ISO).
 
@@ -100,10 +177,10 @@ The difference is just how you get to that point.
    ```
    (Or copy it via a USB stick if you don't want to push it anywhere yet.)
 
-4. **Place caixa's age private key** at `/var/lib/sops-nix/key.txt` on the target disk *before* the config is ever activated — since it doesn't exist until you put it there. You'll do this right after disko formats the disk and mounts it at `/mnt` (next step), so the target path is actually `/mnt/var/lib/sops-nix/key.txt`:
+4. **Place the host's age private key** at `/var/lib/sops-nix/key.txt` on the target disk *before* the config is ever activated — since it doesn't exist until you put it there. You'll do this right after disko formats the disk and mounts it at `/mnt` (next step), so the target path is actually `/mnt/var/lib/sops-nix/key.txt`:
    ```sh
    mkdir -p /mnt/var/lib/sops-nix
-   cp /path/to/caixa-key.txt /mnt/var/lib/sops-nix/key.txt   # from your keys/ folder, transferred via USB/scp
+   cp /path/to/<host>-key.txt /mnt/var/lib/sops-nix/key.txt   # from your keys/ folder, transferred via USB/scp
    chmod 600 /mnt/var/lib/sops-nix/key.txt
    ```
    (Do this after step 5's `disko` run, since `/mnt` only exists once disko has partitioned and mounted things — the order here is: run disko, then copy the key in, then generate hardware config, then install.)
@@ -130,55 +207,52 @@ The difference is just how you get to that point.
    ```
    You'll be prompted for the LUKS passphrase again during install (it needs to unlock/interact with the encrypted volume).
 
-9. **Reboot into caixa.** From here on, log in as henrique (Hyprland, physical console) or SSH in with the appropriate private key from `keys/`.
+9. **Reboot.** From here on, log in as henrique (Hyprland, physical console) or SSH in with the appropriate private key from `keys/`. Clone this repo to `/home/henrique/codigos/nexos` — that's where `nh` (and the Noctalia settings sync) expects it.
 
-10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real cloudflared tunnel credentials, real password hashes, etc. should already be in `secrets/caixa.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
+10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real cloudflared tunnel credentials, real password hashes, etc. should already be in `secrets/<host>.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
 
 ### Option B — Adopting this config on an already-running NixOS system
 
-Use this if caixa (or a machine that will become caixa) already has *some* NixOS installation and you're switching it over to this flake, rather than doing a from-scratch install.
+Use this if the machine already has *some* NixOS installation and you're switching it over to this flake, rather than doing a from-scratch install.
 
-1. **Clone this repo** onto the machine.
+1. **Clone this repo** onto the machine, at `/home/henrique/codigos/nexos`.
 
-2. **Decide on the disk layout.** If the existing install's partitioning already roughly matches what `disko-config.nix` describes (LUKS + btrfs + the right subvolumes), you can skip disko entirely and just delete/ignore `disko-config.nix`'s import in `flake.nix` and `machines/caixa/configuration.nix`, keeping the system's real `hardware-configuration.nix`/`fileSystems` as normal. If you want to actually adopt disko's exact layout, that means reformatting the disk — treat it like Option A instead (back up data first).
+2. **Decide on the disk layout.** If the existing install's partitioning already roughly matches what `disko-config.nix` describes (LUKS + btrfs + the right subvolumes), you can skip disko entirely and just delete/ignore `disko-config.nix`'s import in `flake.nix`, keeping the system's real `hardware-configuration.nix`/`fileSystems` as normal. If you want to actually adopt disko's exact layout, that means reformatting the disk — treat it like Option A instead (back up data first).
 
 3. **Place the age key** at `/var/lib/sops-nix/key.txt` (root-owned, `chmod 600`) — no `/mnt` prefix needed this time, since the system is already booted:
    ```sh
    sudo mkdir -p /var/lib/sops-nix
-   sudo cp /path/to/caixa-key.txt /var/lib/sops-nix/key.txt
+   sudo cp /path/to/<host>-key.txt /var/lib/sops-nix/key.txt
    sudo chmod 600 /var/lib/sops-nix/key.txt
    ```
 
 4. **Switch**:
    ```sh
-   sudo nixos-rebuild switch --flake .#caixa
+   sudo nixos-rebuild switch --flake .#<host>
    ```
 
    Since this repo's SSH module disables password auth, make sure you have a working key-based session (or physical/console access) *before* this switch takes effect — otherwise you could lock yourself out of SSH access with no way back in except the physical console.
 
-## Using the devShell templates
+## Using the devenv templates
 
 `henrique`'s Neovim (`modules/home/neovim.nix`) is deliberately generic:
 LSP client, treesitter, completion, telescope, gitsigns — but **no**
 per-language LSP servers or compilers/runtimes installed globally. Those
-come from a per-project Nix devShell instead, so each project only pulls
-in the toolchain it actually needs. The `templates/` folder in this repo
-holds one such devShell per language (`rust`, `python`, `c`, `sql`,
-`web` for JS/TS) — meant to be dropped into your *other* project repos,
-not used inside `nexos` itself.
+come from a per-project [devenv](https://devenv.sh) environment instead,
+so each project only pulls in the toolchain it actually needs. The
+`templates/` folder in this repo holds one per language (`rust`,
+`python`, `c`, `sql`, `web` for JS/TS) — meant to be dropped into your
+*other* project repos, not used inside `nexos` itself.
 
 1. **Drop the template into your project** (once per project):
    ```sh
    cd ~/my-project
    nix flake init -t nexos#rust   # or #python, #c, #sql, #web
    ```
-   `nexos` here is a short alias for this flake, registered via
-   `nix.registry.nexos` in `machines/caixa/configuration.nix` — without
-   that, you'd need the full path (`nix flake init -t /home/henrique/codigos/nexos#rust`).
-
-   If the project already has its own `flake.nix`, `nix flake init` will
-   refuse to overwrite it — copy the template's `devShells` block into
-   your existing flake by hand instead.
+   This adds `devenv.nix`, `devenv.yaml` and `.envrc`. `nexos` here is a
+   short alias for this flake, registered via `nix.registry.nexos` in
+   `modules/nixos/common.nix` — without that, you'd need the full path
+   (`nix flake init -t /home/henrique/codigos/nexos#rust`).
 
 2. **Authorize direnv** (also once per project — it's a safety prompt,
    since a `.envrc` can run arbitrary code):
@@ -187,13 +261,13 @@ not used inside `nexos` itself.
    ```
 
 3. **That's it.** From then on, `cd`-ing into the project auto-activates
-   the devShell (you'll see `direnv: loading ...`), putting that
+   the environment (you'll see `direnv: loading ...`), putting that
    language's compiler/LSP/formatter on `PATH` — and Neovim picks up the
    right LSP automatically when opened from inside the project. Leaving
    the directory removes them from `PATH` again.
 
    Prefer not to use direnv for a given project? Skip the `.envrc` and
-   run `nix develop` manually instead — same effect, but only for that
+   run `devenv shell` manually instead — same effect, but only for that
    shell session, and you have to re-run it every new terminal.
 
 ## Verifying before you trust it on real hardware
@@ -203,6 +277,7 @@ You don't need real hardware to sanity-check this flake — evaluate and build i
 ```sh
 nix flake check
 nix build '.#nixosConfigurations.caixa.config.system.build.toplevel'
+nix build '.#nixosConfigurations.marvin.config.system.build.toplevel'
 ```
 
-Both should complete cleanly before you attempt an actual install or switch.
+These should complete cleanly before you attempt an actual install or switch.
