@@ -45,6 +45,23 @@ in
   nexos.refind = {
     enable = true;
     windowsEsp = "ee46a2aa-aa95-4890-be73-2e631ebe70fa";
+    timeout = 10;
+    # The laptop panel's native mode -- the firmware only lights that one up.
+    resolution = "1920x1080";
+    # users/henrique/tama, the original, at 1920x1080 and opaque.
+    background = ../../users/henrique/tama-wallpaper.png;
+    # League of Legends' "L" emblem in place of the Windows logo: the SVG
+    # from the official LoL wiki (wiki.leagueoflegends.com,
+    # File:League_of_Legends_icon.svg; copyrighted to Riot Games), already
+    # rendered at 128x128.
+    windowsIcon = ../../users/henrique/league-of-legends.png;
+    # Tool icons and label font from refind-theme-regular
+    # (github.com/bobafetthotmail/refind-theme-regular, icons/128-48 and
+    # fonts/source-code-pro-extralight-14.png); the selection highlights
+    # are plain rounded squares in the palette's hover color (#2B3240),
+    # since the theme's own light/dark ones washed out the white snowflake
+    # or vanished on the black background.
+    theme = ./refind-theme;
   };
 
   # Boot splash: the firmware's own logo (BGRT, Lenovo's) with a spinning
@@ -55,8 +72,10 @@ in
   # initrd for Plymouth to see that output too.
   boot.plymouth = {
     enable = true;
-    theme = "nixos-bgrt";
-    themePackages = [ pkgs.nixos-bgrt-plymouth ];
+    # nixos-bgrt's spinning snowflake with Tama instead of the Lenovo logo,
+    # see plymouth-tama.nix.
+    theme = "tama";
+    themePackages = [ (pkgs.callPackage ./plymouth-tama.nix { }) ];
   };
   boot.initrd.kernelModules = [ "i915" "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
 
