@@ -153,15 +153,65 @@ in
     ''
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-dgpu"
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.intelBusId}", SYMLINK+="dri/intel-igpu"
+      # NVIDIA's render node, for Sunshine's encoder (see below).
+      SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-render"
     '';
   environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
+
+  # Game streaming to the living-room TV (Samsung, Moonlight for Tizen).
+  # Pair once from the web UI at https://localhost:47990 (it asks for a
+  # login on first use), typing the PIN the TV shows.
+  services.sunshine = {
+    enable = true;
+    # Started only when wanted, from the launcher (below) or with
+    # `systemctl --user start sunshine`.
+    autoStart = false;
+    # For KMS capture (settings.capture below).
+    capSysAdmin = true;
+    # Not openFirewall: it'd also open the web UI (47990) to the LAN. The
+    # streaming ports are opened below instead.
+    settings = {
+      sunshine_name = "marvin";
+      # Captured and encoded on the GTX 1650, which draws every output
+      # (AQ_DRM_DEVICES above). Wayland capture plus Intel Quick Sync gave a
+      # black screen: Intel can't import NVIDIA's buffers ("Unsupported
+      # modifier"). Vulkan Video rather than NVENC, which needs a CUDA
+      # build; Vulkan only works with KMS capture.
+      capture = "kms";
+      encoder = "vulkan";
+      adapter_name = "/dev/dri/nvidia-render";
+    };
+  };
+  # Sunshine's ports (base 47989): HTTPS/HTTP pairing and RTSP over TCP,
+  # video/control/audio/mic over UDP. mDNS (so Moonlight finds marvin on
+  # its own) is opened by Avahi's module.
+  networking.firewall = {
+    allowedTCPPorts = [ 47984 47989 48010 ];
+    allowedUDPPorts = [ 47998 47999 48000 48002 48010 ];
+  };
+  # Replaces the package's own launcher (same desktop-file ID), which runs
+  # a bare `sunshine` outside the service, without the settings above.
+  home-manager.users.henrique.xdg.desktopEntries."dev.lizardbyte.app.Sunshine" = {
+    name = "Sunshine";
+    comment = "Start game streaming (Moonlight)";
+    icon = "dev.lizardbyte.app.Sunshine";
+    exec = "systemctl --user start sunshine";
+    actions.stop = {
+      name = "Stop";
+      exec = "systemctl --user stop sunshine";
+    };
+  };
 
   # The proprietary driver above (see modules/nixos/unfree.nix).
   nexos.unfree = [ "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced" ];
 
-  # Quickshell's own CLI (`qs`), for running shell configs by hand.
-  # Noctalia bundles Quickshell but doesn't put it on PATH.
-  home-manager.users.henrique.home.packages = [ pkgs.quickshell ];
+  home-manager.users.henrique.home.packages = [
+    # Quickshell's own CLI (`qs`), for running shell configs by hand.
+    # Noctalia bundles Quickshell but doesn't put it on PATH.
+    pkgs.quickshell
+    # To put Moonlight on the TV (see apps2samsung.nix).
+    (pkgs.callPackage ./apps2samsung.nix { })
+  ];
 
   sops.defaultSopsFile = ../../secrets/marvin.yaml;
 
