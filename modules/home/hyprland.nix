@@ -206,6 +206,11 @@ in
     # -- SUPER+Print/SHIFT below (see hl.bind in extraConfig, via the
     # "screenshot" wrapper right below, not grimblast's own --notify).
     pkgs.grimblast
+    # wl-copy/wl-paste on PATH. grimblast only bundles its own copy, so
+    # programs that read the clipboard by shelling out to wl-paste --
+    # Claude Code's Ctrl+V for images, notably -- couldn't paste a
+    # screenshot even though it was on the clipboard.
+    pkgs.wl-clipboard
     # Wayland-native, lightweight image viewer (GIF playback included) for
     # the "screenshot" notification's click action below.
     pkgs.imv
@@ -236,7 +241,7 @@ in
     pkgs.wf-recorder
     (pkgs.writeShellApplication {
       name = "toggle-recording";
-      runtimeInputs = [ pkgs.wf-recorder pkgs.libnotify pkgs.procps pkgs.coreutils ];
+      runtimeInputs = [ pkgs.wf-recorder pkgs.libnotify pkgs.procps pkgs.coreutils pkgs.hyprland pkgs.jq ];
       text = ''
         state_file="''${XDG_RUNTIME_DIR:-/tmp}/toggle-recording-file"
 
@@ -260,9 +265,20 @@ in
           mkdir -p "$HOME/Videos"
           file="$HOME/Videos/recording-$(date +%Y-%m-%d_%H-%M-%S).mp4"
           echo "$file" > "$state_file"
-          notify-send "Screen recording" "Started -> $file"
-          wf-recorder -f "$file" &
+          # With more than one monitor connected (marvin: laptop panel +
+          # HDMI) wf-recorder asks on stdin which output to record; with no
+          # terminal to answer it just exits, so nothing was ever recorded
+          # and the next press "started" again instead of stopping. Record
+          # the focused monitor instead.
+          output="$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')"
+          wf-recorder -o "$output" -f "$file" &
           disown
+          sleep 0.5
+          if pidof wf-recorder > /dev/null; then
+            notify-send "Screen recording" "Started ($output) -> $file"
+          else
+            notify-send -u critical "Screen recording" "wf-recorder failed to start on $output"
+          fi
         fi
       '';
     })
@@ -412,6 +428,10 @@ in
     fi
   '';
 
+  # henrique's profile picture, read by Noctalia (settings.shell.avatar_path
+  # below).
+  home.file.".face".source = ../../users/henrique/user-profile.jpg;
+
   # Launched from Hyprland's Lua config itself (hl.on("hyprland.start", ...)
   # below), per <https://docs.noctalia.dev/v5/compositor-settings/hyprland/>
   # — not via systemd.enable, to avoid starting it twice.
@@ -419,6 +439,10 @@ in
     enable = true;
     systemd.enable = false;
     settings.wallpaper.default.path = "~/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png";
+    # Profile picture (control center, lock screen): ~/.face, the usual
+    # avatar location, linked by home.file below -- so the setting shows a
+    # readable path rather than the image's /nix/store one.
+    settings.shell.avatar_path = "~/.face";
     settings.theme = {
       mode = "dark";
       source = "custom";
