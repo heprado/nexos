@@ -19,6 +19,16 @@
   # modules/nixos/unfree.nix).
   nexos.unfree = [ "claude-code" ];
 
+  # Profile picture for the login screen: noctalia-greeter shows each
+  # user's AccountsService IconFile, read as the "greeter" user. With none
+  # set, AccountsService reports ~/.face, which the greeter can't read
+  # (home is 0700), so it fell back to a generic icon. Same picture as
+  # Noctalia's own avatar (~/.face, modules/home/hyprland.nix).
+  systemd.tmpfiles.rules = [
+    "L+ /var/lib/AccountsService/icons/henrique - - - - ${./user-profile.jpg}"
+    "f+ /var/lib/AccountsService/users/henrique 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/henrique\\nSystemAccount=false\\n"
+  ];
+
   users.users.henrique = {
     isNormalUser = true;
     shell = pkgs.zsh;
