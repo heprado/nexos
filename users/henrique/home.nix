@@ -4,6 +4,7 @@
     ../../modules/home/cli.nix
     ../../modules/home/dev.nix
     ../../modules/home/chat.nix
+    ../../modules/home/design.nix
     ../../modules/home/ai.nix
     ../../modules/home/claude-voice.nix
     ../../modules/home/hyprland.nix
