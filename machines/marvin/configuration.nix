@@ -15,7 +15,8 @@ in
 
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
   # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).
-  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl ];
+  # nvtop: live GPU temperature/usage monitor, NVIDIA-only build.
+  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl pkgs.nvtopPackages.nvidia ];
 
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
@@ -102,6 +103,9 @@ in
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     prime = {
       offload.enable = true;
+      # Installs `nvidia-offload`, for running a program on the NVIDIA GPU
+      # (e.g. Steam launch options: `nvidia-offload %command%`).
+      offload.enableOffloadCmd = true;
       # Detected by install.sh and recorded in facts.nix.
       inherit (facts) intelBusId nvidiaBusId;
     };
