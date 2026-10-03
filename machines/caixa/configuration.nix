@@ -4,6 +4,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/common.nix
     ../../modules/nixos/cloudflared.nix
+    ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/wayvnc-hyprland.nix
     ../../modules/nixos/novnc-hyprland.nix
   ];

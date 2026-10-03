@@ -10,7 +10,6 @@
     ./chrony.nix
     ./session-stop-timeout.nix
     ./take-monitor.nix
-    ./lan-isolation.nix
     ../../users/henrique
   ];
 

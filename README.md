@@ -41,7 +41,7 @@ nexos/
       docker-rootless.nix        # rootless Docker, per-user daemons
       ssh.nix                    # key-only SSH (no passwords, no root login)
       chrony.nix                 # NTP from NIC.br with NTS
-      lan-isolation.nix          # LAN interfaces only reach the gateway, no peer-to-peer traffic
+      lan-isolation.nix          # caixa only: LAN interfaces reach just the gateway, no peer-to-peer traffic
       take-monitor.nix (+ .sh)   # switches shared DDC/CI monitors to whichever host boots
       session-stop-timeout.nix   # 10s (not 90s) for stuck login-session processes on shutdown
       cloudflared.nix            # caixa: Cloudflare Tunnel, SSH/VNC reachable with no open inbound port
