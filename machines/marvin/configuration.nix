@@ -113,6 +113,23 @@ in
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
+  # Steam and everything it launches run on the NVIDIA GPU, so games don't
+  # need `nvidia-offload %command%` each. Same variables nvidia-offload
+  # sets; __VK_LAYER_NV_optimus is the one that matters for Proton (DXVK
+  # and VKD3D are Vulkan).
+  programs.steam.package = pkgs.steam.override {
+    extraEnv = {
+      __NV_PRIME_RENDER_OFFLOAD = "1";
+      __NV_PRIME_RENDER_OFFLOAD_PROVIDER = "NVIDIA-G0";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      __VK_LAYER_NV_optimus = "NVIDIA_only";
+      # Proton (10+) draws games through Wine's native Wayland driver
+      # instead of Xwayland. A game that misbehaves can opt out with
+      # `PROTON_ENABLE_WAYLAND=0 %command%` in its launch options.
+      PROTON_ENABLE_WAYLAND = "1";
+    };
+  };
+
   # Hyprland itself renders on the NVIDIA GPU, even though apps still
   # default to Intel (PRIME offload above). The HDMI port is wired to the
   # NVIDIA card, so with Intel as the compositor's renderer every HDMI frame
