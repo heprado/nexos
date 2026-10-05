@@ -130,6 +130,13 @@ in
     };
   };
 
+  # Steam's Vulkan shader pre-caching (fossilize_replay) uses only a few
+  # threads by default, so e.g. Deadlock's recompile after every NVIDIA
+  # driver update took ages. Give it all 12 of the i7-10750H's threads.
+  home-manager.users.henrique.xdg.dataFile."Steam/steam_dev.cfg".text = ''
+    unShaderBackgroundProcessingThreads 12
+  '';
+
   # Hyprland itself renders on the NVIDIA GPU, even though apps still
   # default to Intel (PRIME offload above). The HDMI port is wired to the
   # NVIDIA card, so with Intel as the compositor's renderer every HDMI frame
