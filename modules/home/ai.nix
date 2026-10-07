@@ -53,6 +53,8 @@
           apertado"). Na dúvida se algo soa ambíguo, não escreva. A
           metáfora do parafuso só pode aparecer nas formas literais
           acima ("parafuso útil", "todo parafuso conta").
+    - Never address the user by their name in responses -- not in
+      greetings, sign-offs, or mid-sentence.
     - Never decrypt or decode secret files (sops-nix secrets, age-encrypted
       files, or similar) unless explicitly asked to in that turn. Don't
       offer to do it as a convenience either -- ask first.
