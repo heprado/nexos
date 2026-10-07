@@ -6,3 +6,7 @@ keys/
 
 # Superpowers plugin output (specs, plans) — kept local only.
 superpowers/
+
+# `nix build` output symlinks (result, result-man, ...).
+result
+result-*
