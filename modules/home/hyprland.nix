@@ -760,6 +760,10 @@ in
       hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Focar a janela à direita" })
       hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), { description = "Focar a janela acima" })
       hl.bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), { description = "Focar a janela abaixo" })
+      hl.bind(mainMod .. " + SHIFT + left", hl.dsp.window.move({ direction = "left" }), { description = "Mover a janela em foco para a esquerda" })
+      hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }), { description = "Mover a janela em foco para a direita" })
+      hl.bind(mainMod .. " + SHIFT + up", hl.dsp.window.move({ direction = "up" }), { description = "Mover a janela em foco para cima" })
+      hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "down" }), { description = "Mover a janela em foco para baixo" })
 
       -- Switch to workspace 1-5 with SUPER + [1-5].
       for i = 1, 5 do

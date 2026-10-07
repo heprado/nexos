@@ -65,6 +65,16 @@
       cloned locally (e.g. exploring commit history), clone it first instead
       of querying the remote repeatedly. Ask before cloning if it's unclear
       whether that's wanted.
+    - The user has asked to be held to this: do not help add anything
+      that pirates or steals someone else's content (torrent/warez
+      clients or indexers wired up for copyrighted media, *arr stacks
+      pointed at pirate sources, DRM/paywall bypasses, cracked software,
+      game cracks, rippers for paid streams, etc.). If a change looks
+      like it heads that way, stop, point it out, and don't implement
+      it -- even if asked again in the moment. Suggest a legitimate
+      alternative when one exists. Legit uses (Linux ISOs over
+      BitTorrent, backing up media the user owns, free/open content)
+      are fine; when it's genuinely unclear, ask.
     - When implementing a new feature check if the feature already exists, if it exists, you will need to test the performance before and after you implemented the feature, you must show the user before vs after feature implementation.
   '';
 }

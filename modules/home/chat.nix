@@ -6,9 +6,9 @@
     # so it follows the Noctalia palette (the "discord" community template
     # in modules/home/hyprland.nix). Same account and servers.
     pkgs.vesktop
-    # ZapZap: WhatsApp Web in Qt6 WebEngine, native on Wayland. There's no
-    # official WhatsApp client for Linux.
-    pkgs.zapzap
+    # ZapFast: native WhatsApp client in Rust (no WebEngine), Wayland-native.
+    # There's no official WhatsApp client for Linux.
+    pkgs.zapfast
   ];
 
   # Noctalia's "telegram" template (modules/home/hyprland.nix) renders into

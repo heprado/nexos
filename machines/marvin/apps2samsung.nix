@@ -9,7 +9,7 @@ let
     url = "https://github.com/Apps2Samsung/Apps2Samsung/releases/download/v${version}/Apps2Samsung-v${version}-linux-x64.AppImage";
     hash = "sha256-jQ1DZgiTQVSL8qCSeLR/HVoFQGGrLAeW/zSjOE+oWhw=";
   };
-  contents = appimageTools.extractType2 { inherit pname version src; };
+  contents = appimageTools.extract { inherit pname version src; };
 in
 appimageTools.wrapType2 {
   inherit pname version src;

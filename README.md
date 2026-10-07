@@ -52,7 +52,7 @@ nexos/
     home/                     # home-manager modules (per-user environment, not system config)
       cli.nix                    # git, gh, glow, zoxide
       dev.nix                    # direnv + nix-direnv + devenv, so per-project environments auto-activate
-      chat.nix                   # Telegram, Vesktop (Discord), ZapZap (WhatsApp)
+      chat.nix                   # Telegram, Vesktop (Discord), ZapFast (WhatsApp)
       design.nix                 # Inkscape
       ai.nix                     # Claude Code + its policy (CLAUDE.md)
       claude-voice.nix           # Claude Code's /voice skill: reads replies aloud, pt_BR piper voice

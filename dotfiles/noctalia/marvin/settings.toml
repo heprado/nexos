@@ -1,4 +1,4 @@
-config_version = 14
+config_version = 15
 
 [bar.default]
 end = [ "group:g2", "group:g1", "notifications", "session" ]

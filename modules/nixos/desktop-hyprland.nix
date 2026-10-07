@@ -50,6 +50,14 @@
     };
   };
 
+  # A Secret Service provider (org.freedesktop.secrets on D-Bus): ZapFast
+  # keeps its WhatsApp session in the OS keyring and refuses to start
+  # without one ("Unlock your OS keyring ... ServiceUnknown"). This also
+  # adds pam_gnome_keyring to the "login" PAM stack, which greetd includes,
+  # so logging in unlocks the "login" keyring with the login password
+  # (creating it on first login) and nothing prompts for it afterwards.
+  services.gnome.gnome-keyring.enable = true;
+
   # Recommended by Noctalia (the shell/bar running in henrique's Hyprland
   # session, see modules/home/hyprland.nix) for its network/bluetooth/power
   # widgets to actually have something to report.
