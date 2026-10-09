@@ -1,16 +1,12 @@
 { ... }:
 {
+  # Terminal-only half, on every host (caixa has no GUI at all). The GUI
+  # half is home-desktop.nix, imported by modules/nixos/desktop-hyprland.nix.
   imports = [
     ../../modules/home/cli.nix
     ../../modules/home/dev.nix
-    ../../modules/home/chat.nix
-    ../../modules/home/design.nix
     ../../modules/home/ai.nix
-    ../../modules/home/claude-voice.nix
-    ../../modules/home/hyprland.nix
-    ../../modules/home/helium.nix
     ../../modules/home/neovim.nix
-    ../../modules/home/zed.nix
     ../../modules/home/zsh.nix
   ];
 
