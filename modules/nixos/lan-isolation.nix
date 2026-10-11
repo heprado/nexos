@@ -54,6 +54,13 @@ in
         "$ipt" -I nixos-fw 1 -j nexos-lan-in
         "$ipt" -D OUTPUT -j nexos-lan-out 2>/dev/null || true
         "$ipt" -I OUTPUT 1 -j nexos-lan-out
+        # This host's own addresses are never a peer, but a packet to them
+        # can still look like it leaves through the LAN interface: k3s'
+        # kube-proxy DNATs the API service (10.43.0.1) to this host's LAN IP
+        # after routing already picked the LAN interface, and the subnet
+        # DROP below ate it -- the host network namespace (clabernetes'
+        # clabwire) timed out reaching the API.
+        "$ipt" -A nexos-lan-out -m addrtype --dst-type LOCAL -j RETURN
       done
 
       # IPv6 neighbor discovery (router/neighbor solicitation and
