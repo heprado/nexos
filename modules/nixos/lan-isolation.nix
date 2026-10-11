@@ -1,20 +1,33 @@
 { config, lib, pkgs, ... }:
 let
-  sshMacs = config.nexos.lanIsolation.sshFromMacs;
-  sshPorts = config.services.openssh.ports;
+  cfg = config.nexos.lanIsolation;
+  trustedPorts = lib.unique (
+    lib.optionals config.services.openssh.enable config.services.openssh.ports
+    ++ cfg.trustedTcpPorts);
 in
 {
-  options.nexos.lanIsolation.sshFromMacs = lib.mkOption {
+  options.nexos.lanIsolation.trustedMacs = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [ ];
     example = [ "80:38:fb:e0:7e:3c" ];
     description = ''
-      MAC addresses of LAN peers allowed to reach this host's SSH directly,
-      the one exception to the isolation below. Matched by MAC rather than
-      IP since peers get theirs from DHCP (and IPv6 privacy addresses
-      rotate); it only works on the same L2 segment, which is the point.
-      A MAC can be spoofed by anyone on the LAN, so SSH keys stay the
-      actual gate.
+      MAC addresses of LAN peers allowed to reach this host's
+      trustedTcpPorts directly, the one exception to the isolation below.
+      Matched by MAC rather than IP since peers get theirs from DHCP (and
+      IPv6 privacy addresses rotate); it only works on the same L2 segment,
+      which is the point.
+      A MAC can be spoofed by anyone on the LAN, so whatever listens on
+      those ports has to authenticate on its own (SSH keys, ...).
+    '';
+  };
+
+  options.nexos.lanIsolation.trustedTcpPorts = lib.mkOption {
+    type = lib.types.listOf lib.types.port;
+    default = [ ];
+    example = [ 443 ];
+    description = ''
+      TCP ports the trustedMacs peers may reach, besides SSH's (always
+      included when the SSH server is on).
     '';
   };
 
@@ -22,10 +35,9 @@ in
     # Restricts every physical/LAN interface to "vertical" traffic only: the
     # default gateway (and, through it, the internet) is reachable, but
     # nothing else on the same local subnet is -- no lateral/peer traffic,
-    # in either direction, not even to ports opened in allowedTCPPorts (SSH
-    # included: from the LAN it's only reachable through the Cloudflare
-    # Tunnel, like from anywhere else, except from the peers listed in
-    # nexos.lanIsolation.sshFromMacs). Loopback is excluded since it's
+    # in either direction, not even to ports opened in allowedTCPPorts,
+    # except from the peers in nexos.lanIsolation.trustedMacs, on
+    # trustedTcpPorts. Loopback is excluded since it's
     # needed for things like cloudflared forwarding to local services (see
     # cloudflared.nix) -- no interface-specific exception is needed for
     # that: cloudflared is outbound-only (egresses through the gateway,
@@ -70,18 +82,18 @@ in
         ip6tables -A nexos-lan-in -p icmpv6 --icmpv6-type "$ndp" -j RETURN
         ip6tables -A nexos-lan-out -p icmpv6 --icmpv6-type "$ndp" -j RETURN
       done
-      ${lib.optionalString (sshMacs != [ ]) ''
+      ${lib.optionalString (cfg.trustedMacs != [ ]) ''
 
-      # SSH from the listed peers. Ahead of the per-interface rules below,
-      # which would refuse them as subnet peers; caixa's replies to them go
-      # out as ESTABLISHED. Nothing else on the subnet ever gets a
-      # connection established (it's refused or dropped first), so that
-      # can't open anything more.
+      # The trusted peers, on the trusted ports only. Ahead of the
+      # per-interface rules below, which would refuse them as subnet peers;
+      # caixa's replies to them go out as ESTABLISHED. Nothing else on the
+      # subnet ever gets a connection established (it's refused or dropped
+      # first), so that can't open anything more.
       for ipt in iptables ip6tables; do
         "$ipt" -A nexos-lan-out -m conntrack --ctstate ESTABLISHED -j RETURN
         ${lib.concatMapStrings (mac: lib.concatMapStrings (port: ''
           "$ipt" -A nexos-lan-in -p tcp --dport ${toString port} -m mac --mac-source ${lib.escapeShellArg mac} -j RETURN
-        '') sshPorts) sshMacs}
+        '') trustedPorts) cfg.trustedMacs}
       done
       ''}
 

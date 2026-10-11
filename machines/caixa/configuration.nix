@@ -8,6 +8,7 @@
     ../../modules/nixos/cloudflared.nix
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/k3s-lab.nix
+    ../../modules/nixos/lab-console-https.nix
   ];
 
   networking.hostName = "caixa";
@@ -40,9 +41,10 @@
   # remount read-only. max_performance (1) disables that LPM state.
   boot.kernelParams = [ "ahci.mobile_lpm_policy=1" ];
 
-  # SSH is local-network only (ssh.nix refuses it through the tunnel), and
-  # only marvin may reach it: its Wi-Fi and Ethernet cards' permanent MACs.
-  nexos.lanIsolation.sshFromMacs = [ "80:38:fb:e0:7e:3c" "64:1c:67:e3:8d:38" ];
+  # Only marvin may reach caixa from the LAN (its Wi-Fi and Ethernet cards'
+  # permanent MACs): SSH, which is local-network only (ssh.nix refuses it
+  # through the tunnel), and the lab console on 443 (lab-console-https.nix).
+  nexos.lanIsolation.trustedMacs = [ "80:38:fb:e0:7e:3c" "64:1c:67:e3:8d:38" ];
 
   sops.defaultSopsFile = ../../secrets/caixa.yaml;
   # caixa decrypts with its SSH host key (converted to age), generated on
