@@ -1,23 +1,19 @@
-{ inputs, pkgs, self, ... }:
+{ pkgs, self, ... }:
 {
-  # What every host (caixa, marvin) shares. machines/<name>/configuration.nix
+  # What every host (caixa, marvin) shares -- terminal only. The graphical
+  # desktop (desktop-hyprland.nix) and the SSH server (ssh.nix) are
+  # imported by the hosts that want them. machines/<name>/configuration.nix
   # only keeps what's specific to that machine.
   imports = [
     ./unfree.nix
     ./docker-rootless.nix
-    ./ssh.nix
-    ./desktop-hyprland.nix
     ./chrony.nix
     ./session-stop-timeout.nix
     ./take-monitor.nix
     ../../users/henrique
   ];
 
-  # Noctalia isn't in the official nixpkgs cache; without this, its
-  # Quickshell/Qt dependencies get compiled from source on every rebuild.
   nix.settings = {
-    extra-substituters = [ "https://noctalia.cachix.org" ];
-    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
     # So `nix flake ...`/`nix build ...` etc. work without having to pass
     # --extra-experimental-features "nix-command flakes" every time.
     experimental-features = [ "nix-command" "flakes" ];
@@ -43,11 +39,13 @@
   i18n.defaultLocale = "pt_BR.UTF-8";
   time.timeZone = "America/Sao_Paulo";
 
-  # Backend dconf needs to actually apply GTK theme settings (see
-  # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
-  programs.dconf.enable = true;
+  # ABNT2 keyboard (has ç, /, dead keys, and a numpad) on the text console.
+  # The graphical session's layout is set in desktop-hyprland.nix.
+  console.keyMap = "br-abnt2";
 
-  nixpkgs.overlays = [ inputs.helium-flake.overlays.default ];
+  # nmcli/nmtui on both hosts, GUI or not (Noctalia's network widget on
+  # marvin talks to it too).
+  networking.networkmanager.enable = true;
 
   # Which boot loader gets installed (plain systemd-boot, or lanzaboote's
   # signed one) is up to each host; these apply to both.
@@ -65,6 +63,7 @@
   # newest kernel release packaged for this channel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Terminal-only home config; desktop-hyprland.nix adds the GUI half.
   home-manager.users.henrique.imports = [ ../../users/henrique/home.nix ];
 
   # Generate on each host with `age-keygen`, then record the public key in

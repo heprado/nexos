@@ -601,7 +601,7 @@ in
     # nixpkgs is already on 0.56.0 (one release past the cutoff).
     configType = "lua";
     # Wires up hyprland-session.target so systemd user services (like
-    # wayvnc and noctalia) can bind their lifecycle to the actual
+    # noctalia) can bind their lifecycle to the actual
     # Hyprland session.
     systemd.enable = true;
     # "scrolling" is a native layout in Hyprland core as of 0.56.0 (no

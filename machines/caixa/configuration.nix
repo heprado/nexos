@@ -1,36 +1,26 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
+    ./zfs.nix
     ../../modules/nixos/common.nix
+    ../../modules/nixos/ssh.nix
     ../../modules/nixos/cloudflared.nix
     ../../modules/nixos/lan-isolation.nix
-    ../../modules/nixos/wayvnc-hyprland.nix
-    ../../modules/nixos/novnc-hyprland.nix
+    ../../modules/nixos/k3s-lab.nix
   ];
 
   networking.hostName = "caixa";
+
+  # Terminal only: no desktop-hyprland.nix (no greeter, no graphical
+  # session, no auto-login), just getty on the console and SSH from marvin
+  # on the local network.
 
   # adb/fastboot for Android device debugging. Used to also need
   # programs.adb.enable + the adbusers group for udev permissions, but
   # systemd 258 grants uaccess to the device node automatically now, so
   # just the package is enough.
   environment.systemPackages = [ pkgs.android-tools pkgs.unzip];
-
-  # caixa's iGPU is a Skylake HD Graphics 530 (i915). intel-media-driver
-  # (iHD) is the modern VAAPI driver for Gen9+ Intel iGPUs -- the legacy
-  # i965 driver mesa falls back to otherwise doesn't support this
-  # generation well. Vulkan (needed for WebGPU in Helium, see
-  # modules/home/helium.nix) comes for free from hardware.graphics.enable
-  # via mesa's ANV driver, no extra package required.
-  hardware.graphics = {
-    enable = true;
-    extraPackages = [ pkgs.intel-media-driver ];
-  };
-  environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
-
-  # Monitors shared with marvin: take them over on boot.
-  nexos.takeMonitor.enable = true;
 
   # Mininet (used by ~/codigos/p4-tutorials' devenv, studying P4) needs
   # this to let the virtual hosts it creates route/forward packets between
@@ -50,7 +40,14 @@
   # remount read-only. max_performance (1) disables that LPM state.
   boot.kernelParams = [ "ahci.mobile_lpm_policy=1" ];
 
+  # SSH is local-network only (ssh.nix refuses it through the tunnel), and
+  # only marvin may reach it: its Wi-Fi and Ethernet cards' permanent MACs.
+  nexos.lanIsolation.sshFromMacs = [ "80:38:fb:e0:7e:3c" "64:1c:67:e3:8d:38" ];
+
   sops.defaultSopsFile = ../../secrets/caixa.yaml;
+  # caixa decrypts with its SSH host key (converted to age), generated on
+  # the installer by install.sh, so no age key file is carried around.
+  sops.age.keyFile = lib.mkForce null;
 
   # Bump to whatever release you actually install; do not change on upgrades.
   system.stateVersion = "24.05";

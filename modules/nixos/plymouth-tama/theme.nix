@@ -3,7 +3,7 @@
 # firmware's Lenovo logo.
 #
 # two-step only loops one animation (the "throbber"), so every frame in
-# plymouth-tama/ is a composite: the GIF at 75% (405x480, so it fits above
+# frames/ is a composite: the GIF at 75% (405x480, so it fits above
 # the snowflake on a 1080px-tall screen) with nixos-bgrt's snowflake
 # 100px below it (its top at y=580 in the frame). two-step plays the
 # whole throbber in 2s (THROBBER_DURATION in
@@ -24,7 +24,7 @@
 runCommand "plymouth-theme-tama" { } ''
   t=$out/share/plymouth/themes/tama
   mkdir -p $t
-  cp ${./plymouth-tama}/throbber-*.png $t/
+  cp ${builtins.path { path = ./frames; name = "plymouth-tama"; }}/throbber-*.png $t/
   cp ${nixos-bgrt-plymouth}/share/plymouth/themes/nixos-bgrt/images/{bullet,capslock,entry,keyboard,keymap-render,lock}.png $t/
 
   # The frame's top at y=300 puts the GIF's center on the screen's (540),

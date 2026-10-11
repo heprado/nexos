@@ -7,52 +7,39 @@ are sensitive.
 
 ## Status
 
-caixa's age keypair has already been generated (it doesn't need to happen
-*on* caixa — it's just a keypair, generated wherever is convenient, the same
-way you'd generate an SSH key before a server exists). Its public half is
-already in `.sops.yaml`, and `secrets/caixa.yaml` is already sops-encrypted
-against it.
+Two recipients per file (see `.sops.yaml`):
 
-**What's still needed before caixa can decrypt its own secrets:**
+- **admin**: henrique's own age key, post-quantum (`age-keygen -pq`),
+  passphrase-protected, kept on a USB stick (`keys/admin.age` there), never
+  in this repo. It's what edits and re-encrypts every secrets file, so no
+  machine's key is ever needed for that.
+- **the host**: caixa decrypts with its SSH host key, converted to age
+  (`sops.age.sshKeyPaths`). `machines/caixa/install.sh` generates that key
+  on the installer and re-encrypts `secrets/caixa.yaml` for it with the
+  admin key, so no private key is carried to caixa.
 
-1. Copy the private key file you were given (`caixa-key.txt`) onto caixa, at:
+## Editing a secret
 
-   ```
-   /var/lib/sops-nix/key.txt
-   ```
+With the stick mounted (asks for the admin passphrase):
 
-   Do this any time before the first `nixos-rebuild switch` that uses this
-   flake — e.g. right after first boot, via a USB stick, `scp`, or pasting it
-   in during the install's live session. Permissions should be root-only
-   (`chmod 600`).
+```sh
+SOPS_AGE_KEY_FILE=/path/to/stick/keys/admin.age sops secrets/caixa.yaml
+```
 
-2. Add the Cloudflare Tunnel's token (Zero Trust dashboard → Networks →
-   Tunnels → this tunnel → Configure — it's the long string after
-   `--token` in the install command shown there) as the
-   `cloudflared_tunnel_token` key in `secrets/caixa.yaml`. Edit it in
-   place with `sops` —
-   this decrypts, opens your editor, and re-encrypts on save — you need
-   the same `caixa-key.txt` available locally (e.g. also at
-   `~/.config/sops/age/keys.txt`, sops's default lookup path) to do this:
+Commit the re-encrypted file, then rebuild the host.
 
-   ```sh
-   sops secrets/caixa.yaml
-   ```
+## A host key changes (reinstall)
 
-3. Commit the re-encrypted `secrets/caixa.yaml`.
+`install.sh` handles it. By hand: put the new `ssh-to-age` recipient in
+`.sops.yaml`, then `SOPS_AGE_KEY_FILE=.../admin.age sops updatekeys
+secrets/<host>.yaml`.
 
-## Rotating the Cloudflare Tunnel credentials later
+## Losing the admin key
 
-Same as step 2 above — `sops secrets/caixa.yaml` decrypts, lets you edit,
-and re-encrypts on save.
-
-## Losing the private key
-
-If `caixa-key.txt` / `/var/lib/sops-nix/key.txt` is lost, `secrets/caixa.yaml`
-becomes permanently undecryptable as-is. Recovery: generate a fresh age
-keypair, update `.sops.yaml` with the new public key, and re-encrypt
-`secrets/caixa.yaml` from a plaintext copy of the secret (i.e. you'll need
-the Cloudflare Tunnel's token again too).
+The hosts keep working (they decrypt with their own keys), but nothing can
+be edited or re-encrypted any more. Recovery: a new admin key, and every
+secret re-created from its source (password hash, Cloudflare Tunnel token).
+Keep a second copy of `admin.age` somewhere other than the stick.
 
 ## Bootstrapping marvin
 

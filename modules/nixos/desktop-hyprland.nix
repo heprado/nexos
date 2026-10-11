@@ -1,17 +1,33 @@
-{ config, lib, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 {
-  # Local physical console only (henrique). Session appears in SDDM's
-  # session picker alongside Plasma; anyone at the physical console can
-  # choose either, but only henrique has this listed as his intended one.
+  # Everything graphical, for the hosts that have a desktop at all (marvin;
+  # caixa is terminal-only). Local physical console only (henrique).
   #
   # Uses nixpkgs-unstable's packaged Hyprland (not the upstream git flake)
   # so builds hit the binary cache instead of compiling from source.
   programs.hyprland.enable = true;
 
-  # ABNT2 keyboard (has ç, /, dead keys, and a numpad) -- without this,
-  # SDDM/the console fall back to a US layout where those keys don't map.
+  # henrique's GUI home config (Hyprland/Noctalia, browser, chat apps, ...),
+  # on top of the terminal one common.nix imports.
+  home-manager.users.henrique.imports = [ ../../users/henrique/home-desktop.nix ];
+
+  # Noctalia isn't in the official nixpkgs cache; without this, its
+  # Quickshell/Qt dependencies get compiled from source on every rebuild.
+  nix.settings = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+  };
+
+  # pkgs.helium, for modules/home/helium.nix.
+  nixpkgs.overlays = [ inputs.helium-flake.overlays.default ];
+
+  # Backend dconf needs to actually apply GTK theme settings (see
+  # modules/home/hyprland.nix's dconf.settings for henrique's GTK theme).
+  programs.dconf.enable = true;
+
+  # ABNT2 keyboard in the greeter and the graphical session -- without
+  # this they fall back to a US layout. The text console's is in common.nix.
   services.xserver.xkb.layout = "br";
-  console.keyMap = "br-abnt2";
 
   # Noctalia Greeter (greetd-backed) replaces SDDM as the physical-console
   # login screen, matching the look of henrique's Noctalia shell. It only
@@ -60,8 +76,8 @@
 
   # Recommended by Noctalia (the shell/bar running in henrique's Hyprland
   # session, see modules/home/hyprland.nix) for its network/bluetooth/power
-  # widgets to actually have something to report.
-  networking.networkmanager.enable = true;
+  # widgets to actually have something to report (NetworkManager itself is
+  # enabled in common.nix).
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
@@ -139,4 +155,21 @@
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="e0", ATTR{bInterfaceSubClass}=="01", ATTR{bInterfaceProtocol}=="01", TEST=="power/control", ATTR{power/control}="on"
   '';
+
+  # projectMSDL (github.com/projectM-visualizer/frontend-sdl-cpp release
+  # tarball, used by noctalia-song-visualizer) is a prebuilt binary run
+  # through nix-ld (users/henrique/default.nix) -- `ldd` on it reports these
+  # three missing alongside libstdc++, which the module already provides by
+  # default.
+  programs.nix-ld.libraries = with pkgs; [ SDL2 freetype libglvnd ];
+
+  # Profile picture for the login screen: noctalia-greeter shows each
+  # user's AccountsService IconFile, read as the "greeter" user. With none
+  # set, AccountsService reports ~/.face, which the greeter can't read
+  # (home is 0700), so it fell back to a generic icon. Same picture as
+  # Noctalia's own avatar (~/.face, modules/home/hyprland.nix).
+  systemd.tmpfiles.rules = [
+    "L+ /var/lib/AccountsService/icons/henrique - - - - ${../../users/henrique/user-profile.jpg}"
+    "f+ /var/lib/AccountsService/users/henrique 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/henrique\\nSystemAccount=false\\n"
+  ];
 }

@@ -5,8 +5,8 @@ then by **user** — each machine gets its own directory under `machines/`,
 and each user gets their own directory under `users/`, so adding a new
 machine or a new user later doesn't require restructuring anything.
 
-Two machines today: **caixa** (desktop, also reachable remotely) and
-**marvin** (laptop, dual-booting Windows with Secure Boot on). Both run
+Two machines today: **caixa** (terminal-only, reachable over SSH from the local network) and
+**marvin** (laptop, dual-booting Windows with Secure Boot on), which runs
 Hyprland with the [Noctalia](https://docs.noctalia.dev) shell for
 `henrique`.
 
@@ -34,19 +34,17 @@ nexos/
 
   modules/
     nixos/                    # system-level (NixOS) modules, each one feature-scoped
-      common.nix                 # what every host shares (nix settings, nh, locale, kernel, boot console,
+      common.nix                 # what every host shares, terminal only (nix settings, nh, locale, kernel, boot console,
                                  # sops key, home-manager) + imports the modules every host uses
       unfree.nix                 # nexos.unfree: each module lists the unfree packages it needs
-      desktop-hyprland.nix       # Hyprland + Noctalia greeter (greetd) at the physical console
+      desktop-hyprland.nix       # marvin: Hyprland + Noctalia greeter (greetd), audio, bluetooth, GUI home config
       docker-rootless.nix        # rootless Docker, per-user daemons
-      ssh.nix                    # key-only SSH (no passwords, no root login)
+      ssh.nix                    # caixa: key-only SSH server, LAN only (no passwords, no root login, fail2ban)
       chrony.nix                 # NTP from NIC.br with NTS
       lan-isolation.nix          # caixa only: LAN interfaces reach just the gateway, no peer-to-peer traffic
       take-monitor.nix (+ .sh)   # switches shared DDC/CI monitors to whichever host boots
       session-stop-timeout.nix   # 10s (not 90s) for stuck login-session processes on shutdown
-      cloudflared.nix            # caixa: Cloudflare Tunnel, SSH/VNC reachable with no open inbound port
-      wayvnc-hyprland.nix        # caixa: remote access to henrique's actual Hyprland session
-      novnc-hyprland.nix         # caixa: websockify+noVNC, browser/HTTPS front-end for the wayvnc above
+      cloudflared.nix            # caixa: Cloudflare Tunnel (web apps; SSH is refused through it)
       gaming.nix                 # marvin: Steam, Lutris, MangoHud, PCSX2, Eden, AppImages via binfmt
       refind.nix                 # marvin: rEFInd as the NixOS/Windows picker in front of systemd-boot
     home/                     # home-manager modules (per-user environment, not system config)
@@ -65,7 +63,8 @@ nexos/
   users/
     henrique/
       default.nix              # NixOS account: shell, groups, SSH authorized_keys, password hash
-      home.nix                 # home-manager config for this user: which modules/home/*.nix apply
+      home.nix                 # home-manager config for this user, terminal half (every host)
+      home-desktop.nix         # GUI half (Hyprland, apps), imported by desktop-hyprland.nix
 
   dotfiles/
     noctalia/<host>/settings.toml  # Noctalia control-center settings, synced on every rebuild (see below)
@@ -73,6 +72,7 @@ nexos/
   templates/                  # per-language devenv environments, meant to be dropped into OTHER
                               # project repos (not used here) via `nix flake init -t`
     rust/ python/ c/ sql/ web/   # each: devenv.nix + devenv.yaml + .envrc
+    containers/                  # add-on: containers.nix (rootless Podman tied to the shell)
 
   secrets/
     caixa.yaml / marvin.yaml   # sops-encrypted secrets per host (password hashes, tunnel credentials, ...)
@@ -93,19 +93,23 @@ nexos/
 
 On both machines:
 
-- **Disk**: LUKS-encrypted (interactive passphrase) btrfs via [disko](https://github.com/nix-community/disko), subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
-- **User**: `henrique` (sudo/wheel). SSH is key-only, no password auth.
-- **Desktop**: Hyprland with the Noctalia shell, and the Noctalia greeter (on greetd) as the login screen.
+- **Disk** (declared with [disko](https://github.com/nix-community/disko), passphrase asked at boot on the Plymouth splash):
+  - **marvin**: LUKS-encrypted btrfs, subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
+  - **caixa**: ZFS pool `zroot` with native encryption (aes-256-gcm) on the pool root, datasets for `/`, `/home`, `/nix`, `/var/lib/db` (8K records, for databases; k3s' `db` StorageClass lives there) and a 1G `reserved`, swap on its own partition re-keyed randomly each boot. One disk today; ZFS so more can join as an array later (`zpool attach` for a mirror). See `machines/caixa/zfs.nix`.
+- **User**: `henrique` (sudo/wheel).
 - **Docker**: rootless, one daemon per user, auto-starts at login (via `linger`).
 - **Secrets**: managed with [sops-nix](https://github.com/Mic92/sops-nix) + `age`; see `secrets/README.md` for the full secrets workflow (rotating keys, adding new secrets, etc).
 
 **caixa** additionally:
 
-- **Remote access**: [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (`cloudflared`) fronts SSH and VNC — outbound-only from this machine, so no inbound port is ever opened for them. Credentials come from a sops-encrypted tunnel token; see `modules/nixos/cloudflared.nix`. The VNC side is henrique's *same* Hyprland session (`wayvnc`), either with a native VNC client or straight from a browser over HTTPS via a websockify+noVNC front-end (`modules/nixos/novnc-hyprland.nix`).
+- **Terminal only**: no graphical session, greeter or auto-login; just getty on the console.
+- **SSH**: key-only, no password auth, local network only: just marvin, by MAC (`modules/nixos/ssh.nix`, `lan-isolation.nix`). 3 failed attempts and fail2ban bans the address. Refused over loopback, so it can't be reached through the Cloudflare Tunnel (`cloudflared`, outbound-only, kept for web apps such as the lab console; its token is sops-encrypted, see `modules/nixos/cloudflared.nix`).
+- **LAN isolation**: from the local network only the gateway is reachable, in both directions, plus SSH from marvin (`modules/nixos/lan-isolation.nix`).
 - `net.ipv4.ip_forward` on, for Mininet.
 
 **marvin** additionally:
 
+- **Desktop**: Hyprland with the Noctalia shell, and the Noctalia greeter (on greetd) as the login screen. No SSH server.
 - **Dual boot with Windows**, each on its own disk and ESP. **rEFInd** is the first menu (NixOS or Windows); NixOS goes on to systemd-boot's list of generations.
 - **Secure Boot** on, via [lanzaboote](https://github.com/nix-community/lanzaboote). The keys live in `/var/lib/sbctl` (**back that directory up**: without it new generations can't be signed). They were enrolled with `sbctl enroll-keys --append --microsoft` on top of the firmware's existing db/KEK/dbx, so Windows (including its 2023 CA) and the NVIDIA option ROM stay trusted.
 - **ESP is only 512M**, and each initrd is ~210M (the NVIDIA driver is in it), so `boot.lanzaboote.configurationLimit = 2`. If a rebuild fails with `No space left on device`, consecutive kernel/driver updates filled it.
@@ -190,7 +194,7 @@ The `nrs`/`nrt` aliases only exist once this config has been applied, so use the
    nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- \
      --mode disko ./machines/caixa/disko-config.nix
    ```
-   This prompts for the LUKS passphrase you want to set (interactive, no keyfile — see `disko-config.nix`).
+   This prompts for the passphrase you want to set (interactive, no keyfile — see `disko-config.nix`): the ZFS pool's on caixa, LUKS on marvin. On caixa, boot the installer with ZFS support (`boot.supportedFilesystems = [ "zfs" ]`, e.g. the stock NixOS ISO) and set any `networking.hostId` there.
 
 6. **Copy in the age key** now that `/mnt` exists (see step 4's commands).
 
@@ -205,11 +209,24 @@ The `nrs`/`nrt` aliases only exist once this config has been applied, so use the
    ```sh
    nixos-install --root /mnt --flake .#caixa
    ```
-   You'll be prompted for the LUKS passphrase again during install (it needs to unlock/interact with the encrypted volume).
+   On marvin you'll be prompted for the LUKS passphrase again during install. On caixa the pool is still imported with its key loaded from step 5; run `zpool export zroot` after the install, before rebooting, or the next boot finds it "in use by another system".
 
-9. **Reboot.** From here on, log in as henrique (Hyprland, physical console) or SSH in with the appropriate private key from `keys/`. Clone this repo to `/home/henrique/codigos/nexos` — that's where `nh` (and the Noctalia settings sync) expects it.
+9. **Reboot.** From here on, log in as henrique at the physical console (Hyprland on marvin, a plain text console on caixa) or, on caixa, SSH in with the appropriate private key from `keys/`. Clone this repo to `/home/henrique/codigos/nexos` — that's where `nh` (and the Noctalia settings sync) expects it.
 
 10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real cloudflared tunnel credentials, real password hashes, etc. should already be in `secrets/<host>.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
+
+### Moving caixa from LUKS + btrfs to ZFS
+
+There's no in-place conversion: it's Option A on the same disk, and the disk
+is wiped. Before booting the installer, copy off caixa:
+
+- `/home` (and anything else you care about under `/var/lib`);
+- nothing key-related: `sudo bash machines/caixa/install.sh` generates a new
+  SSH host key and re-encrypts the secrets for it with the admin key (see
+  its header and `secrets/README.md`). SSH clients see a new host key.
+
+Then run it from the installer (Option A's steps, automated). At the first
+boot the Plymouth splash asks for the pool passphrase (`Enter key for zroot`).
 
 ### Option B — Adopting this config on an already-running NixOS system
 
@@ -269,6 +286,35 @@ so each project only pulls in the toolchain it actually needs. The
    Prefer not to use direnv for a given project? Skip the `.envrc` and
    run `devenv shell` manually instead — same effect, but only for that
    shell session, and you have to re-run it every new terminal.
+
+### Adding containers (`#containers`)
+
+`containers` is an add-on, not a language: it drops a single
+`containers.nix` next to the `devenv.nix` you already have. Import it
+there:
+
+```sh
+nix flake init -t nexos#containers
+# devenv.nix:  imports = [ ./containers.nix ];
+```
+
+It gives the project its **own rootless Podman** (`podman`,
+`podman-compose`, and `DOCKER_HOST` pointing at a project-scoped API
+socket), with images/containers/networks stored under
+`.devenv/state/podman` — not shared with other projects or with the
+machine-wide rootless Docker. Its lifetime is the shell's: when the last
+shell that activated it goes away (`devenv shell` exited, terminal closed,
+or — with direnv — that shell `cd`'d out of the project), a watchdog stops
+every container and kills the API service and the rootless pause process.
+`containers-guard status` shows what is up; `containers-guard down` tears
+it down on demand.
+
+Image pulls go through a deny-by-default Podman signature policy:
+`containersGuard.allowedImages` lists the registry repositories a project
+may pull (optionally requiring a cosign key), and
+`containersGuard.allowArchiveLoad = true` permits `podman load` for base
+images verified another way (e.g. a Nix store path signed by
+cache.nixos.org) while keeping every registry closed.
 
 ## Verifying before you trust it on real hardware
 

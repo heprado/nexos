@@ -14,26 +14,22 @@
   # hand-rolled systemd unit instead. Because it's remotely-managed, the
   # ingress rules (which public hostname maps to which local service)
   # are NOT declared here -- they live in the Cloudflare Zero Trust
-  # dashboard, under this tunnel's "Public Hostname" tab. Configure:
-  #   ssh.heprado.com.br    -> ssh://localhost:22
-  #   remote.heprado.com.br -> http://localhost:6080  (noVNC/websockify in front
-  #                                                     of wayvnc, see
-  #                                                     novnc-hyprland.nix --
-  #                                                     browser-based HTTPS
-  #                                                     access, no VNC client
-  #                                                     needed; TLS terminates
-  #                                                     here at the tunnel)
+  # dashboard, under this tunnel's "Public Hostname" tab.
   #
-  # kde.heprado.com.br (RDP, leonardo/martin's Plasma sessions) was removed
-  # along with desktop-plasma-rdp.nix and those users -- also remove its
-  # "Public Hostname" mapping from the Zero Trust dashboard by hand, that
-  # part isn't declared here.
+  # SSH is no longer one of them: it's local-network only, and ssh.nix
+  # refuses it over loopback, which is where the tunnel would deliver it.
+  # Remove the ssh.heprado.com.br mapping from the dashboard by hand.
   #
-  # WARNING: neither hostname above has an authentication layer of its own
-  # beyond whatever runs on the other end (SSH keys; wayvnc's password). If
-  # Cloudflare Access policies aren't configured for these hostnames in the
-  # dashboard, anyone who discovers the hostname can attempt to connect
-  # straight through.
+  # kde.heprado.com.br (RDP, leonardo/martin's Plasma sessions) and
+  # remote.heprado.com.br (noVNC/wayvnc into the Hyprland session, gone
+  # since caixa became terminal-only) were removed from this flake -- also
+  # remove their "Public Hostname" mappings from the Zero Trust dashboard by
+  # hand, that part isn't declared here.
+  #
+  # WARNING: a public hostname has no authentication layer of its own beyond
+  # whatever runs on the other end. If a Cloudflare Access policy isn't
+  # configured for it in the dashboard, anyone who discovers the hostname
+  # can attempt to connect straight through.
   systemd.services.cloudflared-tunnel = {
     description = "Cloudflare Tunnel (token-based)";
     after = [ "network-online.target" ];

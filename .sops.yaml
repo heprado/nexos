@@ -1,9 +1,17 @@
 keys:
-  # caixa's age public key. The matching private key was generated ahead of
-  # time (not on caixa, since it didn't exist yet) and must be copied to
-  # /var/lib/sops-nix/key.txt on caixa before the first `nixos-rebuild
-  # switch` there. See secrets/README.md.
-  - &caixa age1xhhzemyhg8lc4amzapkf77gsmyvdz277y94jgvspa7r35vtw83qsnss64g
+  # The admin age key: henrique's own, a recipient of every secrets file,
+  # so they can be edited and re-encrypted (new host, lost host key)
+  # without depending on any machine's key. Post-quantum (ML-KEM-768 +
+  # X25519): these files stay in git history for good. Its private half
+  # is passphrase-protected and lives on a USB stick (keys/admin.age),
+  # never in this repo:
+  #   age-keygen -pq | age -p -a > /path/to/stick/keys/admin.age
+  # (prints "Public key: age1pq1..." -- that goes here).
+  - &admin age1pq1pgzen4qpcgf2cvrra3j2a9cqf6zxg6ccvj2xz4hcusxadanpkk7ge8akwa8dn2xy5cegauefc4v9mmc8p8cx0fwnfx25tp5y2jmuytr9gm6vrxlf6kwrkw6kzm6t054pkfz0887502zupet2tq9t2mz5q5fzy4hj5wlsuvexs8vz9fjmjv5gewpvwnxjnq4flmg3262zcksjjpc5vd6vr7432qucju3jxpmptpzcf23rvg9wl9v5kdcy4nalwakeexf9ukdgxwru8lwz03wsgv9ujphlcjq89t3g7vw2kszvwxd7gs234gqsw99eq8u6gd7jgfgrczwcda9w03fsd3yhskw8egv7kpmn36ezn2a8epzukcyu5mxtvt9trwd0w5z22rnyyq24rdjgc509mh975x4ywpwszjncy4p2v3wl6jcgzw7rp3zs0kn6fs6vl9a3ezmvlzg8pzhr9u933xa83yqgrvdx3ejfq7yuc7fjn0mrwpzjy9q3gs54huau5c2kjxaj5yz8gjpvnrcxrl4992cf9ycznj3ws0pyerc50z0u0eej8zgkx37a4jeflu3tegk5qhdxtr7zgsv7xhx9wnamddek2rnqerdt7ck6kv9jgmyt5c523rp8xl9dfqdxuydyvx54dahfwec55xe7v5km5gt363dssk7kjta60ncqnxrue9rx8jzfmp74cy3pf3wnndlm8cvuxwzj6504t6wxwntd7e797v3x3xgxp6gre706w3skz3an85sdt3s3s9cuylapxduhsvs5hs9rx2e5tz8jdr28e32ep378gsj4s99jhtzk30jk3dhppspskjqaamd6gxxzjrfc4vxj0dyx4x25673ylrmzq7jd2zue7jp9n4c3gzustd8950muvsyq5ans2am7t06f3l769ekpd3c93psekp4l5hxz2n0hq0ljq9jlrsmcxnygd5qu0t92ca03njuuh2c4s7cqv2m55s32gv0gpnfkz8r3t9fag5fs6zpvzfu6r8ekggnskqdu5afx0lk6k0yd9ghh3zvyx2v89kujk58rczj3stxgrnxdfevluavxhyuu8t5kzk92j36ycv4n6zut8g3ctralr3pd6jmn9g5c0sp972fzn9hehq5wy7yrzwunstmxhhq3t0mmcc5nyzm8m7vn4n23q4wqdxun3w4fav64k44askekupxgscm2yrrzfglpu72ny9peyfvgrkce9wf3kaey2ja6rq2qpmrzw983wrxmuyus3c4yhwykjew9n3eptphwjsrfskky5mgg4jsn2edm5f525xprfwmmy8scrlgyceap8fy62z4yj4t8j7qk6hyrqxh7wxa3guecvjmlfqdpd98gvg8kz782ggudy4amjq6txcz98e6cjeqt7vqj0fkvu93sp62c9yghgwavxadxuyf5uj9jkfatwr54pvwvmdwvmvvsgfykvn0q53ekvt7mr3kanujfr03hl3dsymqfxr40ylp4lf984q9nt324p4djjepyz6gvwjryeks82nqq5zkjt25lyyxrv2u23kgg0vge85jc5xfz38rfp4xvq7ajtvhq8p29qdwk8ztq5pg8grqrl7hpj3set3wups8erpp0hh5cqx3qn8djqthcmjjddgsckvaqrqcnfq3a88huwq5xnjradgcttqqscf80vm7hys2eye48vykr8pzqyuzr8r6ldd0fxapxm5qc9g6jvlrncx0el28rgcy5523uq8mspkfaszlz75lr4az9385zsscgq9vczge6ep5u2k2c9x2zzrsp4j3z4j8u7k09swt5x0937j6u2g6erfesck3c6lgdzaex53yprzztxytm7k3ytyu3h6dyss8zrxf62w7988y5y6g034m7un24chgjz8wquc4znmk6hcm9pez8nlwrgq3zqylf89yz0cl4gt9d
+  # caixa's age public key: its SSH host key converted with ssh-to-age.
+  # machines/caixa/install.sh generates that key on the installer, rewrites
+  # this line and re-encrypts secrets/caixa.yaml for it with the admin key.
+  - &caixa age1vrkn52npsrc4z8j56p2s2fmckel5lsus30xcup3mg23mgu4fhfqs2uerjq
   # PLACEHOLDER -- marvin's age public key. Generate a real keypair with
   # `age-keygen` (doesn't need to happen on marvin itself), replace this
   # value with the real public key, and save the private half to
@@ -14,8 +22,10 @@ creation_rules:
   - path_regex: secrets/caixa\.yaml$
     key_groups:
       - age:
+          - *admin
           - *caixa
   - path_regex: secrets/marvin\.yaml$
     key_groups:
       - age:
+          - *admin
           - *marvin

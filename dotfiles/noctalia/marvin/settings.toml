@@ -25,6 +25,12 @@ start = [ "workspaces" ]
     opacity = 1.0
     padding = 6.0
 
+[location]
+address = "São Paulo, Brasil"
+custom_schedule = true
+sunrise = "07:00"
+sunset = "18:00"
+
 [lockscreen_widgets]
 enabled = false
 schema_version = 2
@@ -88,6 +94,9 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
         show_session_buttons = true
         show_unlock_hint = true
         show_weather = true
+
+[nightlight]
+enabled = true
 
 [plugins]
 enabled = []

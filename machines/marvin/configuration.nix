@@ -6,8 +6,12 @@ in
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/common.nix
+    # No ssh.nix: marvin is a laptop roaming arbitrary Wi-Fi networks and
+    # never needs to accept SSH (it's only a client, to caixa).
+    ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/refind.nix
+    ../../modules/nixos/plymouth-tama
     inputs.lanzaboote.nixosModules.lanzaboote
   ];
 
@@ -70,14 +74,8 @@ in
   # panel, so the menu above can't reach the HDMI monitor; Plymouth runs
   # after the kernel's DRM drivers are up, so it can. The HDMI port is
   # wired to NVIDIA, so its driver (not just i915) is loaded early in the
-  # initrd for Plymouth to see that output too.
-  boot.plymouth = {
-    enable = true;
-    # nixos-bgrt's spinning snowflake with Tama instead of the Lenovo logo,
-    # see plymouth-tama.nix.
-    theme = "tama";
-    themePackages = [ (pkgs.callPackage ./plymouth-tama.nix { }) ];
-  };
+  # initrd for Plymouth to see that output too. The Tama theme itself is
+  # modules/nixos/plymouth-tama (imported above).
   boot.initrd.kernelModules = [ "i915" "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
 
   # The shared monitor sees no HDMI signal until nvidia-drm is up (~4s in),
@@ -196,6 +194,11 @@ in
     allowedTCPPorts = [ 47984 47989 48010 ];
     allowedUDPPorts = [ 47998 47999 48000 48002 48010 ];
   };
+  # ~/codigos/compartilhamento-de-video-legal publishes its nginx on
+  # 192.168.15.141:443 from rootless Podman, which can only bind ports at or
+  # above this. 443 is deliberately NOT in allowedTCP/UDPPorts above: only
+  # marvin itself (loopback path to its own IP) reaches it, never the LAN.
+  boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 443;
   # Replaces the package's own launcher (same desktop-file ID), which runs
   # a bare `sunshine` outside the service, without the settings above.
   home-manager.users.henrique.xdg.desktopEntries."dev.lizardbyte.app.Sunshine" = {

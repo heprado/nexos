@@ -83,6 +83,12 @@
         path = ./templates/web;
         description = "JavaScript/TypeScript devShell: node, typescript, typescript-language-server, eslint, prettier";
       };
+      # Add-on, not a standalone env: drops containers.nix next to an
+      # existing devenv.nix, which then needs `imports = [ ./containers.nix ];`.
+      containers = {
+        path = ./templates/containers;
+        description = "Add-on: rootless Podman scoped to the project, killed when the devenv shell is left";
+      };
     };
 
     nixosConfigurations =
