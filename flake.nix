@@ -52,6 +52,13 @@
       url = "github:nix-community/lanzaboote/v1.2.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Two lab servers as microVMs on caixa, on a Linux bridge of their own
+    # (container_studies' vms/ flake; see modules/nixos/lab-vms.nix).
+    lab-vms = {
+      url = "git+file:///home/henrique/codigos/container_studies?dir=vms";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia-greeter, ... }@inputs: {

@@ -9,6 +9,7 @@
     ../../modules/nixos/lan-isolation.nix
     ../../modules/nixos/k3s-lab.nix
     ../../modules/nixos/lab-console-https.nix
+    ../../modules/nixos/lab-vms.nix
   ];
 
   networking.hostName = "caixa";

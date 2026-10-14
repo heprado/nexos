@@ -168,6 +168,29 @@
         "type": "github"
       }
     },
+    "lab-vms": {
+      "inputs": {
+        "microvm": "microvm",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "vms",
+        "lastModified": 1792006191,
+        "narHash": "sha256-oRI25ljBh6hPO8SoGrz9Hd0rVI9zxl0bRAxd1/vZALQ=",
+        "ref": "refs/heads/main",
+        "rev": "42dfbca9207543f8429c45b1058308ffcaefde4b",
+        "revCount": 50,
+        "type": "git",
+        "url": "file:///home/henrique/codigos/container_studies"
+      },
+      "original": {
+        "dir": "vms",
+        "type": "git",
+        "url": "file:///home/henrique/codigos/container_studies"
+      }
+    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -189,6 +212,28 @@
         "owner": "nix-community",
         "ref": "v1.2.0",
         "repo": "lanzaboote",
+        "type": "github"
+      }
+    },
+    "microvm": {
+      "inputs": {
+        "nixpkgs": [
+          "lab-vms",
+          "nixpkgs"
+        ],
+        "spectrum": "spectrum"
+      },
+      "locked": {
+        "lastModified": 1791551030,
+        "narHash": "sha256-jTx3O3MKqPjv+cDfBFQ5zlKECBEwzF91scC+mSumZyE=",
+        "owner": "microvm-nix",
+        "repo": "microvm.nix",
+        "rev": "f13928fe9900e91709d7ce581eefa47eaafa79e1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "microvm-nix",
+        "repo": "microvm.nix",
         "type": "github"
       }
     },
@@ -296,6 +341,7 @@
         "helium-flake": "helium-flake",
         "home-manager": "home-manager",
         "hyprqt6engine": "hyprqt6engine",
+        "lab-vms": "lab-vms",
         "lanzaboote": "lanzaboote",
         "monitor-settings": "monitor-settings",
         "nixpkgs": "nixpkgs",
@@ -343,6 +389,22 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "type": "github"
+      }
+    },
+    "spectrum": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786032750,
+        "narHash": "sha256-+Ba/kIn5BjvV7PN8bWOo7RoqgTY/Yv2M7qeMf3wS2Ag=",
+        "ref": "refs/heads/main",
+        "rev": "77d2389874bb092b8dbf05ecc5b1030372e80e98",
+        "revCount": 1417,
+        "type": "git",
+        "url": "https://spectrum-os.org/git/spectrum"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://spectrum-os.org/git/spectrum"
       }
     },
     "systems": {
