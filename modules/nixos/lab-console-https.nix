@@ -62,6 +62,19 @@ in
           proxy_read_timeout 1h;
         '';
       };
+      # Images uploaded from the game (lab-console's PUT /api/images/...): a
+      # vendor's VM disk is GBs, so no size limit here (lab-console has its
+      # own), streamed on as it comes instead of spooled to nginx's disk
+      # first, and time for a slow link.
+      locations."/api/images/" = {
+        proxyPass = "http://127.0.0.1:30880";
+        extraConfig = ''
+          client_max_body_size 0;
+          proxy_request_buffering off;
+          proxy_read_timeout 1h;
+          proxy_send_timeout 1h;
+        '';
+      };
     };
   };
 
