@@ -97,5 +97,10 @@
       stop undo-<name>.timer`; no cron or `at` here, and a
       `(sleep N; undo) &` child dies with the shell. Kills go by saved PID
       or a pattern that can't match your own command line (`[l]abdev`).
+    - Runtime first: optimise for how the program runs (frame time, CPU,
+      memory, size), not how long it takes to build. Pick what runs
+      better even when it compiles slower (codegen-units = 1, LTO, heavier
+      optimisation) and don't propose trading runtime for build speed;
+      still show build time in before/after tables, as information.
   '';
 }
