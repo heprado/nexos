@@ -81,5 +81,21 @@
       BitTorrent, backing up media the user owns, free/open content)
       are fine; when it's genuinely unclear, ask.
     - When implementing a new feature check if the feature already exists, if it exists, you will need to test the performance before and after you implemented the feature, you must show the user before vs after feature implementation.
+    - Self-reverting changes: on any shell you work in -- local, or remote
+      over SSH -- before a change that could cut you off or leave the
+      machine broken if you lose it midway (killing processes, network,
+      firewall, SSH or sudo config, services, mounts, a rebuild or switch
+      of the system), first schedule its undo on that same machine,
+      detached from your session, then make the change, check it worked,
+      and cancel the undo. Pick the delay from how critical the change is:
+      seconds for something that only risks your own shell, a few minutes
+      for networking or access on a remote host, longer for a slow
+      rebuild -- enough to verify, short enough that a lockout heals
+      itself. Use what the machine has: `systemd-run --user
+      --on-active=<delay> --unit=undo-<name> sh -c '<undo>'` (system scope
+      with sudo for system changes), cancelled with `systemctl [--user]
+      stop undo-<name>.timer`; no cron or `at` here, and a
+      `(sleep N; undo) &` child dies with the shell. Kills go by saved PID
+      or a pattern that can't match your own command line (`[l]abdev`).
   '';
 }
