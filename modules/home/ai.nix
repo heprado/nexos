@@ -1,4 +1,7 @@
 { config, pkgs, ... }:
+let
+  claudeMd = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude/CLAUDE.md";
+in
 {
   home.packages = [ pkgs.claude-code ];
 
@@ -7,10 +10,11 @@
   xdg.mimeApps.defaultApplications."x-scheme-handler/claude-cli" =
     "claude-code-url-handler.desktop";
 
-  # The same policy for agents that read AGENTS.md (Codex's global one): a
-  # link to the file below, so the two never drift.
-  home.file.".codex/AGENTS.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude/CLAUDE.md";
+  # The same policy for the agents that read a global AGENTS.md -- Codex,
+  # opencode, pi: links to the file below, so they never drift.
+  home.file.".codex/AGENTS.md".source = claudeMd;
+  home.file.".config/opencode/AGENTS.md".source = claudeMd;
+  home.file.".pi/agent/AGENTS.md".source = claudeMd;
 
   # henrique-only Claude Code policy (not machine-wide -- see
   # <https://code.claude.com/docs/en/memory> for the full precedence
