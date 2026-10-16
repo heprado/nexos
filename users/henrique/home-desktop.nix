@@ -6,6 +6,7 @@
   imports = [
     ../../modules/home/chat.nix
     ../../modules/home/design.nix
+    ../../modules/home/reading.nix
     ../../modules/home/claude-voice.nix
     ../../modules/home/hyprland.nix
     ../../modules/home/helium.nix

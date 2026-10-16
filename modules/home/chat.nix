@@ -17,4 +17,11 @@
   # keeps its data in ~/.local/share/TelegramDesktop and never creates it,
   # so without this the theme was always skipped.
   xdg.configFile."telegram-desktop/themes/.keep".text = "";
+
+  # Link handlers (mimeapps.list is managed, see modules/home/reading.nix).
+  xdg.mimeApps.defaultApplications = {
+    "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
+    "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
+    "x-scheme-handler/discord" = "vesktop.desktop";
+  };
 }

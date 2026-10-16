@@ -19,4 +19,7 @@
       "--enable-features=Vulkan,AcceleratedVideoDecodeLinuxGL"
     ];
   };
+
+  # mimeapps.list is managed, see modules/home/reading.nix.
+  xdg.mimeApps.defaultApplications."x-scheme-handler/mailto" = "helium.desktop";
 }

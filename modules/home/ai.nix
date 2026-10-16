@@ -2,6 +2,11 @@
 {
   home.packages = [ pkgs.claude-code ];
 
+  # Claude Code registers this handler itself, but mimeapps.list is
+  # read-only on desktop hosts (modules/home/reading.nix), so declare it.
+  xdg.mimeApps.defaultApplications."x-scheme-handler/claude-cli" =
+    "claude-code-url-handler.desktop";
+
   # henrique-only Claude Code policy (not machine-wide -- see
   # <https://code.claude.com/docs/en/memory> for the full precedence
   # order; ~/.claude/CLAUDE.md is the per-user location).
