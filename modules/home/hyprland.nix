@@ -62,6 +62,29 @@ in
 
   programs.foot.enable = true;
 
+  # Nix snowflake as a real image via foot's sixel support (nixpkgs'
+  # fastfetch is built with ImageMagick, which the sixel logo type needs).
+  # A config file without "modules" shows no modules at all (only the
+  # logo), so the list below is fastfetch's own default, copied from what
+  # `fastfetch -c none --gen-config` writes.
+  programs.fastfetch = {
+    enable = true;
+    settings = {
+      logo = {
+        type = "sixel";
+        source = "${pkgs.nixos-icons}/share/icons/hicolor/256x256/apps/nix-snowflake.png";
+        width = 30;
+        height = 15;
+      };
+      modules = [
+        "title" "separator" "os" "host" "kernel" "uptime" "packages"
+        "shell" "display" "de" "wm" "wmtheme" "theme" "icons" "font"
+        "cursor" "terminal" "terminalfont" "cpu" "gpu" "memory" "swap"
+        "disk" "localip" "battery" "poweradapter" "locale" "break" "colors"
+      ];
+    };
+  };
+
   # Renames how these apps show up in Noctalia's launcher (and any other
   # XDG-desktop-file-based launcher/dock/menu -- this isn't a launcher
   # feature, it's a standard XDG override: a user-level .desktop with the
