@@ -36,10 +36,10 @@ let
       loader /EFI/systemd/systemd-bootx64.efi
     }
 
-    menuentry "Windows" {
-      icon /EFI/refind/icons/os_windows.png
-      volume ${cfg.windowsEsp}
-      loader /EFI/Microsoft/Boot/bootmgfw.efi
+    menuentry "${cfg.otherOs.name}" {
+      icon /EFI/refind/icons/os_other.png
+      volume ${cfg.otherOs.esp}
+      loader ${cfg.otherOs.loader}
     }
   '';
 
@@ -49,7 +49,7 @@ let
 
     dir=${esp}/EFI/refind
     stamp=$dir/.installed-from
-    want="${pkgs.refind} ${refindConf} ${snowflake} ${cfg.windowsIcon} ${lib.optionalString (cfg.background != null) "${cfg.background}"} ${lib.optionalString (cfg.theme != null) "${cfg.theme}"}"
+    want="${pkgs.refind} ${refindConf} ${snowflake} ${cfg.otherOs.icon}${lib.optionalString (cfg.background != null) "${cfg.background}"} ${lib.optionalString (cfg.theme != null) "${cfg.theme}"}"
 
     # Only touch the ESP when rEFInd or its config actually changed.
     if [[ "$(cat "$stamp" 2>/dev/null)" != "$want" ]]; then
@@ -57,7 +57,7 @@ let
       rm -rf "$dir/icons"
       cp -r --no-preserve=mode ${pkgs.refind}/share/refind/icons "$dir/icons"
       cp --no-preserve=mode ${snowflake} "$dir/icons/os_nixos.png"
-      cp --no-preserve=mode ${cfg.windowsIcon} "$dir/icons/os_windows.png"
+      cp --no-preserve=mode ${cfg.otherOs.icon} "$dir/icons/os_other.png"
       rm -rf "$dir/theme"
       ${lib.optionalString (cfg.theme != null) ''cp -r --no-preserve=mode ${cfg.theme} "$dir/theme"''}
       rm -f "$dir/background.png"
@@ -83,14 +83,33 @@ let
 in
 {
   # A first menu that only picks the OS: "NixOS" chainloads lanzaboote's
-  # systemd-boot (which then lists the generations) and "Windows" its boot
-  # manager on another disk's ESP, which systemd-boot can't reach.
+  # systemd-boot (which then lists the generations) and otherOs the boot
+  # loader on another disk's ESP, which systemd-boot can't reach.
   options.nexos.refind = {
     enable = lib.mkEnableOption "rEFInd as an OS picker in front of systemd-boot";
-    windowsEsp = lib.mkOption {
-      type = lib.types.str;
-      example = "ee46a2aa-aa95-4890-be73-2e631ebe70fa";
-      description = "PARTUUID of the ESP holding Windows' boot manager (`lsblk -o NAME,PARTUUID`).";
+    otherOs = {
+      name = lib.mkOption {
+        type = lib.types.str;
+        default = "Windows";
+        description = "Menu label of the second OS.";
+      };
+      esp = lib.mkOption {
+        type = lib.types.str;
+        example = "ee46a2aa-aa95-4890-be73-2e631ebe70fa";
+        description = "PARTUUID of the ESP holding its boot loader (`lsblk -o NAME,PARTUUID`).";
+      };
+      loader = lib.mkOption {
+        type = lib.types.str;
+        default = "/EFI/Microsoft/Boot/bootmgfw.efi";
+        example = "/EFI/systemd/systemd-bootx64.efi";
+        description = "Its boot loader, as a path on that ESP.";
+      };
+      icon = lib.mkOption {
+        type = lib.types.path;
+        default = "${pkgs.refind}/share/refind/icons/os_win8.png";
+        defaultText = lib.literalExpression ''"''${pkgs.refind}/share/refind/icons/os_win8.png"'';
+        description = "128x128 PNG, transparent background, for its entry.";
+      };
     };
     timeout = lib.mkOption {
       type = lib.types.int;
@@ -113,12 +132,6 @@ in
         (64x64) are the selected-entry highlights, and an optional font.png
         is the label font.
       '';
-    };
-    windowsIcon = lib.mkOption {
-      type = lib.types.path;
-      default = "${pkgs.refind}/share/refind/icons/os_win8.png";
-      defaultText = lib.literalExpression ''"''${pkgs.refind}/share/refind/icons/os_win8.png"'';
-      description = "128x128 PNG, transparent background, for the Windows entry.";
     };
     background = lib.mkOption {
       type = lib.types.nullOr lib.types.path;

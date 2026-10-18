@@ -45,21 +45,26 @@ in
     configurationLimit = 2;
   };
 
-  # First boot menu: NixOS (-> systemd-boot's generation list) or Windows,
-  # whose boot manager lives on the NVMe's own ESP.
+  # First boot menu: NixOS (-> systemd-boot's generation list) or
+  # darling-lol (~/codigos/darling-lol-iso, League of Legends on Darling),
+  # installed on the NVMe in place of Windows, with its own ESP and
+  # lanzaboote's systemd-boot, signed with marvin's keys.
   nexos.refind = {
     enable = true;
-    windowsEsp = "ee46a2aa-aa95-4890-be73-2e631ebe70fa";
+    otherOs = {
+      name = "League of Legends";
+      esp = "101973e6-f331-42bf-9522-66f629de36dd";
+      loader = "/EFI/systemd/systemd-bootx64.efi";
+      # League of Legends' "L" emblem: the SVG from the official LoL wiki
+      # (wiki.leagueoflegends.com, File:League_of_Legends_icon.svg;
+      # copyrighted to Riot Games), already rendered at 128x128.
+      icon = ../../users/henrique/league-of-legends.png;
+    };
     timeout = 10;
     # The laptop panel's native mode -- the firmware only lights that one up.
     resolution = "1920x1080";
     # users/henrique/tama, the original, at 1920x1080 and opaque.
     background = ../../users/henrique/tama-wallpaper.png;
-    # League of Legends' "L" emblem in place of the Windows logo: the SVG
-    # from the official LoL wiki (wiki.leagueoflegends.com,
-    # File:League_of_Legends_icon.svg; copyrighted to Riot Games), already
-    # rendered at 128x128.
-    windowsIcon = ../../users/henrique/league-of-legends.png;
     # Tool icons and label font from refind-theme-regular
     # (github.com/bobafetthotmail/refind-theme-regular, icons/128-48 and
     # fonts/source-code-pro-extralight-14.png); the selection highlights
