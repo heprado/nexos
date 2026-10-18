@@ -59,6 +59,11 @@
       url = "git+file:///home/henrique/codigos/container_studies?dir=vms";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # League of Legends' macOS client on Darling (~/codigos/darling-lol-iso):
+    # marvin imports just its darling-lol module. No nixpkgs follows: its
+    # Darling is built against its own pin, and following would rebuild it.
+    darling-lol-iso.url = "git+file:///home/henrique/codigos/darling-lol-iso";
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia-greeter, ... }@inputs: {

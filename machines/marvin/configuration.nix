@@ -13,6 +13,7 @@ in
     ../../modules/nixos/refind.nix
     ../../modules/nixos/plymouth-tama
     inputs.lanzaboote.nixosModules.lanzaboote
+    ./darling-lol.nix
   ];
 
   networking.hostName = "marvin";
