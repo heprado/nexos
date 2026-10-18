@@ -1,11 +1,8 @@
 { ... }:
 {
-  # enableZshIntegration wires up ls/ll/la/lt aliases to eza itself (with
-  # icons/git status columns) -- no need to hand-roll them in
-  # shellAliases below.
   programs.eza = {
     enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;
     icons = "auto";
     git = true;
   };
@@ -13,6 +10,13 @@
   programs.zsh = {
     enable = true;
     shellAliases = {
+      eza = "eza --icons auto --git";
+      l = "ls -alh";
+      la = "eza -a";
+      ll = "eza -l";
+      lla = "eza -la";
+      ls = "eza";
+      lt = "eza --tree";
       # nh finds the flake via programs.nh.flake (modules/nixos/common.nix)
       # and the output via this machine's hostname, so the same aliases are
       # right on caixa and marvin. It shows what changed (added/removed/
@@ -22,10 +26,8 @@
       # `test`: activates the new config now without making it the boot
       # default, so a reboot falls back to the previous one.
       nrt = "nh os test";
-      # Lets `sudo <alias>` also expand aliases (sudo isn't a shell
-      # builtin, so it normally can't see them) -- a trailing space on an
-      # alias's value tells zsh to alias-expand the *next* word too.
-      sudo = "sudo ";
+      run-help = "man";
+      which-command = "whence";
     };
 
     # PROMPT_SUBST makes zsh re-evaluate `$(...)` inside PROMPT on every
