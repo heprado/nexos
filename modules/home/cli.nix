@@ -1,11 +1,19 @@
 { pkgs, ... }:
 {
   home.packages = [
-    pkgs.git
-    pkgs.gh
     # Renders Markdown in the terminal.
     pkgs.glow
   ];
+
+  # git and gh through home-manager: gh's credential helper is written into
+  # ~/.config/git/config with the current gh's path on every switch, where
+  # `gh auth setup-git` pins a store path that a garbage collection removes.
+  programs.git.enable = true;
+  programs.gh = {
+    enable = true;
+    gitCredentialHelper.enable = true;
+    settings.git_protocol = "https";
+  };
 
   programs.zoxide = {
     enable = true;
