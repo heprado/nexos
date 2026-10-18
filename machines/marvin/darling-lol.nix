@@ -6,11 +6,8 @@
 {
   imports = [ inputs.darling-lol-iso.nixosModules.darling-lol ];
 
-  programs.darling-lol = {
-    enable = true;
-    # Hyprland renders on the GTX 1650 (AQ_DRM_DEVICES), so Xwayland and
-    # Darling do too, and darling-lol's direct presentation draws black on
-    # NVIDIA: copy frames through the CPU instead.
-    directPresent = false;
-  };
+  # Hyprland renders on Intel (AQ_DRM_DEVICES), so Xwayland, Mesa's EGL and
+  # Vulkan (the loader's first device) all use it: darling-lol's validated
+  # single-GPU Mesa path, with direct presentation.
+  programs.darling-lol.enable = true;
 }
