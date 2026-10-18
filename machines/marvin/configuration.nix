@@ -141,12 +141,11 @@ in
     unShaderBackgroundProcessingThreads 12
   '';
 
-  # Hyprland renders on the Intel GPU, with apps (PRIME offload above).
-  # darling-lol needs Xwayland on the GPU Mesa renders on: on NVIDIA its EGL
-  # contexts fail inside Darling, and Xwayland on NVIDIA can't take Intel's
-  # buffers. The HDMI port is wired to the NVIDIA card, so every HDMI frame
-  # is copied across GPUs (with NVIDIA first, animations there were
-  # smoother). Aquamarine uses the first device in AQ_DRM_DEVICES as its
+  # Hyprland itself renders on the NVIDIA GPU, even though apps still
+  # default to Intel (PRIME offload above). The HDMI port is wired to the
+  # NVIDIA card, so with Intel as the compositor's renderer every HDMI frame
+  # (1080p@120Hz) had to be copied across GPUs, which made animations crawl
+  # there. Aquamarine uses the first device in AQ_DRM_DEVICES as its
   # renderer. The cardN numbers aren't stable across boots, and by-path
   # names contain ':' (AQ_DRM_DEVICES' separator), so udev gives each GPU a
   # fixed symlink keyed on its PCI address from facts.nix. ID_PATH is
@@ -168,7 +167,7 @@ in
       # NVIDIA's render node, for Sunshine's encoder (see below).
       SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-render"
     '';
-  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/intel-igpu:/dev/dri/nvidia-dgpu";
+  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
 
   # Game streaming to the living-room TV (Samsung, Moonlight for Tizen).
   # Pair once from the web UI at https://localhost:47990 (it asks for a
