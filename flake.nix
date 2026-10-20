@@ -58,7 +58,7 @@
     # Two lab servers as microVMs on caixa, on a Linux bridge of their own
     # (container_studies' vms/ flake; see modules/nixos/lab-vms.nix).
     lab-vms = {
-      url = "git+file:///home/henrique/codigos/container_studies?dir=vms";
+      url = "git+https://github.com/heprado/container_studies.git?dir=vms";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
