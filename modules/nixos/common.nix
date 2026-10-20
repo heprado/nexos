@@ -1,4 +1,4 @@
-{ pkgs, self, ... }:
+{ config, lib, pkgs, self, ... }:
 {
   # What every host (caixa, marvin) shares -- terminal only. The graphical
   # desktop (desktop-hyprland.nix) and the SSH server (ssh.nix) are
@@ -62,11 +62,12 @@
   boot.loader.systemd-boot.consoleMode = "auto";
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Unset, this falls back to nixpkgs' own default kernel package set,
-  # which tracks an older/more conservative version (6.18) even on
-  # nixpkgs-unstable -- linuxPackages_latest is what actually follows the
-  # newest kernel release packaged for this channel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # ZFS must use a kernel supported by its out-of-tree module. Keep the
+  # ZFS-root host on 7.2; Btrfs hosts continue following the latest kernel.
+  boot.kernelPackages =
+    if config.fileSystems."/".fsType == "zfs"
+    then pkgs.linuxPackages_7_2
+    else pkgs.linuxPackages_latest;
 
   # Terminal-only home config; desktop-hyprland.nix adds the GUI half.
   home-manager.users.henrique.imports = [ ../../users/henrique/home.nix ];
