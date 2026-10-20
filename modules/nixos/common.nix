@@ -26,6 +26,10 @@
 
   programs.zsh.enable = true;
   
+  security.pki.caCertificateBlacklist = [
+    "Comodo AAA Services root"
+    "emSign ECC Root CA - G3"
+  ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
   # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
