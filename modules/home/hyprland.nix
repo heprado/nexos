@@ -62,8 +62,8 @@ in
 
   programs.foot.enable = true;
 
-  # Nix snowflake as a real image via foot's sixel support (nixpkgs'
-  # fastfetch is built with ImageMagick, which the sixel logo type needs).
+  # Nix snowflake rendered via sixel in Brazil's colours, with room
+  # between the image and the terminal edge.
   # A config file without "modules" shows no modules at all (only the
   # logo), so the list below is fastfetch's own default, copied from what
   # `fastfetch -c none --gen-config` writes.
@@ -72,9 +72,18 @@ in
     settings = {
       logo = {
         type = "sixel";
-        source = "${pkgs.nixos-icons}/share/icons/hicolor/256x256/apps/nix-snowflake.png";
+        source = "${pkgs.runCommand "nix-snowflake-br.png" { nativeBuildInputs = [ pkgs.librsvg ]; } ''
+          sed -e 's/#415e9a/#009739/g; s/#4a6baf/#009739/g; s/#5277c3/#009739/g' \
+              -e 's/#699ad7/#FEDD00/g; s/#7eb1dd/#FEDD00/g; s/#7ebae4/#FEDD00/g' \
+            ${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg > br.svg
+          rsvg-convert -w 256 -h 256 br.svg -o $out
+        ''}";
         width = 30;
         height = 15;
+        padding = {
+          left = 2;
+          right = 4;
+        };
       };
       modules = [
         "title" "separator" "os" "host" "kernel" "uptime" "packages"
@@ -405,18 +414,14 @@ in
     style=Fusion
   '';
 
-  # Without this, the cursor theme only ever exists as a live dconf/nwg-look
-  # setting -- nothing propagates it to Hyprland's own (wlroots) cursor
-  # renderer, so any compositor restart (e.g. after nixos-rebuild switch)
-  # reverts to Hyprland's built-in default arrow. hyprcursor.enable adds
-  # HYPRCURSOR_THEME/HYPRCURSOR_SIZE alongside XCURSOR_THEME/XCURSOR_SIZE,
-  # since Hyprland prefers the hyprcursor format when available.
+  # Vanilla-DMZ is a small standalone XCursor theme. Hyprland falls back to
+  # XCursor when no Hyprcursor theme is configured, so this also covers its
+  # Wayland cursor while avoiding the KDE Breeze package closure.
   home.pointerCursor = {
     enable = true;
-    package = pkgs.kdePackages.breeze;
-    name = "breeze_cursors";
+    package = pkgs.vanilla-dmz;
+    name = "Vanilla-DMZ";
     size = 24;
-    hyprcursor.enable = true;
   };
 
   # Noctalia's control center saves its changes to
@@ -653,14 +658,10 @@ in
       -- QT_QPA_PLATFORMTHEME name above is set correctly.
       hl.env("QT_PLUGIN_PATH", "${qtPluginPath}")
 
-      -- Same reasoning as QT_QPA_PLATFORMTHEME above -- home.pointerCursor
-      -- only writes plain home.sessionVariables, which don't reach the
-      -- systemd-activated Hyprland session, so the cursor theme has to be
-      -- re-propagated here too.
-      hl.env("XCURSOR_THEME", "breeze_cursors")
+      -- home.pointerCursor's session variables don't reach the systemd-
+      -- activated Hyprland session, so propagate the XCursor theme here too.
+      hl.env("XCURSOR_THEME", "Vanilla-DMZ")
       hl.env("XCURSOR_SIZE", "24")
-      hl.env("HYPRCURSOR_THEME", "breeze_cursors")
-      hl.env("HYPRCURSOR_SIZE", "24")
 
       hl.on("hyprland.start", function()
         hl.exec_cmd("noctalia")

@@ -45,7 +45,7 @@ nexos/
       take-monitor.nix (+ .sh)   # switches shared DDC/CI monitors to whichever host boots
       session-stop-timeout.nix   # 10s (not 90s) for stuck login-session processes on shutdown
       cloudflared.nix            # caixa: Cloudflare Tunnel (web apps; SSH is refused through it)
-      gaming.nix                 # marvin: Steam, Lutris, MangoHud, PCSX2, Eden, AppImages via binfmt
+      gaming.nix                 # marvin: Steam, Lutris, MangoHud, PCSX2, AppImages via binfmt
       refind.nix                 # marvin: rEFInd as the NixOS/Windows picker in front of systemd-boot
     home/                     # home-manager modules (per-user environment, not system config)
       cli.nix                    # git, gh, glow, zoxide
@@ -114,7 +114,7 @@ On both machines:
 - **Secure Boot** on, via [lanzaboote](https://github.com/nix-community/lanzaboote). The keys live in `/var/lib/sbctl` (**back that directory up**: without it new generations can't be signed). They were enrolled with `sbctl enroll-keys --append --microsoft` on top of the firmware's existing db/KEK/dbx, so Windows (including its 2023 CA) and the NVIDIA option ROM stay trusted.
 - **ESP is only 512M**, and each initrd is ~210M (the NVIDIA driver is in it), so `boot.lanzaboote.configurationLimit = 2`. If a rebuild fails with `No space left on device`, consecutive kernel/driver updates filled it.
 - **NVIDIA PRIME** offload (GTX 1650 + Intel iGPU); Hyprland itself renders on the NVIDIA GPU, since the HDMI port is wired to it.
-- **Gaming**: Steam, Lutris, MangoHud, PCSX2, Eden. AppImages (e.g. game recomps) run directly, through `appimage-run` via binfmt.
+- **Gaming**: Steam, Lutris, MangoHud, PCSX2. AppImages (e.g. game recomps) run directly, through `appimage-run` via binfmt.
 
 ## Day to day
 

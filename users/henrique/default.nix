@@ -8,12 +8,7 @@
   # Xtensa Rust toolchain espup downloads for ESP32 dev in ~/codigos/clipesp) --
   # NixOS has no /lib64/ld-linux... for their hardcoded ELF interpreter to find.
   programs.nix-ld.enable = true;
-
-  # Unfree packages in henrique's home (modules/home/ai.nix's claude-code).
-  # home-manager uses the system's pkgs, so it's allowed here (see
-  # modules/nixos/unfree.nix).
   nexos.unfree = [ "claude-code" ];
-
   users.users.henrique = {
     isNormalUser = true;
     shell = pkgs.zsh;

@@ -1,6 +1,15 @@
 { config, lib, pkgs, inputs, ... }:
 let
   facts = import ./facts.nix;
+
+  deadlockShaderCacheSync = pkgs.writeShellApplication {
+    name = "deadlock-shader-cache-sync";
+    runtimeInputs = [ pkgs.python3 ];
+    text = ''
+      exec python3 ${../../scripts/deadlock_shader_cache_sync.py}
+    '';
+  };
+
 in
 {
   imports = [
@@ -21,7 +30,7 @@ in
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
   # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).
   # nvtop: live GPU temperature/usage monitor, NVIDIA-only build.
-  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl pkgs.nvtopPackages.nvidia ];
+  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl pkgs.nvtopPackages.nvidia pkgs.bubblewrap pkgs.socat ];
 
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
@@ -127,10 +136,9 @@ in
       __NV_PRIME_RENDER_OFFLOAD_PROVIDER = "NVIDIA-G0";
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       __VK_LAYER_NV_optimus = "NVIDIA_only";
-      # Proton (10+) draws games through Wine's native Wayland driver
-      # instead of Xwayland. A game that misbehaves can opt out with
-      # `PROTON_ENABLE_WAYLAND=0 %command%` in its launch options.
-      PROTON_ENABLE_WAYLAND = "1";
+      # Use Xwayland for Proton games; some games do not capture keyboard
+      # input correctly with Wine's native Wayland driver.
+      PROTON_ENABLE_WAYLAND = "0";
     };
   };
 
@@ -140,6 +148,26 @@ in
   home-manager.users.henrique.xdg.dataFile."Steam/steam_dev.cfg".text = ''
     unShaderBackgroundProcessingThreads 12
   '';
+
+  # Preserve Steam's individual NVIDIA shader-cache fragments before its
+  # merger drops entries from large (>4 GiB) merged caches. Deadlock reads
+  # those preserved fragments as read-only driver caches and writes new
+  # shaders into a separate, larger persistent cache.
+  home-manager.users.henrique = {
+    # Deadlock's Steam Launch Options:
+    # PROTON_ENABLE_WAYLAND=0 /run/current-system/sw/bin/bash /home/henrique/codigos/nexos/scripts/deadlock_shader_cache_launch.sh nvidia-offload %command%
+    systemd.user.services.deadlock-shader-cache-sync = {
+      Unit = {
+        Description = "Preserve Deadlock's Steam NVIDIA shader-cache fragments";
+      };
+      Service = {
+        ExecStart = "${deadlockShaderCacheSync}/bin/deadlock-shader-cache-sync";
+        Restart = "always";
+        RestartSec = "1s";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  };
 
   # Hyprland itself renders on the NVIDIA GPU, even though apps still
   # default to Intel (PRIME offload above). The HDMI port is wired to the
@@ -227,6 +255,8 @@ in
     pkgs.quickshell
     # To put Moonlight on the TV (see apps2samsung.nix).
     (pkgs.callPackage ./apps2samsung.nix { })
+    # OpenAI's coding agent; reads ~/.codex/AGENTS.md (modules/home/ai.nix).
+    pkgs.codex
   ];
 
   sops.defaultSopsFile = ../../secrets/marvin.yaml;

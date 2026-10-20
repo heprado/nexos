@@ -11,11 +11,18 @@
   # on top of the terminal one common.nix imports.
   home-manager.users.henrique.imports = [ ../../users/henrique/home-desktop.nix ];
 
-  # Noctalia isn't in the official nixpkgs cache; without this, its
-  # Quickshell/Qt dependencies get compiled from source on every rebuild.
+  # Additional binary caches for packages built by their respective projects.
   nix.settings = {
-    extra-substituters = [ "https://noctalia.cachix.org" ];
-    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+    extra-substituters = [
+      "https://noctalia.cachix.org"
+      "https://nix-community.cachix.org"
+      "https://nixpkgs-wayland.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA="
+    ];
   };
 
   # pkgs.helium, for modules/home/helium.nix.
@@ -82,10 +89,7 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
 
-  # Nothing in this flake enabled an audio server before now -- PipeWire
-  # (with its Pulse/ALSA compat shims) is what pw-play (used by
-  # modules/home/claude-voice.nix's TTS hook, among anything else wanting
-  # sound) and every other desktop app expect to find.
+  # PipeWire provides desktop audio, including Pulse/ALSA compatibility.
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;

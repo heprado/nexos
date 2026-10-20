@@ -2,7 +2,7 @@
   description = "NixOS configurations, split by machine and by user";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/master";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -20,8 +20,10 @@
     };
 
     noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # Track the latest commit already published to Noctalia's binary cache.
+      # Do not follow the root nixpkgs input: that changes package hashes and
+      # prevents Cachix hits (see Noctalia's NixOS installation docs).
+      url = "github:noctalia-dev/noctalia/cachix";
     };
 
     noctalia-greeter = {

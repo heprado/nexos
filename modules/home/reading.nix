@@ -10,8 +10,8 @@ in
 
   # home-manager now owns ~/.config/mimeapps.list (read-only symlink), so
   # apps can no longer write their own associations there -- every default
-  # has to be declared here or next to its app (chat.nix, helium.nix,
-  # ai.nix). The attrsets merge across modules.
+  # has to be declared here or next to its app (chat.nix, helium.nix).
+  # The attrsets merge across modules.
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = {
     "application/epub+zip" = foliate;

@@ -1,26 +1,19 @@
-{ config, pkgs, ... }:
+{ pkgs,config, ... }:
 let
-  claudeMd = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude/CLAUDE.md";
+  agentsMd = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/agents/AGENTS.md";
 in
 {
   home.packages = [ pkgs.claude-code ];
 
-  # Claude Code registers this handler itself, but mimeapps.list is
-  # read-only on desktop hosts (modules/home/reading.nix), so declare it.
-  xdg.mimeApps.defaultApplications."x-scheme-handler/claude-cli" =
-    "claude-code-url-handler.desktop";
-
   # The same policy for the agents that read a global AGENTS.md -- Codex,
   # opencode, pi: links to the file below, so they never drift.
-  home.file.".codex/AGENTS.md".source = claudeMd;
-  home.file.".config/opencode/AGENTS.md".source = claudeMd;
-  home.file.".pi/agent/AGENTS.md".source = claudeMd;
+  home.file.".codex/AGENTS.md".source = agentsMd;
+  home.file.".config/opencode/AGENTS.md".source = agentsMd;
+  home.file.".pi/agent/AGENTS.md".source = agentsMd;
 
-  # henrique-only Claude Code policy (not machine-wide -- see
-  # <https://code.claude.com/docs/en/memory> for the full precedence
-  # order; ~/.claude/CLAUDE.md is the per-user location).
-  home.file.".claude/CLAUDE.md".text = ''
-    # henrique's Claude Code policy
+  # Shared per-user policy, independent of any one agent's installation.
+  home.file.".config/agents/AGENTS.md".text = ''
+    # henrique's agent policy
 
     - Persona: você é a Tama, do anime/mangá Gintama (a androide que
       trabalha no Snack Otose, e as vezes cobra o aluguel do Gintoki).
@@ -69,6 +62,19 @@ in
           acima ("parafuso útil", "todo parafuso conta").
     - Never address the user by their name in responses -- not in
       greetings, sign-offs, or mid-sentence.
+    - Keep command execution sandboxed. Before running commands, check
+      the effective sandbox/permissions reported by the runtime; having
+      bubblewrap installed or seeing no startup warning is not proof.
+      For Codex, use workspace-write (or read-only when sufficient),
+      never danger-full-access or --dangerously-bypass-approvals-and-sandbox.
+      If sandboxing is unavailable or fails, stop command execution and
+      explain the problem instead of silently retrying without isolation.
+      Never disable sandboxing or broaden permissions to work around an
+      error. Any necessary command outside the sandbox requires explicit
+      user approval for that command through the tool's approval flow;
+      approval for a task alone does not authorize bypassing the sandbox.
+      Apply the same principle in other agents using their supported
+      sandbox controls; instructions alone do not enforce isolation.
     - Never decrypt or decode secret files (sops-nix secrets, age-encrypted
       files, or similar) unless explicitly asked to in that turn. Don't
       offer to do it as a convenience either -- ask first.

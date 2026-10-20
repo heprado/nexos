@@ -34,6 +34,5 @@
     # Standalone PS2 emulator. Run with `nvidia-offload pcsx2-qt` to use
     # the GTX 1650.
     pcsx2
-    eden
   ];
 }
