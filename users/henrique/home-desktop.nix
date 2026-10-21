@@ -30,6 +30,9 @@ in
     ../../modules/home/zed.nix
   ];
 
+  # xdg-open is used by GUI apps and development tools to open URLs/files.
+  home.packages = [ pkgs.xdg-utils ];
+
   systemd.user.services.nexos-nixpkgs-cache-warm = {
     Unit.Description = "Update nixpkgs master and build Marvin's NixOS closure for cache warming";
     Service = {

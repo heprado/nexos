@@ -21,5 +21,9 @@
   };
 
   # mimeapps.list is managed, see modules/home/reading.nix.
-  xdg.mimeApps.defaultApplications."x-scheme-handler/mailto" = "helium.desktop";
+  xdg.mimeApps.defaultApplications = {
+    "x-scheme-handler/http" = "helium.desktop";
+    "x-scheme-handler/https" = "helium.desktop";
+    "x-scheme-handler/mailto" = "helium.desktop";
+  };
 }

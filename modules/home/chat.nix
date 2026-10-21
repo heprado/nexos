@@ -18,10 +18,25 @@
   # so without this the theme was always skipped.
   xdg.configFile."telegram-desktop/themes/.keep".text = "";
 
+  # ZapFast's packaged desktop entry omits the URL field and its protocol
+  # MIME types. Shadow it so desktop handlers pass whatsapp:/wa: links to it.
+  xdg.desktopEntries.zapfast = {
+    name = "ZapFast";
+    genericName = "WhatsApp Client";
+    comment = "A native WhatsApp client";
+    exec = "zapfast %u";
+    icon = "zapfast";
+    terminal = false;
+    categories = [ "Network" "InstantMessaging" "Chat" ];
+    mimeType = [ "x-scheme-handler/whatsapp" "x-scheme-handler/wa" ];
+  };
+
   # Link handlers (mimeapps.list is managed, see modules/home/reading.nix).
   xdg.mimeApps.defaultApplications = {
     "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
     "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
     "x-scheme-handler/discord" = "vesktop.desktop";
+    "x-scheme-handler/whatsapp" = "zapfast.desktop";
+    "x-scheme-handler/wa" = "zapfast.desktop";
   };
 }
