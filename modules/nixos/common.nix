@@ -10,6 +10,8 @@
     ./chrony.nix
     ./session-stop-timeout.nix
     ./take-monitor.nix
+    ./rules/no-php.nix
+    ./rules/ca-trust.nix
     ../../users/henrique
   ];
 
@@ -29,6 +31,9 @@
   security.pki.caCertificateBlacklist = [
     "Comodo AAA Services root"
     "emSign ECC Root CA - G3"
+    "emSign Root CA - G1"
+    "emSign Root CA - C1"
+    "emSign ECC Root CA - C3"
   ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
