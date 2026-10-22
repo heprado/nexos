@@ -73,6 +73,17 @@ in
         # DROP below ate it -- the host network namespace (clabernetes'
         # clabwire) timed out reaching the API.
         "$ipt" -A nexos-lan-out -m addrtype --dst-type LOCAL -j RETURN
+
+        # Routing on behalf of LAN peers (filled per interface below). In
+        # mangle PREROUTING, i.e. before any DNAT: kube-proxy rewrites a
+        # NodePort to a Pod address in nat PREROUTING, after which the
+        # packet goes through FORWARD and never reaches nexos-lan-in --
+        # and k3s puts its own ACCEPTs at the top of FORWARD whenever it
+        # starts, so a rule there wouldn't stay first.
+        "$ipt" -t mangle -N nexos-lan-pre 2>/dev/null || true
+        "$ipt" -t mangle -F nexos-lan-pre
+        "$ipt" -t mangle -D PREROUTING -j nexos-lan-pre 2>/dev/null || true
+        "$ipt" -t mangle -I PREROUTING 1 -j nexos-lan-pre
       done
 
       # IPv6 neighbor discovery (router/neighbor solicitation and
@@ -121,6 +132,21 @@ in
           "$ipt" -A nexos-lan-in -i "$iface" -s "$cidr" -j nixos-fw-log-refuse
           "$ipt" -A nexos-lan-out -o "$iface" -d "$gw" -j RETURN
           "$ipt" -A nexos-lan-out -o "$iface" -d "$cidr" -j DROP
+
+          # New connections arriving here may only be for this host itself,
+          # and never for a NodePort: the lab (Pods, br-lab's VMs, the SAN
+          # link) is reached through the lab console's WebSocket on 443,
+          # not routed into. Replies to the lab's own outbound traffic are
+          # ESTABLISHED and pass. Broadcast/multicast (DHCP offers, IPv6
+          # router/neighbor discovery) isn't LOCAL, but it isn't routed
+          # either. (IPv6 has no broadcast: ip6tables refuses the type.)
+          if [ "$fam" = 4 ]; then
+            iptables -t mangle -A nexos-lan-pre -i "$iface" -m addrtype --dst-type BROADCAST -j RETURN
+          fi
+          "$ipt" -t mangle -A nexos-lan-pre -i "$iface" -m addrtype --dst-type MULTICAST -j RETURN
+          "$ipt" -t mangle -A nexos-lan-pre -i "$iface" -m conntrack --ctstate NEW,INVALID,UNTRACKED -m addrtype ! --dst-type LOCAL -j DROP
+          "$ipt" -t mangle -A nexos-lan-pre -i "$iface" -m conntrack --ctstate NEW -p tcp --dport 30000:32767 -j DROP
+          "$ipt" -t mangle -A nexos-lan-pre -i "$iface" -m conntrack --ctstate NEW -p udp --dport 30000:32767 -j DROP
           if [ "$fam" = 6 ]; then
             ip6tables -A nexos-lan-in -i "$iface" -s fe80::/10 -j nixos-fw-log-refuse
             ip6tables -A nexos-lan-out -o "$iface" -d fe80::/10 -j DROP
@@ -137,6 +163,8 @@ in
         "$ipt" -D OUTPUT -j nexos-lan-out 2>/dev/null || true
         "$ipt" -F nexos-lan-in 2>/dev/null || true
         "$ipt" -F nexos-lan-out 2>/dev/null || true
+        "$ipt" -t mangle -D PREROUTING -j nexos-lan-pre 2>/dev/null || true
+        "$ipt" -t mangle -F nexos-lan-pre 2>/dev/null || true
       done
     '';
 

@@ -32,6 +32,11 @@ in
     extraFlags = [
       "--write-kubeconfig-mode=0640"
       "--write-kubeconfig-group=kube"
+      # NodePorts (lab console 30880, registry 30500) on loopback only:
+      # from outside, the lab is the console's WebSocket behind nginx on
+      # 443 (lab-console-https.nix). lan-isolation.nix drops LAN traffic
+      # to the NodePort range as well.
+      "--kube-proxy-arg=nodeport-addresses=127.0.0.1/32"
     ];
   };
 
