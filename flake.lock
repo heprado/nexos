@@ -464,11 +464,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792872326,
-        "narHash": "sha256-PAwgFupyt03Ba3NcLqIx3AiA5rVXuQpl0F5GNYidoZo=",
+        "lastModified": 1792876171,
+        "narHash": "sha256-A4v4Bk82h/3mspO2EVUGnN692VRHOWG51opJgar2ijA=",
         "owner": "heprado",
         "repo": "noctalia-ideapad-fan",
-        "rev": "47c34cb2a59fd873bd22524cdf0195c732745c26",
+        "rev": "04d7743db63394bd0dbc27a1b7c50f6dcc0a5ac6",
         "type": "github"
       },
       "original": {
