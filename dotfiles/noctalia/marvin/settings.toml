@@ -1,13 +1,14 @@
 config_version = 15
 
 [bar.default]
-end = [ "group:g2", "group:g1", "notifications", "session", "widget" ]
+end = [ "group:g2", "group:g1", "notifications", "session" ]
 show_on_workspace_switch = false
 start = [ "workspaces" ]
 
     [[bar.default.capsule_group]]
     accordion = true
     accordion_direction = "end"
+    border_width = 1.0
     enabled = true
     fill = "surface_variant"
     id = "g1"
@@ -18,10 +19,11 @@ start = [ "workspaces" ]
     [[bar.default.capsule_group]]
     accordion = true
     accordion_direction = "end"
+    border_width = 1.0
     enabled = true
     fill = "surface_variant"
     id = "g2"
-    members = [ "network", "bluetooth" ]
+    members = [ "network", "bluetooth", "widget" ]
     opacity = 1.0
     padding = 6.0
 
