@@ -111,8 +111,11 @@ enabled = []
     location = "https://github.com/noctalia-dev/community-plugins"
     name = "community"
 
-[shell.launcher]
-app_grid = true
+[shell]
+avatar_path = "/home/henrique/Pictures/tama-gintama-tama-gintama-robot.gif"
+
+    [shell.launcher]
+    app_grid = true
 
 [theme]
 builtin = "Noctalia"
