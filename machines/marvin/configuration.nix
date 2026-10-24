@@ -25,10 +25,14 @@ in
   # default fan mode barely spins the fan up under load, and CPU and GPU
   # share one heatpipe, so games throttled; max cooling (fan_mode 4, the
   # game preset) fixed it. The module makes fan_mode writable by henrique
-  # (after a re-login); the widget saves and restores the preset.
+  # (after a re-login); the widget saves and restores the preset. Even
+  # fan_mode 4 kept switching the fan on and off every few seconds, so the
+  # game preset also pins both fans at full speed (~6000/5000 RPM) through
+  # the GameZone WMI method SetFanCooling.
   hardware.ideapad-fan = {
     enable = true;
     users = [ "henrique" ];
+    fullSpeed.enable = true;
   };
   home-manager.users.henrique.imports = [ inputs.noctalia-ideapad-fan.homeManagerModules.default ];
   home-manager.users.henrique.programs.noctalia-ideapad-fan.enable = true;
