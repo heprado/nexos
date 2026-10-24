@@ -9,11 +9,10 @@
   networking.hostId = "16ac98b4";
   boot.zfs.forceImportRoot = false;
 
-  # systemd in the initrd is what makes the passphrase prompt go through
-  # systemd-ask-password, which Plymouth draws. The scripted initrd runs
-  # `zfs load-key -a` straight on the console instead -- hidden behind the
-  # splash.
-  boot.initrd.systemd.enable = true;
+  # The passphrase prompt goes through systemd-ask-password, which Plymouth
+  # draws. That needs systemd in the initrd, now the only initrd nixpkgs
+  # has (the scripted one, which prompted on the console hidden behind the
+  # splash, was removed).
   boot.zfs.requestEncryptionCredentials = true;
 
   # Plymouth needs the iGPU's DRM driver up in the initrd (Skylake HD 530,
