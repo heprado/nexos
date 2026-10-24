@@ -23,10 +23,24 @@ in
     ../../modules/nixos/refind.nix
     ../../modules/nixos/plymouth-tama
     inputs.lanzaboote.nixosModules.lanzaboote
+    inputs.noctalia-ideapad-fan.nixosModules.default
     ./darling-lol.nix
   ];
 
   networking.hostName = "marvin";
+
+  # Quiet / normal / game presets in a Noctalia bar widget, each setting the
+  # firmware fan mode together with the power profile. The firmware's
+  # default fan mode barely spins the fan up under load, and CPU and GPU
+  # share one heatpipe, so games throttled; max cooling (fan_mode 4, the
+  # game preset) fixed it. The module makes fan_mode writable by henrique
+  # (after a re-login); the widget saves and restores the preset.
+  hardware.ideapad-fan = {
+    enable = true;
+    users = [ "henrique" ];
+  };
+  home-manager.users.henrique.imports = [ inputs.noctalia-ideapad-fan.homeManagerModules.default ];
+  home-manager.users.henrique.programs.noctalia-ideapad-fan.enable = true;
 
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
   # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).

@@ -43,6 +43,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Noctalia bar widget for the Lenovo IdeaPad firmware fan mode (marvin),
+    # plus the NixOS module that makes fan_mode writable without root.
+    noctalia-ideapad-fan = {
+      url = "github:heprado/noctalia-ideapad-fan";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     helium-flake = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";

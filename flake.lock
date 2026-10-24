@@ -457,6 +457,26 @@
         "type": "github"
       }
     },
+    "noctalia-ideapad-fan": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792872326,
+        "narHash": "sha256-PAwgFupyt03Ba3NcLqIx3AiA5rVXuQpl0F5GNYidoZo=",
+        "owner": "heprado",
+        "repo": "noctalia-ideapad-fan",
+        "rev": "47c34cb2a59fd873bd22524cdf0195c732745c26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "heprado",
+        "repo": "noctalia-ideapad-fan",
+        "type": "github"
+      }
+    },
     "pre-commit": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -515,6 +535,7 @@
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
+        "noctalia-ideapad-fan": "noctalia-ideapad-fan",
         "sops-nix": "sops-nix"
       }
     },

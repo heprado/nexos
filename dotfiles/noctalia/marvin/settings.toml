@@ -1,7 +1,7 @@
 config_version = 15
 
 [bar.default]
-end = [ "group:g2", "group:g1", "notifications", "session" ]
+end = [ "group:g2", "group:g1", "notifications", "session", "widget" ]
 show_on_workspace_switch = false
 start = [ "workspaces" ]
 
@@ -99,7 +99,7 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
 enabled = true
 
 [plugins]
-enabled = []
+enabled = [ "heprado/ideapad-fan" ]
 
     [[plugins.source]]
     kind = "git"
@@ -140,3 +140,6 @@ path = "/home/henrique/Pictures/tama.png"
 
 [wallpaper.monitors.eDP-1]
 path = "/home/henrique/Pictures/tama.png"
+
+[widget.widget]
+type = "heprado/ideapad-fan:widget"
