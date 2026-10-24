@@ -31,8 +31,5 @@
     protonup-qt
     # FPS/frametime overlay: `mangohud %command%` in Steam launch options.
     mangohud
-    # Standalone PS2 emulator. Run with `nvidia-offload pcsx2-qt` to use
-    # the GTX 1650.
-    pcsx2
   ];
 }

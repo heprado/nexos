@@ -178,35 +178,9 @@ in
     ''
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-dgpu"
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.intelBusId}", SYMLINK+="dri/intel-igpu"
-      # NVIDIA's render node, for Sunshine's encoder (see below).
-      SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-render"
     '';
   environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
 
-  # Game streaming to the living-room TV (Samsung, Moonlight for Tizen).
-  # Pair once from the web UI at https://localhost:47990 (it asks for a
-  # login on first use), typing the PIN the TV shows.
-  services.sunshine = {
-    enable = true;
-    # Started only when wanted, from the launcher (below) or with
-    # `systemctl --user start sunshine`.
-    autoStart = false;
-    # For KMS capture (settings.capture below).
-    capSysAdmin = true;
-    # Not openFirewall: it'd also open the web UI (47990) to the LAN. The
-    # streaming ports are opened below instead.
-    settings = {
-      sunshine_name = "marvin";
-      # Captured and encoded on the GTX 1650, which draws every output
-      # (AQ_DRM_DEVICES above). Wayland capture plus Intel Quick Sync gave a
-      # black screen: Intel can't import NVIDIA's buffers ("Unsupported
-      # modifier"). Vulkan Video rather than NVENC, which needs a CUDA
-      # build; Vulkan only works with KMS capture.
-      capture = "kms";
-      encoder = "vulkan";
-      adapter_name = "/dev/dri/nvidia-render";
-    };
-  };
   # Streaming and discovery ports, only on the home Wi-Fi ("Tricks") and on
   # a cable: marvin is a laptop, and on anyone else's Wi-Fi these stay
   # closed. The wired profile isn't tied to one network -- it's what any
@@ -218,41 +192,22 @@ in
       "e4fb6299-a298-307e-b057-3b7137dec3fb" # Conexão cabeada 1 (enp12s0)
     ];
     allowedTCPPorts = [
-      # Sunshine (base 47989): HTTPS/HTTP pairing and RTSP.
-      47984 47989 48010
       # Steam Remote Play.
       27036 27037
     ];
     allowedUDPPorts = [
-      # Sunshine: video/control/audio/mic.
-      47998 47999 48000 48002 48010
       # Steam: peer discovery, Remote Play.
       27036 10400 10401
-      # mDNS, so Moonlight finds marvin on its own (Avahi).
-      5353
     ];
     # Steam Remote Play.
     allowedUDPPortRanges = [ { from = 27031; to = 27035; } ];
   };
   programs.steam.remotePlay.openFirewall = lib.mkForce false;
-  services.avahi.openFirewall = false;
   # ~/codigos/compartilhamento-de-video-legal publishes its nginx on
   # 192.168.15.141:443 from rootless Podman, which can only bind ports at or
   # above this. 443 is deliberately NOT in allowedTCP/UDPPorts above: only
   # marvin itself (loopback path to its own IP) reaches it, never the LAN.
   boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 443;
-  # Replaces the package's own launcher (same desktop-file ID), which runs
-  # a bare `sunshine` outside the service, without the settings above.
-  home-manager.users.henrique.xdg.desktopEntries."dev.lizardbyte.app.Sunshine" = {
-    name = "Sunshine";
-    comment = "Start game streaming (Moonlight)";
-    icon = "dev.lizardbyte.app.Sunshine";
-    exec = "systemctl --user start sunshine";
-    actions.stop = {
-      name = "Stop";
-      exec = "systemctl --user stop sunshine";
-    };
-  };
 
   # The proprietary driver above (see modules/nixos/unfree.nix).
   nexos.unfree = [ "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced" ];

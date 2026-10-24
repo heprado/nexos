@@ -31,7 +31,7 @@
     mimeType = [ "x-scheme-handler/whatsapp" "x-scheme-handler/wa" ];
   };
 
-  # Link handlers (mimeapps.list is managed, see modules/home/reading.nix).
+  # Link handlers (mimeapps.list is managed, see users/henrique/home-desktop.nix).
   xdg.mimeApps.defaultApplications = {
     "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
     "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";

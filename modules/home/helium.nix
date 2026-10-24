@@ -20,7 +20,7 @@
     ];
   };
 
-  # mimeapps.list is managed, see modules/home/reading.nix.
+  # mimeapps.list is managed, see users/henrique/home-desktop.nix.
   xdg.mimeApps.defaultApplications = {
     "x-scheme-handler/http" = "helium.desktop";
     "x-scheme-handler/https" = "helium.desktop";
