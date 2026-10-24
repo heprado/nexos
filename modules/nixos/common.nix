@@ -33,12 +33,12 @@
 
   programs.zsh.enable = true;
   
+  # nss-cacert fails to build if a name here isn't in its store, so drop
+  # the ones upstream (Mozilla) removes: emSign ECC Root CA - G3, emSign
+  # Root CA - C1 and emSign ECC Root CA - C3 went in nss 3.131.
   security.pki.caCertificateBlacklist = [
     "Comodo AAA Services root"
-    "emSign ECC Root CA - G3"
     "emSign Root CA - G1"
-    "emSign Root CA - C1"
-    "emSign ECC Root CA - C3"
   ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
