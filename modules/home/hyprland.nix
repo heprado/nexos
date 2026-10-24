@@ -536,11 +536,11 @@ in
         mOnTertiary = "#171A21";
         mError = "#D0607A";
         mOnError = "#171A21";
-        mSurface = "#171A21";
+        mSurface = "#232937";
         mOnSurface = "#EAEAEA";
-        mHover = "#2B3240";
+        mHover = "#3A4356";
         mOnHover = "#EAEAEA";
-        mSurfaceVariant = "#20252F";
+        mSurfaceVariant = "#2E3545";
         mOnSurfaceVariant = "#B9BEC6";
         mOutline = "#7D848C";
         mShadow = "#0C0E12";

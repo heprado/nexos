@@ -115,6 +115,7 @@ enabled = []
 app_grid = true
 
 [theme]
+builtin = "Noctalia"
 custom_palette = "henrique"
 mode = "dark"
 source = "custom"
@@ -126,13 +127,13 @@ wallpaper_scheme = "m3-content"
     enable_community_templates = true
 
 [wallpaper.default]
-path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+path = "/home/henrique/Pictures/tama.png"
 
 [wallpaper.last]
-path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+path = "/home/henrique/Pictures/tama.png"
 
 [wallpaper.monitors.HDMI-A-1]
-path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+path = "/home/henrique/Pictures/tama.png"
 
 [wallpaper.monitors.eDP-1]
-path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+path = "/home/henrique/Pictures/tama.png"
