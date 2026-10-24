@@ -19,6 +19,7 @@ in
     # never needs to accept SSH (it's only a client, to caixa).
     ../../modules/nixos/desktop-hyprland.nix
     ../../modules/nixos/gaming.nix
+    ../../modules/nixos/home-network.nix
     ../../modules/nixos/refind.nix
     ../../modules/nixos/plymouth-tama
     inputs.lanzaboote.nixosModules.lanzaboote
@@ -221,13 +222,35 @@ in
       adapter_name = "/dev/dri/nvidia-render";
     };
   };
-  # Sunshine's ports (base 47989): HTTPS/HTTP pairing and RTSP over TCP,
-  # video/control/audio/mic over UDP. mDNS (so Moonlight finds marvin on
-  # its own) is opened by Avahi's module.
-  networking.firewall = {
-    allowedTCPPorts = [ 47984 47989 48010 ];
-    allowedUDPPorts = [ 47998 47999 48000 48002 48010 ];
+  # Streaming and discovery ports, only on the home Wi-Fi ("Tricks") and on
+  # a cable: marvin is a laptop, and on anyone else's Wi-Fi these stay
+  # closed. The wired profile isn't tied to one network -- it's what any
+  # cable in enp12s0 gets -- so a cable plugged in elsewhere opens them too.
+  # The modules that would open them everywhere are told not to.
+  nexos.homeNetwork = {
+    connections = [
+      "b0efb593-69d3-47e9-915d-a293249fad3d" # Tricks (Wi-Fi)
+      "e4fb6299-a298-307e-b057-3b7137dec3fb" # Conexão cabeada 1 (enp12s0)
+    ];
+    allowedTCPPorts = [
+      # Sunshine (base 47989): HTTPS/HTTP pairing and RTSP.
+      47984 47989 48010
+      # Steam Remote Play.
+      27036 27037
+    ];
+    allowedUDPPorts = [
+      # Sunshine: video/control/audio/mic.
+      47998 47999 48000 48002 48010
+      # Steam: peer discovery, Remote Play.
+      27036 10400 10401
+      # mDNS, so Moonlight finds marvin on its own (Avahi).
+      5353
+    ];
+    # Steam Remote Play.
+    allowedUDPPortRanges = [ { from = 27031; to = 27035; } ];
   };
+  programs.steam.remotePlay.openFirewall = lib.mkForce false;
+  services.avahi.openFirewall = false;
   # ~/codigos/compartilhamento-de-video-legal publishes its nginx on
   # 192.168.15.141:443 from rootless Podman, which can only bind ports at or
   # above this. 443 is deliberately NOT in allowedTCP/UDPPorts above: only

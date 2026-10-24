@@ -115,10 +115,24 @@ enabled = []
 app_grid = true
 
 [theme]
+custom_palette = "henrique"
 mode = "dark"
+source = "custom"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
     builtin_ids = [ "foot", "gtk3", "gtk4", "hyprland", "kcolorscheme", "qt" ]
     community_ids = [ "ungoogled-chromium", "discord", "telegram", "zed" ]
     enable_community_templates = true
+
+[wallpaper.default]
+path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+
+[wallpaper.last]
+path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+
+[wallpaper.monitors.HDMI-A-1]
+path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
+
+[wallpaper.monitors.eDP-1]
+path = "/home/henrique/Pictures/Wallpapers/217060-kagura-gintama-1920x1080.png"
