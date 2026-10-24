@@ -19,6 +19,11 @@
     # So `nix flake ...`/`nix build ...` etc. work without having to pass
     # --extra-experimental-features "nix-command flakes" every time.
     experimental-features = [ "nix-command" "flakes" ];
+    # Lets `nix run .#update-machines` (flake.nix) copy closures built on
+    # another host into this store over SSH: unsigned paths are only
+    # accepted from trusted users. wheel can already sudo, so this grants
+    # nothing new.
+    trusted-users = [ "root" "@wheel" ];
   };
 
   # Short alias for this flake itself, so the per-language devShell

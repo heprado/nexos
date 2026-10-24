@@ -137,5 +137,107 @@
         caixa = mkHost "caixa";
         marvin = mkHost "marvin";
       };
+
+    # `nix run .#update-machines`: switches every host in
+    # nixosConfigurations to this checkout (uncommitted changes included),
+    # all built here so the others don't need their own up-to-date clone.
+    # Other hosts are reached over SSH by their hostname, so they need to
+    # resolve (/etc/hosts or ~/.ssh/config). Building and copying -- the
+    # slow part -- runs for every host at once, each logging to
+    # $XDG_RUNTIME_DIR/update-machines/<host>.log; activating runs one host
+    # after another afterwards, since it's quick and sudo may ask for a
+    # password on each. A host that fails doesn't stop the rest.
+    apps.x86_64-linux.update-machines =
+      let
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        hosts = builtins.attrNames self.nixosConfigurations;
+        script = pkgs.writeShellApplication {
+          name = "update-machines";
+          runtimeInputs = [ pkgs.openssh pkgs.hostname pkgs.coreutils ];
+          text = ''
+            flake=${self}
+            here=$(hostname)
+            logs=''${XDG_RUNTIME_DIR:-/tmp}/update-machines
+            mkdir -p "$logs"
+            failed=()
+
+            # Every remote host takes several SSH connections (reachability,
+            # copy, activate); load the key into an agent once so its
+            # passphrase is asked here, not on every connection. Uses the
+            # running agent if there is one, else a temporary one.
+            # ssh-add -l: 0 = keys loaded, 1 = agent but no keys, 2 = no agent.
+            agent=0
+            ssh-add -l >/dev/null 2>&1 || agent=$?
+            if [ "$agent" = 2 ]; then
+              eval "$(ssh-agent -s)" >/dev/null
+              trap 'ssh-agent -k >/dev/null' EXIT
+            fi
+            if [ "$agent" != 0 ]; then
+              ssh-add
+            fi
+
+            hosts=()
+            for host in ${builtins.concatStringsSep " " hosts}; do
+              if [ "$host" = "$here" ] || ssh -o ConnectTimeout=5 -o BatchMode=yes "$host" true; then
+                hosts+=("$host")
+              else
+                echo "$host: unreachable over SSH, skipped" >&2
+                failed+=("$host")
+              fi
+            done
+
+            # Build (and, for other hosts, copy) in parallel. Each job
+            # leaves the built system's store path in $logs/<host>.out.
+            declare -A jobs
+            for host in "''${hosts[@]}"; do
+              rm -f "$logs/$host.out"
+              (
+                out=$(nix build --no-link --print-out-paths -L \
+                  "$flake#nixosConfigurations.$host.config.system.build.toplevel")
+                if [ "$host" != "$here" ]; then
+                  nix copy --to "ssh-ng://$host" "$out"
+                fi
+                echo "$out" > "$logs/$host.out"
+              ) > "$logs/$host.log" 2>&1 &
+              jobs[$host]=$!
+              echo "$host: building (log: $logs/$host.log)"
+            done
+
+            ready=()
+            for host in "''${hosts[@]}"; do
+              if wait "''${jobs[$host]}"; then
+                echo "$host: built"
+                ready+=("$host")
+              else
+                echo "$host: build/copy failed, last lines of $logs/$host.log:" >&2
+                tail -n 15 "$logs/$host.log" >&2
+                failed+=("$host")
+              fi
+            done
+
+            # Activate one by one: point the system profile at the new
+            # generation (so it's the boot default) and switch to it.
+            for host in "''${ready[@]}"; do
+              out=$(cat "$logs/$host.out")
+              activate="nix-env -p /nix/var/nix/profiles/system --set $out && $out/bin/switch-to-configuration switch"
+              echo "==> $host: activating $out"
+              if [ "$host" = "$here" ]; then
+                sudo sh -c "$activate" || failed+=("$host")
+              else
+                ssh -t "$host" sudo sh -c "'$activate'" || failed+=("$host")
+              fi
+            done
+
+            if [ ''${#failed[@]} -gt 0 ]; then
+              echo "failed: ''${failed[*]}" >&2
+              exit 1
+            fi
+          '';
+        };
+      in
+      {
+        type = "app";
+        program = "${script}/bin/update-machines";
+      };
   };
 }
