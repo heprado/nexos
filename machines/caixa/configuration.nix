@@ -11,6 +11,9 @@
     ../../modules/nixos/lab-console-https.nix
     ../../modules/nixos/lab-vms.nix
   ];
+  
+  home-manager.backupFileExtension = "backup";  
+  
 
   networking.hostName = "caixa";
 
