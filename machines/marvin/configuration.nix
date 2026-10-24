@@ -1,15 +1,6 @@
 { config, lib, pkgs, inputs, ... }:
 let
   facts = import ./facts.nix;
-
-  deadlockShaderCacheSync = pkgs.writeShellApplication {
-    name = "deadlock-shader-cache-sync";
-    runtimeInputs = [ pkgs.python3 ];
-    text = ''
-      exec python3 ${../../scripts/deadlock_shader_cache_sync.py}
-    '';
-  };
-
 in
 {
   imports = [
@@ -163,26 +154,6 @@ in
   home-manager.users.henrique.xdg.dataFile."Steam/steam_dev.cfg".text = ''
     unShaderBackgroundProcessingThreads 12
   '';
-
-  # Preserve Steam's individual NVIDIA shader-cache fragments before its
-  # merger drops entries from large (>4 GiB) merged caches. Deadlock reads
-  # those preserved fragments as read-only driver caches and writes new
-  # shaders into a separate, larger persistent cache.
-  home-manager.users.henrique = {
-    # Deadlock's Steam Launch Options:
-    # PROTON_ENABLE_WAYLAND=0 /run/current-system/sw/bin/bash /home/henrique/codigos/nexos/scripts/deadlock_shader_cache_launch.sh nvidia-offload %command%
-    systemd.user.services.deadlock-shader-cache-sync = {
-      Unit = {
-        Description = "Preserve Deadlock's Steam NVIDIA shader-cache fragments";
-      };
-      Service = {
-        ExecStart = "${deadlockShaderCacheSync}/bin/deadlock-shader-cache-sync";
-        Restart = "always";
-        RestartSec = "1s";
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-  };
 
   # Hyprland itself renders on the NVIDIA GPU, even though apps still
   # default to Intel (PRIME offload above). The HDMI port is wired to the
