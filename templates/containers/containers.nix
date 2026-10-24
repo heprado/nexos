@@ -7,9 +7,9 @@
 # project -- the watchdog stops every container, kills the API service and
 # the rootless pause process. Nothing survives deactivation.
 #
-# Why Podman and not Docker: the machine-wide rootless Docker
-# (modules/nixos/docker-rootless.nix) is a systemd user service that is
-# always up and shared by every project; Podman is daemonless, so it can be
+# Why a project-scoped Podman and not the machine-wide one
+# (modules/nixos/podman-rootless.nix): that one stores everything under
+# ~/.local/share/containers, shared by every project; this one can be
 # confined to the project and killed with it.
 #
 # Everything Podman stores lives under .devenv/state/podman (images,
@@ -267,7 +267,7 @@ in
     packages = [ podmanWrapper composeWrapper guard ];
 
     # Docker-compatible clients (docker CLI, testcontainers, ...) talk to
-    # this project's Podman instead of the machine-wide rootless Docker.
+    # this project's Podman instead of the machine-wide rootless Podman.
     enterShell = ''
       containers-guard attach
       export DOCKER_HOST="unix://''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/devenv-podman-$(printf %s "$DEVENV_ROOT" | sha256sum | cut -c1-12)/podman.sock"

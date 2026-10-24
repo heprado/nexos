@@ -38,7 +38,7 @@ nexos/
                                  # sops key, home-manager) + imports the modules every host uses
       unfree.nix                 # nexos.unfree: each module lists the unfree packages it needs
       desktop-hyprland.nix       # marvin: Hyprland + Noctalia greeter (greetd), audio, bluetooth, GUI home config
-      docker-rootless.nix        # rootless Docker, per-user daemons
+      podman-rootless.nix        # rootless Podman (docker alias, socket-activated API)
       ssh.nix                    # caixa: key-only SSH server, LAN only (no passwords, no root login, fail2ban)
       chrony.nix                 # NTP from NIC.br with NTS
       lan-isolation.nix          # caixa only: LAN interfaces reach just the gateway, no peer-to-peer traffic
@@ -97,7 +97,7 @@ On both machines:
   - **marvin**: LUKS-encrypted btrfs, subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
   - **caixa**: ZFS pool `zroot` with native encryption (aes-256-gcm) on the pool root, datasets for `/`, `/home`, `/nix`, `/var/lib/db` (8K records, for databases; k3s' `db` StorageClass lives there) and a 1G `reserved`, swap on its own partition re-keyed randomly each boot. One disk today; ZFS so more can join as an array later (`zpool attach` for a mirror). See `machines/caixa/zfs.nix`.
 - **User**: `henrique` (sudo/wheel).
-- **Docker**: rootless, one daemon per user, auto-starts at login (via `linger`).
+- **Podman**: rootless and daemonless, `docker` aliased to it; a per-user Docker-compatible API socket starts on demand.
 - **Secrets**: managed with [sops-nix](https://github.com/Mic92/sops-nix) + `age`; see `secrets/README.md` for the full secrets workflow (rotating keys, adding new secrets, etc).
 
 **caixa** additionally:
@@ -302,7 +302,7 @@ It gives the project its **own rootless Podman** (`podman`,
 `podman-compose`, and `DOCKER_HOST` pointing at a project-scoped API
 socket), with images/containers/networks stored under
 `.devenv/state/podman` — not shared with other projects or with the
-machine-wide rootless Docker. Its lifetime is the shell's: when the last
+machine-wide rootless Podman. Its lifetime is the shell's: when the last
 shell that activated it goes away (`devenv shell` exited, terminal closed,
 or — with direnv — that shell `cd`'d out of the project), a watchdog stops
 every container and kills the API service and the rootless pause process.

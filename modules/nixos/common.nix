@@ -6,7 +6,7 @@
   # only keeps what's specific to that machine.
   imports = [
     ./unfree.nix
-    ./docker-rootless.nix
+    ./podman-rootless.nix
     ./chrony.nix
     ./session-stop-timeout.nix
     ./take-monitor.nix
