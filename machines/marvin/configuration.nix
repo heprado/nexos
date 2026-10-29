@@ -197,15 +197,55 @@ in
     ];
     allowedTCPPorts = [
       # Steam Remote Play.
+      # WiVRn (Quest 3 streaming, see services.wivrn below).
+      9757
       27036 27037
     ];
     allowedUDPPorts = [
       # Steam: peer discovery, Remote Play.
+      # WiVRn streaming; mDNS, so the headset finds marvin by itself.
+      9757 5353
       27036 10400 10401
     ];
     # Steam Remote Play.
     allowedUDPPortRanges = [ { from = 27031; to = 27035; } ];
   };
+  services.avahi.openFirewall = false;
+
+  # Meta Quest 3 as a PC VR headset over Wi-Fi: WiVRn's server streams
+  # OpenXR to the WiVRn app on the Quest (from the Meta store), and starts
+  # WayVR (ex wlx-overlay-s) once the headset connects, to see and use the
+  # desktop in VR. Firewall ports are in nexos.homeNetwork above, not
+  # openFirewall. Steam games find the runtime through importOXRRuntimes.
+  services.wivrn = {
+    enable = true;
+    autoStart = true;
+    # Encodes on the GTX 1650's NVENC. cudaSupport only builds WiVRn's NVENC
+    # encoder, which loads libnvidia-encode from the driver at runtime, so
+    # no CUDA toolkit (nor anything unfree); WiVRn itself builds locally.
+    package = pkgs.wivrn.override { cudaSupport = true; };
+    # Realtime priority (CAP_SYS_NICE) for asynchronous reprojection; drops
+    # the unit's sandboxing, which the capability can't coexist with.
+    highPriority = true;
+    # The server's compositor renders on NVIDIA too, so frames reach NVENC
+    # without a copy from the Intel iGPU (same variables as nvidia-offload).
+    monadoEnvironment = {
+      __NV_PRIME_RENDER_OFFLOAD = "1";
+      __NV_PRIME_RENDER_OFFLOAD_PROVIDER = "NVIDIA-G0";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      __VK_LAYER_NV_optimus = "NVIDIA_only";
+    };
+    steam.importOXRRuntimes = true;
+    config = {
+      enable = true;
+      json.application = [ pkgs.wayvr ];
+    };
+  };
+  # The server is a user service; only henrique's session runs it.
+  systemd.user.services.wivrn.unitConfig.ConditionUser = lib.mkForce "henrique";
+  # WayVR types and clicks on the desktop through /dev/uinput.
+  hardware.uinput.enable = true;
+  users.users.henrique.extraGroups = [ "uinput" ];
   programs.steam.remotePlay.openFirewall = lib.mkForce false;
   # ~/codigos/compartilhamento-de-video-legal publishes its nginx on
   # 192.168.15.141:443 from rootless Podman, which can only bind ports at or
