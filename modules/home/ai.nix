@@ -1,13 +1,18 @@
-{ pkgs,config, ... }:
+{ pkgs, config, osConfig, ... }:
 let
   agentsMd = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/agents/AGENTS.md";
+  marvinPackages = if osConfig.networking.hostName == "marvin" then [
+    pkgs.deepseek-harness
+  ] else [ ];
 in
 {
-  home.packages = [ pkgs.claude-code ];
+  home.packages = [ pkgs.claude-code ] ++ marvinPackages;
 
   # The same policy for the agents that read a global AGENTS.md -- Codex,
   # opencode, pi: links to the file below, so they never drift.
   home.file.".codex/AGENTS.md".source = agentsMd;
+  # Claude Code reads its global policy from CLAUDE.md, not AGENTS.md.
+  home.file.".claude/CLAUDE.md".source = agentsMd;
 
   # Shared per-user policy, independent of any one agent's installation.
   home.file.".config/agents/AGENTS.md".text = ''
@@ -92,5 +97,13 @@ in
       better even when it compiles slower (codegen-units = 1, LTO, heavier
       optimisation) and don't propose trading runtime for build speed;
       still show build time in before/after tables, as information.
+    - NixOS configs (nexos): check a change with `nrb` (`nh os build`:
+      builds this host's system and shows the package diff, no sudo, no
+      activation). Activate only when asked, and prefer `nrt` (`nh os
+      test`, a reboot falls back) over `nrs` (`nh os switch`); both follow
+      the self-reverting rule above. Extra arguments pass through to nh.
+      Never leave a `result` link in a repo: `nix build` other outputs
+      with `--no-link --print-out-paths` (`--no-out-link` for the legacy
+      `nix-build`), or `-o` into a scratch directory.
   '';
 }
