@@ -733,6 +733,14 @@ in
   # compiling from source. It starts its own bundled Xwayland on demand.
   programs.umbriel.enable = true;
 
+  # Noctalia's binary cache. The noctalia input tracks its cachix branch,
+  # whose commits are published there, but without the substituter Noctalia
+  # was still built from source (~36 minutes). noctalia-greeter isn't in it.
+  nix.settings = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+  };
+
   # henrique's GUI home config (Umbriel/Noctalia, browser, chat apps, ...),
   # on top of the terminal one common.nix imports.
   home-manager.users.henrique.imports = [ ../../users/henrique/home-desktop.nix desktopHome ];
