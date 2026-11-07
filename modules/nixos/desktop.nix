@@ -13,6 +13,11 @@ let
       # = qt6ct gets Qt6 apps qt6ct and Qt5 apps (vlc, ddcui, projectm) qt5ct.
       # Each Qt only loads plugins built for its own major version, so both
       # directories share one QT_PLUGIN_PATH.
+      lucideIcon = name: hash: pkgs.fetchurl {
+        url = "https://raw.githubusercontent.com/lucide-icons/lucide/1.70.0/icons/${name}.svg";
+        inherit hash;
+      };
+
       qt6ct = pkgs.qt6Packages.qt6ct;
       qt5ct = pkgs.libsForQt5.qt5ct;
       qtPluginPath = lib.concatStringsSep ":" [
@@ -400,6 +405,14 @@ let
         custom_palette=true
         style=Fusion
       '';
+
+      # Icons for the bar's RAM and GPU widgets (custom_image in the Noctalia
+      # settings): Noctalia's own set, Tabler, has neither a memory stick nor
+      # a graphics card. From Lucide (ISC), pinned to a release.
+      xdg.dataFile."noctalia/icons/memory-stick.svg".source =
+        lucideIcon "memory-stick" "sha256-khRDmsFCwQFWQ0VCkIQ2CH+xdMccRuMM+0aXHFa6M9I=";
+      xdg.dataFile."noctalia/icons/gpu.svg".source =
+        lucideIcon "gpu" "sha256-qAyr8DltKnQDQhmJYToOBuxVesvMzvPeyGTTKgZFkQE=";
 
       # The bar's network widget (dotfiles/noctalia/plugins/net-usage): an
       # up/down glyph that opens on hover into each interface's rates.
