@@ -32,7 +32,7 @@ in
 
   networking.hostName = "marvin";
 
-  # Quiet / normal / game presets in a Noctalia bar widget, each setting the
+  # Quiet / normal / auto / game presets in a Noctalia bar widget, each setting the
   # firmware fan mode together with the power profile. The firmware's
   # default fan mode barely spins the fan up under load, and CPU and GPU
   # share one heatpipe, so games throttled; max cooling (fan_mode 4, the
@@ -40,7 +40,8 @@ in
   # (after a re-login); the widget saves and restores the preset. Even
   # fan_mode 4 kept switching the fan on and off every few seconds, so the
   # game preset also pins both fans at full speed (~6000/5000 RPM) through
-  # the GameZone WMI method SetFanCooling.
+  # the GameZone WMI method SetFanCooling. Auto picks the fan level and the
+  # power profile from the CPU temperature, up to full speed past 85 °C.
   hardware.ideapad-fan = {
     enable = true;
     users = [ "henrique" ];
