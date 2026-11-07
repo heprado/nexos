@@ -15,7 +15,7 @@ Umbriel with the [Noctalia](https://docs.noctalia.dev) shell for
 ```
 nexos/
   flake.nix / flake.lock      # inputs (nixpkgs, home-manager, sops-nix, disko, noctalia,
-                              # noctalia-greeter, hyprqt6engine, monitor-settings, helium,
+                              # noctalia-greeter, monitor-settings, helium,
                               # lanzaboote) and outputs; hosts are built by mkHost
   .sops.yaml                  # sops-nix: which age key(s) can decrypt which secrets files
   .gitignore                  # keeps keys/ (private keys) out of git
@@ -133,7 +133,7 @@ On both machines:
 
 All colors are set in **one place**: `customPalettes.henrique` in `modules/nixos/desktop.nix` (Tama's colors, from Gintama; dark and light variants). Noctalia renders them into every other app through its templates:
 
-- builtin: GTK3/GTK4, Qt (hyprqt6engine for Qt6, a patched qt5ct for Qt5), KDE color schemes, Umbriel (borders, tab bars, overview) and foot;
+- builtin: GTK3/GTK4, Qt (qt6ct for Qt6, qt5ct for Qt5), KDE color schemes, Umbriel (borders, tab bars, overview) and foot;
 - community (fetched from `api.noctalia.dev`): Telegram, Helium (`ungoogled-chromium`) and Vesktop (`discord`).
 
 The greeter runs before login and can't read that palette, so `modules/nixos/desktop.nix` converts it into the greeter's own `[appearance.palette]`.

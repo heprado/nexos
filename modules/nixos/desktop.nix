@@ -6,44 +6,17 @@ let
   # home-manager's own.
   desktopHome = { config, osConfig, lib, pkgs, ... }:
     let
-      # hyprqt6engine is a Qt platform-theme plugin: it's dlopen()ed into
-      # every Qt app, so it has to link against the same libstdc++ they do.
-      # The hyprwm flake builds it (and hyprlang/hyprutils under it) with
-      # gcc16Stdenv, needing GLIBCXX_3.4.36, which nixpkgs' gcc-15 Qt apps
-      # don't have -- the plugin then fails to load everywhere ("version
-      # `GLIBCXX_3.4.36' not found", visible with QT_DEBUG_PLUGINS=1) and Qt
-      # silently falls back to its default palette. Rebuilt here with the
-      # regular stdenv instead; the extended package set is local to this.
-      hyprqt6engine =
-        (pkgs.extend (lib.composeManyExtensions [
-          (_: prev: { gcc16Stdenv = prev.stdenv; })
-          inputs.hyprqt6engine.overlays.hyprqt6engine-with-deps
-        ])).hyprqt6engine;
-
-      # hyprqt6engine is Qt6-only, and QT_QPA_PLATFORMTHEME takes a single
-      # name for both Qt versions (a `a:b` list doesn't help: each Qt only
-      # tries the first entry), so Qt5 apps (vlc, ddcui, projectm) got Qt's
-      # default palette. Same trick Plasma uses -- one theme name answered by
-      # a Qt5 and a Qt6 plugin: qt5ct already answers to "qt6ct" besides its
-      # own name, and this makes it answer to "hyprqt6engine" too. Qt5 apps
-      # then load qt5ct (configured by qt5ct.conf below) under the same
-      # variable that gets Qt6 apps hyprqt6engine. --replace-fail turns a
-      # qt5ct update that moves these lines into a build error instead of a
-      # silently unthemed Qt5.
-      qt5ct = pkgs.libsForQt5.qt5ct.overrideAttrs (old: {
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace src/qt5ct-qtplugin/qt5ct.json \
-            --replace-fail '"qt6ct"' '"qt6ct", "hyprqt6engine"'
-          substituteInPlace src/qt5ct-qtplugin/main.cpp \
-            --replace-fail 'key.toLower() == "qt6ct"' \
-                           'key.toLower() == "qt6ct" || key.toLower() == "hyprqt6engine"'
-        '';
-      });
-
+      # Qt apps take their theme from the qt6ct (Qt6) and qt5ct (Qt5)
+      # platform-theme plugins. QT_QPA_PLATFORMTHEME takes a single name for
+      # both Qt versions (in an `a:b` list each Qt only tries the first), and
+      # qt5ct answers to "qt6ct" besides its own name, so QT_QPA_PLATFORMTHEME
+      # = qt6ct gets Qt6 apps qt6ct and Qt5 apps (vlc, ddcui, projectm) qt5ct.
       # Each Qt only loads plugins built for its own major version, so both
-      # directories can share one QT_PLUGIN_PATH.
+      # directories share one QT_PLUGIN_PATH.
+      qt6ct = pkgs.qt6Packages.qt6ct;
+      qt5ct = pkgs.libsForQt5.qt5ct;
       qtPluginPath = lib.concatStringsSep ":" [
-        "${hyprqt6engine}/lib/qt-6"
+        "${qt6ct}/${pkgs.qt6.qtbase.qtPluginPrefix}"
         "${qt5ct}/${pkgs.libsForQt5.qtbase.qtPluginPrefix}"
       ];
 
@@ -248,15 +221,12 @@ let
       # templates above actually need to take effect app-wide.
       # See <https://docs.noctalia.dev/v5/templates/official/gtk-qt/>.
       #
-      # hyprqt6engine (below, QT_QPA_PLATFORMTHEME) is the Qt theme engine.
-      # qt6ct isn't installed: it's archived upstream, and its GUI only edits
-      # its own qt6ct.conf, which hyprqt6engine never reads -- theme changes
-      # made there silently did nothing. The Qt colors come from Noctalia's
-      # "qt" template instead (see hyprqt6engine.conf below).
+      # qt6ct (QT_QPA_PLATFORMTHEME below) is the Qt6 theme engine, and its
+      # settings app edits the qt6ct.conf it reads (see below).
       home.packages = [
         pkgs.adw-gtk3
         pkgs.nwg-look
-        hyprqt6engine
+        qt6ct
         # Provides the "JetBrainsMono Nerd Font" family foot.ini (below) uses --
         # nothing in this config previously installed any Nerd Font at all, so
         # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
@@ -385,45 +355,45 @@ let
         ../../users/henrique/217060-kagura-gintama-1920x1080.png;
 
       # QT_QPA_PLATFORMTHEME alone isn't enough: most Qt apps here (ddcui,
-      # etc.) aren't built with hyprqt6engine as a buildInput, so
-      # nixpkgs' wrapQtAppsHook never adds its plugin dir to their own
+      # etc.) aren't built with qt6ct/qt5ct as a buildInput, so nixpkgs'
+      # wrapQtAppsHook never adds their plugin dirs to the apps' own
       # per-binary QT_PLUGIN_PATH wrapper -- some (e.g. ddcui) aren't even
       # wrapped at all. Without this, Qt falls back to its compiled-in
       # default plugin path (baked from qtbase's own store path at build
-      # time), which can never see a separately-built package like
-      # hyprqt6engine, so "hyprqt6engine" would silently fail to load as
-      # the platform theme everywhere except its own process. The same goes
-      # for the patched qt5ct and Qt5 apps (see qtPluginPath above).
+      # time), which can never see a separately-built plugin, so the platform
+      # theme would silently fail to load (see qtPluginPath above).
       home.sessionVariables = {
-        QT_QPA_PLATFORMTHEME = "hyprqt6engine";
+        QT_QPA_PLATFORMTHEME = "qt6ct";
         QT_PLUGIN_PATH = qtPluginPath;
       };
       dconf.settings."org/gnome/desktop/interface".gtk-theme = "adw-gtk3";
 
-      # Points color_scheme at the file Noctalia's "qt" builtin template
-      # renders. The template writes it under ~/.config/qt6ct/ in qt6ct's
-      # color-scheme format even with qt6ct itself not installed, and
-      # hyprqt6engine accepts that format directly -- no changes needed to the
-      # programs.noctalia.settings.theme.templates.builtin_ids list above.
-      # The *color scheme* file is qt6ct's INI format, but this config file
-      # itself is hyprlang (`theme:color_scheme`): an INI `[theme]` header is
-      # an "Invalid config line" and the whole entry gets dropped.
       # Square corners in GTK apps. Noctalia's GTK template only adds its
       # noctalia.css import when gtk.css lacks one, so this read-only file stays.
       # force: Noctalia had already written a gtk.css holding just that import.
       xdg.configFile."gtk-3.0/gtk.css" = squareGtkCss;
       xdg.configFile."gtk-4.0/gtk.css" = squareGtkCss;
 
-      xdg.configFile."hypr/hyprqt6engine.conf".text = ''
-        theme {
-            color_scheme = /home/henrique/.config/qt6ct/colors/noctalia.conf
-        }
+      # qt6ct.conf stays a writable file, so changes made in qt6ct's settings
+      # app take effect; this only writes a starting one where there's none.
+      # It points color_scheme_path at the color scheme Noctalia's "qt"
+      # template renders under ~/.config/qt6ct/colors.
+      home.activation.qt6ctConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        conf=${config.xdg.configHome}/qt6ct/qt6ct.conf
+        if [ ! -e "$conf" ]; then
+          run mkdir -p "$(dirname "$conf")"
+          run tee "$conf" > /dev/null <<'EOF'
+        [Appearance]
+        color_scheme_path=${config.xdg.configHome}/qt6ct/colors/noctalia.conf
+        custom_palette=true
+        style=Fusion
+        EOF
+        fi
       '';
 
-      # The Qt5 side of the same theme: the patched qt5ct (see the let block)
-      # reads this, pointed at the qt5ct copy of the color scheme Noctalia's
-      # "qt" template renders alongside the qt6ct one. Fusion matches the
-      # style Qt6 apps get from hyprqt6engine.
+      # The Qt5 side of the same theme: qt5ct reads this, pointed at the qt5ct
+      # copy of the color scheme Noctalia's "qt" template renders alongside
+      # the qt6ct one. Fusion matches the qt6ct.conf above.
       xdg.configFile."qt5ct/qt5ct.conf".text = ''
         [Appearance]
         color_scheme_path=/home/henrique/.config/qt5ct/colors/noctalia.conf

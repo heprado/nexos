@@ -31,11 +31,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprqt6engine = {
-      url = "github:hyprwm/hyprqt6engine";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Display arrangement + DDC/CI monitor controls (Quickshell app), with
     # a home-manager module that also installs its Noctalia plugin.
     monitor-settings = {
