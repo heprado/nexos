@@ -37,9 +37,9 @@
     };
 
     # Display arrangement + DDC/CI monitor controls (Quickshell app), with
-    # a home-manager module that reapplies the saved layout at login.
+    # a home-manager module that also installs its Noctalia plugin.
     monitor-settings = {
-      url = "github:heprado/noctalia-monitor-settings";
+      url = "github:heprado/noctalia-monitor-settings/bar-refresh-rate";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -68,11 +68,6 @@
       url = "git+https://github.com/heprado/container_studies.git?dir=vms";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # League of Legends' macOS client on Darling (~/codigos/darling-lol-iso):
-    # marvin imports just its darling-lol module. No nixpkgs follows: its
-    # Darling is built against its own pin, and following would rebuild it.
-    darling-lol-iso.url = "git+file:///home/henrique/codigos/darling-lol-iso";
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia-greeter, ... }@inputs: {

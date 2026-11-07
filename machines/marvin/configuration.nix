@@ -1,6 +1,19 @@
 { config, lib, pkgs, inputs, ... }:
 let
   facts = import ./facts.nix;
+  # nixpkgs' nvidia-offload (prime.offload.enableOffloadCmd), plus
+  # VK_ICD_FILENAMES. __VK_LAYER_NV_optimus only puts the NVIDIA GPU first
+  # in the Vulkan device list; Darling (darling-lol) still got the Intel GPU
+  # under it while presenting through NVIDIA's EGL, a black screen. Listing
+  # only NVIDIA's ICD hides the Intel GPU. A value already set wins.
+  nvidiaOffload = pkgs.writeShellScriptBin "nvidia-offload" ''
+    export __NV_PRIME_RENDER_OFFLOAD=1
+    export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+    export __GLX_VENDOR_LIBRARY_NAME=nvidia
+    export __VK_LAYER_NV_optimus=NVIDIA_only
+    export VK_ICD_FILENAMES="''${VK_ICD_FILENAMES:-/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json}"
+    exec "$@"
+  '';
 in
 {
   imports = [
@@ -8,14 +21,13 @@ in
     ../../modules/nixos/common.nix
     # No ssh.nix: marvin is a laptop roaming arbitrary Wi-Fi networks and
     # never needs to accept SSH (it's only a client, to caixa).
-    ../../modules/nixos/desktop-hyprland.nix
+    ../../modules/nixos/desktop.nix
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/home-network.nix
     ../../modules/nixos/refind.nix
     ../../modules/nixos/plymouth-tama
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.noctalia-ideapad-fan.nixosModules.default
-    ./darling-lol.nix
   ];
 
   networking.hostName = "marvin";
@@ -40,7 +52,8 @@ in
   # unar: free RAR (incl. RAR5) extractor, unlike unfree unrar.
   # sbctl: manages marvin's Secure Boot keys (see boot.lanzaboote below).
   # nvtop: live GPU temperature/usage monitor, NVIDIA-only build.
-  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl pkgs.nvtopPackages.nvidia pkgs.bubblewrap pkgs.socat ];
+  # nvidiaOffload: see the let block above.
+  environment.systemPackages = [ pkgs.unzip pkgs.unar pkgs.sbctl pkgs.nvtopPackages.nvidia pkgs.bubblewrap pkgs.socat nvidiaOffload ];
 
   # Lives here (not hardware-configuration.nix) since that file gets
   # wholesale-replaced by `nixos-generate-config` output during install,
@@ -126,9 +139,11 @@ in
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     prime = {
       offload.enable = true;
-      # Installs `nvidia-offload`, for running a program on the NVIDIA GPU
-      # (e.g. Steam launch options: `nvidia-offload %command%`).
-      offload.enableOffloadCmd = true;
+      # `nvidia-offload`, for running a program on the NVIDIA GPU (e.g.
+      # Steam launch options: `nvidia-offload %command%`), comes from
+      # nvidiaOffload in the let block instead, which also sets
+      # VK_ICD_FILENAMES.
+      offload.enableOffloadCmd = false;
       # Detected by install.sh and recorded in facts.nix.
       inherit (facts) intelBusId nvidiaBusId;
     };
@@ -159,16 +174,16 @@ in
     unShaderBackgroundProcessingThreads 12
   '';
 
-  # Hyprland itself renders on the NVIDIA GPU, even though apps still
-  # default to Intel (PRIME offload above). The HDMI port is wired to the
-  # NVIDIA card, so with Intel as the compositor's renderer every HDMI frame
-  # (1080p@120Hz) had to be copied across GPUs, which made animations crawl
-  # there. Aquamarine uses the first device in AQ_DRM_DEVICES as its
-  # renderer. The cardN numbers aren't stable across boots, and by-path
-  # names contain ':' (AQ_DRM_DEVICES' separator), so udev gives each GPU a
-  # fixed symlink keyed on its PCI address from facts.nix. ID_PATH is
-  # matched exactly so the early-boot simple-framebuffer card (which also
-  # sits under the Intel PCI device) doesn't claim the Intel name.
+  # Umbriel renders on the Intel GPU, which is listed first in WLR_DRM_DEVICES:
+  # with NVIDIA first, wlroots found no buffer format for the Intel-wired eDP-1
+  # ("Failed to pick primary buffer format"), which stayed dark while it retried
+  # nonstop. HDMI is wired to NVIDIA, so its frames get copied across GPUs, except
+  # for fullscreen games, which reach it through direct scanout. The cardN numbers
+  # aren't stable across boots, and by-path names contain ':' (the variable's
+  # separator), so udev gives each GPU a fixed symlink keyed on its PCI address
+  # from facts.nix. ID_PATH is matched exactly so the early-boot
+  # simple-framebuffer card (which also sits under the Intel PCI device) doesn't
+  # claim the Intel name.
   services.udev.extraRules =
     let
       # "PCI:1:0:0" (decimal, NixOS format) -> "pci-0000:01:00.0" (hex, udev ID_PATH).
@@ -183,7 +198,7 @@ in
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.nvidiaBusId}", SYMLINK+="dri/nvidia-dgpu"
       SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{ID_PATH}=="${idPath facts.intelBusId}", SYMLINK+="dri/intel-igpu"
     '';
-  environment.sessionVariables.AQ_DRM_DEVICES = "/dev/dri/nvidia-dgpu:/dev/dri/intel-igpu";
+  environment.sessionVariables.WLR_DRM_DEVICES = "/dev/dri/intel-igpu:/dev/dri/nvidia-dgpu";
 
   # Streaming and discovery ports, only on the home Wi-Fi ("Tricks") and on
   # a cable: marvin is a laptop, and on anyone else's Wi-Fi these stay
@@ -197,19 +212,20 @@ in
     ];
     allowedTCPPorts = [
       # Steam Remote Play.
+      27036 27037
       # WiVRn (Quest 3 streaming, see services.wivrn below).
       9757
-      27036 27037
     ];
     allowedUDPPorts = [
       # Steam: peer discovery, Remote Play.
+      27036 10400 10401
       # WiVRn streaming; mDNS, so the headset finds marvin by itself.
       9757 5353
-      27036 10400 10401
     ];
     # Steam Remote Play.
     allowedUDPPortRanges = [ { from = 27031; to = 27035; } ];
   };
+  programs.steam.remotePlay.openFirewall = lib.mkForce false;
   services.avahi.openFirewall = false;
 
   # Meta Quest 3 as a PC VR headset over Wi-Fi: WiVRn's server streams
@@ -219,7 +235,10 @@ in
   # openFirewall. Steam games find the runtime through importOXRRuntimes.
   services.wivrn = {
     enable = true;
-    autoStart = true;
+    # Started from the launcher instead (desktop entry below): running from
+    # login, it showed a pairing PIN notification at every start and kept
+    # the server published on the network.
+    autoStart = false;
     # Encodes on the GTX 1650's NVENC. cudaSupport only builds WiVRn's NVENC
     # encoder, which loads libnvidia-encode from the driver at runtime, so
     # no CUDA toolkit (nor anything unfree); WiVRn itself builds locally.
@@ -243,15 +262,40 @@ in
   };
   # The server is a user service; only henrique's session runs it.
   systemd.user.services.wivrn.unitConfig.ConditionUser = lib.mkForce "henrique";
+  # Replaces WiVRn's own launcher entry (same desktop file ID). That one
+  # opens the dashboard, which can start a server of its own, outside the
+  # unit and so without monadoEnvironment's NVIDIA variables. This starts
+  # the unit first, then opens the dashboard on it.
+  home-manager.users.henrique.xdg.desktopEntries."io.github.wivrn.wivrn" = {
+    name = "WiVRn server";
+    genericName = "WiVRn dashboard";
+    comment = "Play your PC VR games on a standalone headset";
+    icon = "io.github.wivrn.wivrn";
+    exec = toString (pkgs.writeShellScript "wivrn-launch" ''
+      systemctl --user start wivrn.service
+      exec ${config.services.wivrn.package}/bin/wivrn-dashboard
+    '');
+    categories = [ "Network" ];
+    settings.Keywords = "VR;Virtual reality;OpenVR;OpenXR;";
+    actions.stop = {
+      name = "Parar servidor";
+      exec = "systemctl --user stop wivrn.service";
+    };
+  };
   # WayVR types and clicks on the desktop through /dev/uinput.
   hardware.uinput.enable = true;
   users.users.henrique.extraGroups = [ "uinput" ];
-  programs.steam.remotePlay.openFirewall = lib.mkForce false;
   # ~/codigos/compartilhamento-de-video-legal publishes its nginx on
   # 192.168.15.141:443 from rootless Podman, which can only bind ports at or
   # above this. 443 is deliberately NOT in allowedTCP/UDPPorts above: only
   # marvin itself (loopback path to its own IP) reaches it, never the LAN.
   boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 443;
+
+  # Builds aarch64 NixOS systems (~/codigos/nixos-switch, the Switch Lite)
+  # through QEMU user emulation, so their packages come from the binary
+  # cache instead of being cross-compiled from source; also registers
+  # aarch64-linux as an extra platform for the nix daemon.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   # The proprietary driver above (see modules/nixos/unfree.nix).
   nexos.unfree = [ "nvidia-x11" "nvidia-kernel-modules" "nvidia-settings" "nvidia-persistenced" ];
@@ -264,6 +308,15 @@ in
     (pkgs.callPackage ./apps2samsung.nix { })
     # OpenAI's coding agent; reads ~/.codex/AGENTS.md (modules/home/ai.nix).
     pkgs.codex
+    # Torrent client (Qt GUI).
+    pkgs.qbittorrent
+    (pkgs.writeShellApplication {
+      name = "patch_switch";
+      runtimeInputs = [ pkgs.python3 pkgs.util-linux pkgs.udisks pkgs.coreutils ];
+      text = ''
+        exec python3 -I ${../../scripts/nintendo-switch-package3-splash.py} "$@"
+      '';
+    })
   ];
 
   sops.defaultSopsFile = ../../secrets/marvin.yaml;

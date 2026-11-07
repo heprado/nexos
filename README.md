@@ -7,7 +7,7 @@ machine or a new user later doesn't require restructuring anything.
 
 Two machines today: **caixa** (terminal-only, reachable over SSH from the local network) and
 **marvin** (laptop, dual-booting Windows with Secure Boot on), which runs
-Hyprland with the [Noctalia](https://docs.noctalia.dev) shell for
+Umbriel with the [Noctalia](https://docs.noctalia.dev) shell for
 `henrique`.
 
 ## Folder structure
@@ -19,6 +19,7 @@ nexos/
                               # lanzaboote) and outputs; hosts are built by mkHost
   .sops.yaml                  # sops-nix: which age key(s) can decrypt which secrets files
   .gitignore                  # keeps keys/ (private keys) out of git
+  COMMANDS.md                 # nrb / nrt / nrs: what each rebuild command does
 
   machines/
     caixa/
@@ -37,7 +38,7 @@ nexos/
       common.nix                 # what every host shares, terminal only (nix settings, nh, locale, kernel, boot console,
                                  # sops key, home-manager) + imports the modules every host uses
       unfree.nix                 # nexos.unfree: each module lists the unfree packages it needs
-      desktop-hyprland.nix       # marvin: Hyprland + Noctalia greeter (greetd), audio, bluetooth, GUI home config
+      desktop.nix       # marvin: Umbriel + Noctalia greeter (greetd), audio, bluetooth, GUI home config
       podman-rootless.nix        # rootless Podman (docker alias, socket-activated API)
       ssh.nix                    # caixa: key-only SSH server, LAN only (no passwords, no root login, fail2ban)
       chrony.nix                 # NTP from NIC.br with NTS
@@ -48,23 +49,22 @@ nexos/
       gaming.nix                 # marvin: Steam, Lutris, MangoHud, PCSX2, AppImages via binfmt
       refind.nix                 # marvin: rEFInd as the NixOS/Windows picker in front of systemd-boot
     home/                     # home-manager modules (per-user environment, not system config)
-      cli.nix                    # git, gh, glow, zoxide
+      cli.nix                    # git, gh, glow, zoxide, the nrb/nrt/nrs commands (COMMANDS.md)
       dev.nix                    # direnv + nix-direnv + devenv, so per-project environments auto-activate
       chat.nix                   # Telegram, Vesktop (Discord), ZapFast (WhatsApp)
       design.nix                 # Inkscape
       ai.nix                     # Claude Code + its policy (CLAUDE.md)
       claude-voice.nix           # Claude Code's /voice skill: reads replies aloud, pt_BR piper voice
-      hyprland.nix               # Hyprland session, Noctalia shell + the color palette, foot, GTK/Qt theming
       helium.nix                 # Helium browser
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
       zed.nix                    # Zed editor (launched as `IDE`)
-      zsh.nix                    # zsh, prompt, eza, the nrs/nrt aliases
+      zsh.nix                    # zsh, prompt, eza
 
   users/
     henrique/
       default.nix              # NixOS account: shell, groups, SSH authorized_keys, password hash
       home.nix                 # home-manager config for this user, terminal half (every host)
-      home-desktop.nix         # GUI half (Hyprland, apps), imported by desktop-hyprland.nix
+      home-desktop.nix         # GUI half (Umbriel, apps), imported by desktop.nix
 
   dotfiles/
     noctalia/<host>/settings.toml  # Noctalia control-center settings, synced on every rebuild (see below)
@@ -109,33 +109,34 @@ On both machines:
 
 **marvin** additionally:
 
-- **Desktop**: Hyprland with the Noctalia shell, and the Noctalia greeter (on greetd) as the login screen. No SSH server.
+- **Desktop**: Umbriel with the Noctalia shell (`modules/nixos/desktop.nix`), and the Noctalia greeter (on greetd) as the login screen. No SSH server.
 - **Dual boot with Windows**, each on its own disk and ESP. **rEFInd** is the first menu (NixOS or Windows); NixOS goes on to systemd-boot's list of generations.
 - **Secure Boot** on, via [lanzaboote](https://github.com/nix-community/lanzaboote). The keys live in `/var/lib/sbctl` (**back that directory up**: without it new generations can't be signed). They were enrolled with `sbctl enroll-keys --append --microsoft` on top of the firmware's existing db/KEK/dbx, so Windows (including its 2023 CA) and the NVIDIA option ROM stay trusted.
 - **ESP is only 512M**, and each initrd is ~210M (the NVIDIA driver is in it), so `boot.lanzaboote.configurationLimit = 2`. If a rebuild fails with `No space left on device`, consecutive kernel/driver updates filled it.
-- **NVIDIA PRIME** offload (GTX 1650 + Intel iGPU); Hyprland itself renders on the NVIDIA GPU, since the HDMI port is wired to it.
+- **NVIDIA PRIME** offload (GTX 1650 + Intel iGPU); Umbriel renders on Intel, since it can't drive the Intel-wired panel otherwise; fullscreen games reach the NVIDIA-wired HDMI port through direct scanout.
 - **Gaming**: Steam, Lutris, MangoHud, PCSX2. AppImages (e.g. game recomps) run directly, through `appimage-run` via binfmt.
 
 ## Day to day
 
 | Command | What it does |
 |---|---|
+| `nrb` | `nh os build`: only build this host's config and show what would change — no sudo, nothing activated |
 | `nrs` | `nh os switch`: build this host's config and switch to it (shows what changed) |
 | `nrt` | `nh os test`: switch now, but don't make it the boot default — a reboot goes back |
 | `nix flake update` then `nrs` | update every input (packages); commit `flake.lock` afterwards |
 | `nix flake update nixpkgs` | update only nixpkgs |
 | `sudo nixos-rebuild switch --rollback` | go back to the previous generation |
 
-`nh` finds this flake via `programs.nh.flake` and the host by hostname, and asks for sudo itself — use `nrs`, not `sudo nrs`. `nh clean` also runs periodically, keeping generations from the last 4 days (at least 3).
+`nh` finds this flake via `programs.nh.flake` and the host by hostname, and asks for sudo itself — use `nrs`, not `sudo nrs`. See [COMMANDS.md](COMMANDS.md) for how `nrb`, `nrt` and `nrs` differ. `nh clean` also runs periodically, keeping generations from the last 4 days (at least 3).
 
 ## Theming
 
-All colors are set in **one place**: `customPalettes.henrique` in `modules/home/hyprland.nix` (Tama's colors, from Gintama; dark and light variants). Noctalia renders them into every other app through its templates:
+All colors are set in **one place**: `customPalettes.henrique` in `modules/nixos/desktop.nix` (Tama's colors, from Gintama; dark and light variants). Noctalia renders them into every other app through its templates:
 
-- builtin: GTK3/GTK4, Qt (hyprqt6engine for Qt6, a patched qt5ct for Qt5), KDE color schemes, Hyprland (borders, groupbar, the background behind windows) and foot;
+- builtin: GTK3/GTK4, Qt (hyprqt6engine for Qt6, a patched qt5ct for Qt5), KDE color schemes, Umbriel (borders, tab bars, overview) and foot;
 - community (fetched from `api.noctalia.dev`): Telegram, Helium (`ungoogled-chromium`) and Vesktop (`discord`).
 
-The greeter runs before login and can't read that palette, so `modules/nixos/desktop-hyprland.nix` converts it into the greeter's own `[appearance.palette]`.
+The greeter runs before login and can't read that palette, so `modules/nixos/desktop.nix` converts it into the greeter's own `[appearance.palette]`.
 
 The community templates only write a theme file; each app needs it loaded **once**:
 
@@ -157,7 +158,7 @@ Either path below ends with the same command (`<host>` is `caixa` or `marvin`):
 sudo nixos-rebuild switch --flake .#<host>
 ```
 
-The `nrs`/`nrt` aliases only exist once this config has been applied, so use the full command the first time. The difference between the two paths is just how you get to that point.
+The `nrb`/`nrt`/`nrs` commands only exist once this config has been applied, so use the full command the first time. The difference between the two paths is just how you get to that point.
 
 ### Option A — Fresh install from a NixOS ISO (using disko)
 
@@ -211,7 +212,7 @@ The `nrs`/`nrt` aliases only exist once this config has been applied, so use the
    ```
    On marvin you'll be prompted for the LUKS passphrase again during install. On caixa the pool is still imported with its key loaded from step 5; run `zpool export zroot` after the install, before rebooting, or the next boot finds it "in use by another system".
 
-9. **Reboot.** From here on, log in as henrique at the physical console (Hyprland on marvin, a plain text console on caixa) or, on caixa, SSH in with the appropriate private key from `keys/`. Clone this repo to `/home/henrique/codigos/nexos` — that's where `nh` (and the Noctalia settings sync) expects it.
+9. **Reboot.** From here on, log in as henrique at the physical console (Umbriel on marvin, a plain text console on caixa) or, on caixa, SSH in with the appropriate private key from `keys/`. Clone this repo to `/home/henrique/codigos/nexos` — that's where `nh` (and the Noctalia settings sync) expects it.
 
 10. **Finish the secrets setup** per `secrets/README.md` if you haven't already — real cloudflared tunnel credentials, real password hashes, etc. should already be in `secrets/<host>.yaml` if you're using a clone of this repo as-is; only the age key placement (step 4/6) is the part that has to happen manually per physical machine.
 

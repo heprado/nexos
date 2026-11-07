@@ -17,7 +17,7 @@
 
   networking.hostName = "caixa";
 
-  # Terminal only: no desktop-hyprland.nix (no greeter, no graphical
+  # Terminal only: no desktop.nix (no greeter, no graphical
   # session, no auto-login), just getty on the console and SSH from marvin
   # on the local network.
 

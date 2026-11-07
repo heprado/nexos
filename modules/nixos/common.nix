@@ -1,7 +1,7 @@
 { config, lib, pkgs, self, ... }:
 {
   # What every host (caixa, marvin) shares -- terminal only. The graphical
-  # desktop (desktop-hyprland.nix) and the SSH server (ssh.nix) are
+  # desktop (desktop.nix) and the SSH server (ssh.nix) are
   # imported by the hosts that want them. machines/<name>/configuration.nix
   # only keeps what's specific to that machine.
   imports = [
@@ -32,7 +32,11 @@
   nix.registry.nexos.flake = self;
 
   programs.zsh.enable = true;
-  
+
+  # Hex dumps (`xxd file`, `xxd -r` to patch back), on every host and for
+  # root too.
+  environment.systemPackages = [ pkgs.xxd ];
+
   # nss-cacert fails to build if a name here isn't in its store, so drop
   # the ones upstream (Mozilla) removes: emSign ECC Root CA - G3, emSign
   # Root CA - C1 and emSign ECC Root CA - C3 went in nss 3.131.
@@ -55,7 +59,7 @@
   time.timeZone = "America/Sao_Paulo";
 
   # ABNT2 keyboard (has ç, /, dead keys, and a numpad) on the text console.
-  # The graphical session's layout is set in desktop-hyprland.nix.
+  # The graphical session's layout is set in desktop.nix.
   console.keyMap = "br-abnt2";
 
   # nmcli/nmtui on both hosts, GUI or not (Noctalia's network widget on
@@ -79,7 +83,7 @@
     then pkgs.linuxPackages_7_2
     else pkgs.linuxPackages_latest;
 
-  # Terminal-only home config; desktop-hyprland.nix adds the GUI half.
+  # Terminal-only home config; desktop.nix adds the GUI half.
   home-manager.users.henrique.imports = [ ../../users/henrique/home.nix ];
 
   # Generate on each host with `age-keygen`, then record the public key in

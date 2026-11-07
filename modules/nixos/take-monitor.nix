@@ -45,7 +45,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # hardware.i2c (desktop-hyprland.nix) already loads i2c-dev in the
+    # hardware.i2c (desktop.nix) already loads i2c-dev in the
     # booted system.
     systemd.services.take-monitor = unit // {
       wantedBy = [ "multi-user.target" ];

@@ -20,11 +20,10 @@ let
 in
 {
   # GUI half of henrique's home config, only on hosts that import
-  # modules/nixos/desktop-hyprland.nix.
+  # modules/nixos/desktop.nix.
   imports = [
     ../../modules/home/chat.nix
     ../../modules/home/design.nix
-    ../../modules/home/hyprland.nix
     ../../modules/home/helium.nix
     ../../modules/home/zed.nix
   ];

@@ -1,31 +1,40 @@
-config_version = 15
+config_version = 19
 
 [bar.default]
-end = [ "group:g2", "group:g1", "notifications", "session" ]
+background_opacity = 0.0
+capsule_radius = 0.0
+radius = 0.0
+center = [ "cpu", "ram", "temp" ]
+end = [ "refresh_rate", "group:g1", "group:g2" ]
+compositor_blur = false
+concave_edge_corners = false
+margin_ends = 0
+shadow = false
 show_on_workspace_switch = false
-start = [ "workspaces" ]
+start = [ "launcher", "workspaces", "layout" ]
 
     [[bar.default.capsule_group]]
-    accordion = true
-    accordion_direction = "end"
+    accordion = false
     border_width = 1.0
     enabled = true
-    fill = "surface_variant"
+    fill = "surface_container"
     id = "g1"
-    members = [ "volume", "tray", "media", "battery", "clipboard" ]
+    members = [ "media", "tray" ]
     opacity = 1.0
     padding = 6.0
 
     [[bar.default.capsule_group]]
-    accordion = true
-    accordion_direction = "end"
+    accordion = false
     border_width = 1.0
     enabled = true
-    fill = "surface_variant"
+    fill = "surface_container"
     id = "g2"
-    members = [ "network", "bluetooth", "widget" ]
+    members = [ "notifications", "clipboard", "network", "bluetooth", "widget", "battery", "volume", "session" ]
     opacity = 1.0
     padding = 6.0
+
+[control_center]
+circular_avatar = false
 
 [location]
 address = "São Paulo, Brasil"
@@ -36,12 +45,46 @@ sunset = "18:00"
 [lockscreen_widgets]
 enabled = false
 schema_version = 2
-widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
+widget_order = [
+    "lockscreen-login-box@HDMI-A-1",
+    "lockscreen-login-box@eDP-1",
+    "lockscreen-login-box@WAYLAND-1",
+    "lockscreen-login-box@FALLBACK"
+]
 
     [lockscreen_widgets.grid]
     cell_size = 16
     major_interval = 4
     visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "FALLBACK"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 0.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 0.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_media_controls = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
 
     [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
     box_height = 196.0
@@ -55,17 +98,48 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
-        background_radius = 12.0
+        background_radius = 0.0
         center_password_text = false
         input_opacity = 1.0
-        input_radius = 6.0
+        input_radius = 0.0
         layout = "regular"
         show_caps_lock = true
         show_keyboard_layout = true
         show_login_button = true
         show_media = true
+        show_media_controls = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@WAYLAND-1"]
+    box_height = 196.0
+    box_width = 720.0
+    cx = 232.0
+    cy = 337.0
+    output = "WAYLAND-1"
+    placement_height = 519.0
+    placement_width = 464.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@WAYLAND-1".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 0.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 0.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_media_controls = true
+        show_password_reveal = true
         show_session_buttons = true
         show_unlock_hint = true
         show_weather = true
@@ -82,17 +156,19 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 0.88
-        background_radius = 12.0
+        background_radius = 0.0
         center_password_text = false
         input_opacity = 1.0
-        input_radius = 6.0
+        input_radius = 0.0
         layout = "regular"
         show_caps_lock = true
         show_keyboard_layout = true
         show_login_button = true
         show_media = true
+        show_media_controls = true
+        show_password_reveal = true
         show_session_buttons = true
         show_unlock_hint = true
         show_weather = true
@@ -100,8 +176,11 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@eDP-1" ]
 [nightlight]
 enabled = true
 
+[plugin_settings."noctalia/umbriel-companion"]
+panel_placement = "floating"
+
 [plugins]
-enabled = [ "heprado/ideapad-fan" ]
+enabled = [ "heprado/ideapad-fan", "heprado/monitor-settings", "noctalia/umbriel-companion" ]
 
     [[plugins.source]]
     kind = "git"
@@ -114,7 +193,13 @@ enabled = [ "heprado/ideapad-fan" ]
     name = "community"
 
 [shell]
+corner_radius_scale = 0.0
 avatar_path = "/home/henrique/Pictures/tama-gintama-tama-gintama-robot.gif"
+
+    [shell.panel]
+    control_center_placement = "floating"
+    session_placement = "floating"
+    wallpaper_placement = "floating"
 
     [shell.launcher]
     app_grid = true
@@ -127,7 +212,7 @@ source = "custom"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "foot", "gtk3", "gtk4", "hyprland", "kcolorscheme", "qt" ]
+    builtin_ids = [ "foot", "gtk3", "gtk4", "kcolorscheme", "qt", "umbriel" ]
     community_ids = [ "ungoogled-chromium", "discord", "telegram", "zed" ]
     enable_community_templates = true
 
@@ -145,3 +230,44 @@ path = "/home/henrique/Pictures/tama.png"
 
 [widget.widget]
 type = "heprado/ideapad-fan:widget"
+
+[widget.launcher]
+capsule = true
+glyph = "snowflake"
+
+[widget.workspaces]
+capsule = true
+empty_color = "on_surface_variant"
+focused_color = "primary"
+occupied_color = "on_surface"
+style = "minimal"
+
+[widget.layout]
+capsule = true
+scroll_cycles_layout = false
+type = "noctalia/umbriel-companion:bar"
+
+[widget.cpu]
+capsule = true
+stat = "cpu_usage"
+type = "sysmon"
+
+[widget.ram]
+capsule = true
+stat = "ram_used"
+type = "sysmon"
+
+[widget.temp]
+capsule = true
+stat = "cpu_temp"
+type = "sysmon"
+
+[widget.network]
+show_label = false
+
+[widget.media]
+hide_when_no_media = true
+peek = true
+
+[widget.refresh_rate]
+type = "heprado/monitor-settings:widget"
