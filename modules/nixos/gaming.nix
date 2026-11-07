@@ -24,10 +24,8 @@
   nexos.unfree = [ "steam" "steam-unwrapped" "steam-original" "steam-run" ];
 
   environment.systemPackages = with pkgs; [
-    # Non-Steam stores/runners: GOG, Battle.net, emulators, wine in general.
-    lutris
     # Installs/updates custom Proton builds (e.g. GE-Proton) into Steam's
-    # and Lutris' compatibility-tool dirs.
+    # compatibility-tool dir.
     protonup-qt
     # FPS/frametime overlay: `mangohud %command%` in Steam launch options.
     mangohud
