@@ -669,19 +669,19 @@ let
 
           "Mod+Left" = "window-focus-left";
           "Mod+Right" = "window-focus-right";
-          # Like Mod+Wheel: up goes left, down goes right.
-          "Mod+Up" = "window-focus-left";
-          "Mod+Down" = "window-focus-right";
+          # Workspaces are stacked vertically: up/down go to the workspace
+          # above/below (focusing its window), like Mod+Shift+Wheel.
+          "Mod+Up" = "workspace-previous";
+          "Mod+Down" = "workspace-next";
           "Mod+Shift+Left" = "column-move-left";
           "Mod+Shift+Right" = "column-move-right";
-          "Mod+Shift+Up" = "window-move-up";
-          "Mod+Shift+Down" = "window-move-down";
+          # Up/down send the window to the workspace above/below.
+          "Mod+Shift+Up" = once "window-move-to-workspace-previous";
+          "Mod+Shift+Down" = once "window-move-to-workspace-next";
 
           "Mod+1" = "workspace-switch 1";
           "Mod+2" = "workspace-switch 2";
           "Mod+3" = "workspace-switch 3";
-          "Mod+Ctrl+Up" = once "window-move-to-workspace-previous";
-          "Mod+Ctrl+Down" = once "window-move-to-workspace-next";
 
           # Windows horizontally, workspaces vertically. The cooldown keeps one
           # wheel notch from skipping past a target.
