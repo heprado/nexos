@@ -2,7 +2,11 @@
   description = "NixOS configurations, split by machine and by user";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/master";
+    # nixos-unstable, not master: the branch only moves once Hydra has built
+    # and tested a set of packages, so an update finds them in the binary
+    # cache. master is a day or three ahead, but its updates kept needing
+    # packages built here first (electron, openjdk, ...).
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
       url = "github:nix-community/home-manager";
