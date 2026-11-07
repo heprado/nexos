@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "max_interfaces": {
+      "label": "Interfaces exibidas",
+      "description": "Máximo de interfaces conectadas listadas na barra, as de mais tráfego primeiro; as demais são somadas numa entrada \"+N\". O balão sempre lista todas."
+    }
+  }
+}

@@ -401,6 +401,15 @@ let
         style=Fusion
       '';
 
+      # The bar's network widget (dotfiles/noctalia/plugins/net-usage): an
+      # up/down glyph that opens on hover into each interface's rates.
+      # Enabled in the Noctalia settings ([plugins].enabled).
+      # force: a copy dropped there by hand while testing gets replaced.
+      xdg.dataFile."noctalia/plugins/net-usage" = {
+        source = ../../dotfiles/noctalia/plugins/net-usage;
+        force = true;
+      };
+
       # Vanilla-DMZ is a small standalone XCursor theme, avoiding the KDE Breeze
       # package closure.
       home.pointerCursor = {

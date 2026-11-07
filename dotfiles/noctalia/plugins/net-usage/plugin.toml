@@ -1,0 +1,22 @@
+id          = "heprado/net-usage"
+name        = "Network Usage"
+version     = "1.0.0"
+plugin_api  = 24
+author      = "heprado"
+license     = "MIT"
+icon        = "arrows-down-up"
+description = "Bar widget: an up/down glyph that opens on hover into the download and upload rates of the connected network interfaces, busiest first, with every physical interface in the tooltip."
+tags        = ["bar", "network", "system"]
+
+[[widget]]
+id    = "widget"
+entry = "widget.luau"
+
+[[setting]]
+key             = "max_interfaces"
+type            = "int"
+label_key       = "settings.max_interfaces.label"
+description_key = "settings.max_interfaces.description"
+default         = 3
+min             = 1
+max             = 16

@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "max_interfaces": {
+      "label": "Interfaces shown",
+      "description": "Most connected interfaces listed in the bar, the busiest first; the rest are added up into one \"+N\" entry. The tooltip always lists them all."
+    }
+  }
+}
