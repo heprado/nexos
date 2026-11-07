@@ -17,15 +17,7 @@
       lla = "eza -la";
       ls = "eza";
       lt = "eza --tree";
-      # nh finds the flake via programs.nh.flake (modules/nixos/common.nix)
-      # and the output via this machine's hostname, so the same aliases are
-      # right on caixa and marvin. It shows what changed (added/removed/
-      # updated packages) after building, and asks for sudo itself only to
-      # activate -- use `nrs`, not `sudo nrs`.
-      nrs = "nh os switch";
-      # `test`: activates the new config now without making it the boot
-      # default, so a reboot falls back to the previous one.
-      nrt = "nh os test";
+      # nrs/nrt/nrb are commands, not aliases (modules/home/cli.nix).
       run-help = "man";
       which-command = "whence";
     };
