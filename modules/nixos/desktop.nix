@@ -414,6 +414,15 @@ let
       xdg.dataFile."noctalia/icons/gpu.svg".source =
         lucideIcon "gpu" "sha256-qAyr8DltKnQDQhmJYToOBuxVesvMzvPeyGTTKgZFkQE=";
 
+      # The launcher button: the NixOS snowflake, tinted with the theme like
+      # the other bar icons (custom_image_colorize), from
+      # nixpkgs' nixos-icons (the NixOS artwork); the white one, so the
+      # tint isn't mixed with the logo's own blues.
+      # force: replaces the link made by hand while testing.
+      xdg.dataFile."noctalia/icons/nix-snowflake.svg".force = true;
+      xdg.dataFile."noctalia/icons/nix-snowflake.svg".source =
+        "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake-white.svg";
+
       # The bar's network widget (dotfiles/noctalia/plugins/net-usage): an
       # up/down glyph that opens on hover into each interface's rates.
       # Enabled in the Noctalia settings ([plugins].enabled).
