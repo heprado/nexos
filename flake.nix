@@ -38,7 +38,7 @@
     # Display arrangement + DDC/CI monitor controls (Quickshell app), with
     # a home-manager module that also installs its Noctalia plugin.
     monitor-settings = {
-      url = "github:heprado/noctalia-monitor-settings/bar-refresh-rate";
+      url = "github:heprado/noctalia-monitor-settings";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

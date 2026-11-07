@@ -167,16 +167,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1794007120,
-        "narHash": "sha256-o03Pwv8w0yWAeyABKFIshx5aqE1egxzuzAaAbB1apY0=",
+        "lastModified": 1794065718,
+        "narHash": "sha256-2ckC6aLbnfzOrCLJj1BCcSI/DuU3iS8pkgIvn8HU1Ps=",
         "owner": "heprado",
         "repo": "noctalia-monitor-settings",
-        "rev": "cd5468ce83a1f6a24e014b001e5d9821c76e1886",
+        "rev": "0147be27ed29b139a63d94c7a77ec0e7ca2be55b",
         "type": "github"
       },
       "original": {
         "owner": "heprado",
-        "ref": "bar-refresh-rate",
         "repo": "noctalia-monitor-settings",
         "type": "github"
       }
