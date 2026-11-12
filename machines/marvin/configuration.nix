@@ -117,14 +117,6 @@ in
   # modules/nixos/plymouth-tama (imported above).
   boot.initrd.kernelModules = [ "i915" "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
 
-  # The shared monitor sees no HDMI signal until nvidia-drm is up (~4s in),
-  # so its auto input detection wanders off to caixa's DisplayPort. Pull it
-  # back from the initrd, where nvidia-drm is already loaded (see above), so
-  # the Plymouth splash shows up there as well.
-  nexos.takeMonitor = {
-    enable = true;
-    initrd = true;
-  };
 
   # GPU: NVIDIA GTX 1650 (Turing/TU117) + Intel UHD (Comet Lake-H) hybrid
   # graphics, PRIME offload -- Intel iGPU stays the default renderer
@@ -305,8 +297,6 @@ in
     # Quickshell's own CLI (`qs`), for running shell configs by hand.
     # Noctalia bundles Quickshell but doesn't put it on PATH.
     pkgs.quickshell
-    # To put Moonlight on the TV (see apps2samsung.nix).
-    (pkgs.callPackage ./apps2samsung.nix { })
     # OpenAI's coding agent; reads ~/.codex/AGENTS.md (modules/home/ai.nix).
     pkgs.codex
     # Torrent client (Qt GUI).
