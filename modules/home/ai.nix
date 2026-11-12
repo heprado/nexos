@@ -102,6 +102,7 @@ in
       activation). Activate only when asked, and prefer `nrt` (`nh os
       test`, a reboot falls back) over `nrs` (`nh os switch`); both follow
       the self-reverting rule above. Extra arguments pass through to nh.
+      Use `nrb`, never `nh os build` (that one writes ./result).
       Never leave a `result` link in a repo: `nix build` other outputs
       with `--no-link --print-out-paths` (`--no-out-link` for the legacy
       `nix-build`), or `-o` into a scratch directory.
