@@ -9,7 +9,6 @@
     ./podman-rootless.nix
     ./chrony.nix
     ./session-stop-timeout.nix
-    ./take-monitor.nix
     ./rules/no-php.nix
     ./rules/ca-trust.nix
     ../../users/henrique
