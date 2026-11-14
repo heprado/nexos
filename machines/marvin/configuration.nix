@@ -144,6 +144,39 @@ in
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
+  # The GTX 1650's cooler can't shed a game's heat: at full clocks it climbs
+  # past 87 C within a minute and throttles, and at ~90 C the firmware latches
+  # the GPU in P8 (300 MHz, "SW Power Cap" + "SW Thermal Slowdown") under full
+  # load. It stays there even back at 50 C, so the game stutters, and nothing
+  # short of a reboot cleared it (tried on 2026-11-14: `nvidia-smi -rgc/-lgc`
+  # with several floors and ceilings, GPU idle or busy; `-pl` is unsupported
+  # on this GPU). So the fix is to never get that hot: cap the clock below the
+  # throttle point from boot. Measured in WoW: uncapped it peaked at 89 C and
+  # latched; capped at 1150 MHz it holds ~1140 MHz and plateaus at 82 C with
+  # no throttling. Lower capMhz for more thermal headroom.
+  #
+  # nvidia-persistenced keeps the driver (and so the clock lock) alive when no
+  # program has the GPU open; the cap was only verified with it enabled.
+  hardware.nvidia.nvidiaPersistenced = true;
+  systemd.services.nvidia-clock-cap =
+    let
+      smi = "${config.hardware.nvidia.package.bin}/bin/nvidia-smi";
+      capMhz = 1150;
+    in
+    {
+      description = "Cap the NVIDIA GPU clock below its thermal throttle point";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "nvidia-persistenced.service" ];
+      wants = [ "nvidia-persistenced.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${smi} -lgc 300,${toString capMhz}";
+        # Stopping the service (rebuild, switch) leaves the GPU unlocked.
+        ExecStop = "-${smi} -rgc";
+      };
+    };
+
   # Steam and everything it launches run on the NVIDIA GPU, so games don't
   # need `nvidia-offload %command%` each. Same variables nvidia-offload
   # sets; __VK_LAYER_NV_optimus is the one that matters for Proton (DXVK
