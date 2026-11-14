@@ -1,4 +1,4 @@
-config_version = 19
+config_version = 20
 
 [bar.default]
 background_opacity = 0.0
@@ -56,7 +56,6 @@ start = [ "launcher", "workspaces", "layout", "group:g4", "group:g5", "disk", "n
     padding = 6.0
 
 [control_center]
-circular_avatar = false
 
 [location]
 address = "São Paulo, Brasil"
@@ -216,6 +215,7 @@ enabled = [ "heprado/ideapad-fan", "heprado/monitor-settings", "heprado/net-usag
 
 [shell]
 avatar_path = "/home/henrique/Pictures/tama-gintama-tama-gintama-robot.gif"
+circular_avatar = false
 corner_radius_scale = 0.0
 
     [shell.launcher]
