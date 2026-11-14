@@ -177,6 +177,27 @@ in
       };
     };
 
+  # The firmware ships the i7-10750H (45 W design power) with PL1 = 60 W and
+  # PL2 = 90 W, far more than this laptop's single heatpipe, shared with the
+  # GPU, can shed (CPU package 90-95 C in WoW). PL1 back to the 45 W TDP and
+  # PL2 capped at 55 W trim the sustained and burst heat; in WoW the CPU
+  # itself only draws ~35 W, so this costs little. Not in sysfs until the RAPL
+  # module loads, hence a service instead of tmpfiles. The firmware may
+  # rewrite these when the power profile changes; check after switching preset.
+  systemd.services.cpu-power-limit = {
+    description = "Cap the CPU power limits (RAPL PL1/PL2)";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      rapl=/sys/class/powercap/intel-rapl:0
+      echo 45000000 > $rapl/constraint_0_power_limit_uw
+      echo 55000000 > $rapl/constraint_1_power_limit_uw
+    '';
+  };
+
   # Steam and everything it launches run on the NVIDIA GPU, so games don't
   # need `nvidia-offload %command%` each. Same variables nvidia-offload
   # sets; __VK_LAYER_NV_optimus is the one that matters for Proton (DXVK
