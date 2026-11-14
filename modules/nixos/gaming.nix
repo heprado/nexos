@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.steam = {
     enable = true;
@@ -101,4 +101,51 @@
     # FPS/frametime overlay: `mangohud %command%` in Steam launch options.
     mangohud
   ];
+
+  # MangoHud: a small HUD (FPS, frametime, CPU/GPU load, temps, clocks,
+  # power, VRAM) plus CSV logging, so every game launched with `mangohud
+  # %command%` can be measured the same way. Shift_L+F2 starts and stops a
+  # log, written to ~/mangohud-logs as <process>_<start time>.csv (the
+  # folder is made by the user tmpfiles rule below; MangoHud won't). Press
+  # it once you're in the game, not at the launcher.
+  home-manager.users.henrique =
+    let
+      logs = "${config.users.users.henrique.home}/mangohud-logs";
+    in
+    {
+      xdg.configFile."MangoHud/MangoHud.conf".text = ''
+        position=top-left
+        font_size=18
+        background_alpha=0.3
+        fps
+        frametime
+        frame_timing
+        cpu_stats
+        cpu_temp
+        cpu_mhz
+        cpu_power
+        gpu_stats
+        gpu_temp
+        gpu_core_clock
+        gpu_mem_clock
+        gpu_power
+        vram
+        ram
+
+        # The GPU lines above make MangoHud start an NVML polling thread in
+        # every process of the Steam -> Battle.net -> WoW chain (~20% of a
+        # core apiece, ~0.6 core together). `blacklist` did not stop it in
+        # 0.8.4, so it is only a best effort.
+        blacklist=Agent,Agent.exe,agent,agent.exe,xalia,xalia.exe,Battle.net,Battle.net.exe,steam,steam.exe,explorer,explorer.exe,tabtip,tabtip.exe
+
+        output_folder=${logs}
+        # 0 = log until the key is pressed again.
+        log_duration=0
+        # Milliseconds between samples.
+        log_interval=500
+        autostart_log=0
+        toggle_logging=Shift_L+F2
+      '';
+      systemd.user.tmpfiles.rules = [ "d ${logs} 0755 - - -" ];
+    };
 }
