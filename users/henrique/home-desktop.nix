@@ -7,6 +7,7 @@
     ../../modules/home/design.nix
     ../../modules/home/helium.nix
     ../../modules/home/zed.nix
+    ../../modules/home/documents.nix
   ];
 
   # xdg-open is used by GUI apps and development tools to open URLs/files.
