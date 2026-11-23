@@ -1,0 +1,15 @@
+{
+  // Image built by nexos (devcontainers/images.nix) and loaded into
+  // podman by devc-load -- never pulled from a registry.
+  "name": "rust",
+  "image": "localhost/nexos/devcontainer-rust:latest",
+  // Runs on the host before the container starts: builds and loads the
+  // image when podman doesn't have this version yet.
+  "initializeCommand": "devc-load rust",
+  // Rootless podman: the container's dev (uid 1000) is your own uid, so
+  // files in the repo stay yours.
+  "runArgs": ["--userns=keep-id"],
+  "containerUser": "dev",
+  "remoteUser": "dev",
+  "updateRemoteUserUID": false
+}

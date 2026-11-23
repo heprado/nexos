@@ -4,7 +4,6 @@
   # half is home-desktop.nix, imported by modules/nixos/desktop.nix.
   imports = [
     ../../modules/home/cli.nix
-    ../../modules/home/dev.nix
     ../../modules/home/ai.nix
     ../../modules/home/neovim.nix
     ../../modules/home/zsh.nix

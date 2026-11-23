@@ -2,7 +2,8 @@
 # Single-node k3s for the network/SAN lab in ~/codigos/container_studies
 # (clabernetes topologies + an iSCSI "SAN" reached through the lab fabric).
 # Only the host-side half lives here -- the cluster workloads, manifests
-# and client tooling (kubectl, helm, k9s, ...) are in that repo's devenv.
+# and client tooling (kubectl, helm, k9s, ...) are in that repo's own
+# dev environment.
 #
 # Trimmed for a <=8 GB box: traefik and servicelb (klipper-lb) are off,
 # local-path-provisioner and metrics-server stay (PVs and `kubectl top` are
@@ -40,7 +41,7 @@ in
     ];
   };
 
-  # The lab's own images (lab-console) are pushed by the repo's devenv to a
+  # The lab's own images (lab-console) are pushed by the repo's tooling to a
   # registry running inside the cluster, published as NodePort 30500 --
   # plain HTTP on loopback, so containerd needs to be told not to use TLS.
   environment.etc."rancher/k3s/registries.yaml".text = ''

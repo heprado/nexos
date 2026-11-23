@@ -1,5 +1,9 @@
 { pkgs, ... }:
 {
+  # Projects open in dev containers (templates/<lang>/.devcontainer), whose
+  # images come from this flake -- see devcontainers.nix.
+  imports = [ ./devcontainers.nix ];
+
   # Zed, wrapped so the launch command is `IDE` instead of `zeditor`.
   home.packages = [
     (pkgs.symlinkJoin {
@@ -19,11 +23,5 @@
   programs.zed-editor = {
     enable = true;
     package = null;
-    userSettings = {
-      # Load the active project's direnv environment (e.g. a devenv
-      # shell's QML_IMPORT_PATH) before spawning language servers --
-      # otherwise LSPs miss project-local env vars devenv/direnv set.
-      load_direnv = "direct";
-    };
   };
 }

@@ -50,7 +50,7 @@ nexos/
       refind.nix                 # marvin: rEFInd as the NixOS/Windows picker in front of systemd-boot
     home/                     # home-manager modules (per-user environment, not system config)
       cli.nix                    # git, gh, glow, zoxide, the nrb/nrt/nrs commands (COMMANDS.md)
-      dev.nix                    # direnv + nix-direnv + devenv, so per-project environments auto-activate
+      devcontainers.nix          # devc-load: builds a dev container image and loads it into Podman, on demand
       chat.nix                   # Telegram, Vesktop (Discord), ZapFast (WhatsApp)
       design.nix                 # Inkscape
       ai.nix                     # Claude Code + its policy (CLAUDE.md)
@@ -69,10 +69,12 @@ nexos/
   dotfiles/
     noctalia/<host>/settings.toml  # Noctalia control-center settings, synced on every rebuild (see below)
 
-  templates/                  # per-language devenv environments, meant to be dropped into OTHER
+  devcontainers/
+    images.nix                 # dev container images built with Nix (dockerTools), one per language
+
+  templates/                  # per-language dev containers, meant to be dropped into OTHER
                               # project repos (not used here) via `nix flake init -t`
-    rust/ python/ c/ sql/ web/   # each: devenv.nix + devenv.yaml + .envrc
-    containers/                  # add-on: containers.nix (rootless Podman tied to the shell)
+    base/ rust/ python/ c/ sql/ web/   # each: .devcontainer/devcontainer.json
 
   secrets/
     caixa.yaml / marvin.yaml   # sops-encrypted secrets per host (password hashes, tunnel credentials, ...)
@@ -251,71 +253,61 @@ Use this if the machine already has *some* NixOS installation and you're switchi
 
    Since this repo's SSH module disables password auth, make sure you have a working key-based session (or physical/console access) *before* this switch takes effect — otherwise you could lock yourself out of SSH access with no way back in except the physical console.
 
-## Using the devenv templates
+## Using the dev container templates
 
-`henrique`'s Neovim (`modules/home/neovim.nix`) is deliberately generic:
-LSP client, treesitter, completion, telescope, gitsigns — but **no**
-per-language LSP servers or compilers/runtimes installed globally. Those
-come from a per-project [devenv](https://devenv.sh) environment instead,
-so each project only pulls in the toolchain it actually needs. The
-`templates/` folder in this repo holds one per language (`rust`,
-`python`, `c`, `sql`, `web` for JS/TS) — meant to be dropped into your
-*other* project repos, not used inside `nexos` itself.
+Toolchains never live on the host. Each project runs in a **dev
+container** whose image is built by this flake (`devcontainers/images.nix`)
+from the same nixpkgs as the system — no Debian, no registry pull — and
+loaded into `henrique`'s rootless Podman **on demand** by `devc-load
+<lang>` (`modules/home/devcontainers.nix`), which each template runs as
+its `initializeCommand`: opening the project loads its image if Podman
+doesn't have that version yet. The images are not part of the system, so
+they cost nothing until a project uses them. Zed opens the project inside
+the container (`use_podman = true` in `modules/home/zed.nix`).
+
+The `templates/` folder holds one per language — `base` (shell + git
+only), `rust`, `python`, `c`, `sql`, `web` (JS/TS) — meant to be dropped
+into your *other* project repos, not used inside `nexos` itself.
 
 1. **Drop the template into your project** (once per project):
    ```sh
-   cd ~/my-project
-   nix flake init -t nexos#rust   # or #python, #c, #sql, #web
+   cd ~/codigos/my-project
+   nix flake init -t nexos#rust   # or #base, #python, #c, #sql, #web
    ```
-   This adds `devenv.nix`, `devenv.yaml` and `.envrc`. `nexos` here is a
-   short alias for this flake, registered via `nix.registry.nexos` in
-   `modules/nixos/common.nix` — without that, you'd need the full path
-   (`nix flake init -t /home/henrique/codigos/nexos#rust`).
+   This adds `.devcontainer/devcontainer.json`. `nexos` here is a short
+   alias for this flake, registered via `nix.registry.nexos` in
+   `modules/nixos/common.nix`.
 
-2. **Authorize direnv** (also once per project — it's a safety prompt,
-   since a `.envrc` can run arbitrary code):
-   ```sh
-   direnv allow
-   ```
+2. **Open it in Zed** (`IDE`) and pick the dev container when Zed offers
+   it (or from the command palette). Zed starts the container and runs its
+   remote server there — already in the image, same version as the host's
+   Zed, so nothing is downloaded.
 
-3. **That's it.** From then on, `cd`-ing into the project auto-activates
-   the environment (you'll see `direnv: loading ...`), putting that
-   language's compiler/LSP/formatter on `PATH` — and Neovim picks up the
-   right LSP automatically when opened from inside the project. Leaving
-   the directory removes them from `PATH` again.
+What every image has:
 
-   Prefer not to use direnv for a given project? Skip the `.envrc` and
-   run `devenv shell` manually instead — same effect, but only for that
-   shell session, and you have to re-run it every new terminal.
+- user `dev` (uid 1000). The templates run with `--userns=keep-id`, so
+  `dev` is your own uid on the bind-mounted repo: files stay yours, and
+  nothing else of your home is visible inside;
+- coreutils, bash, git (minimal), curl, CA certificates;
+- [nix-ld](https://github.com/nix-community/nix-ld) as
+  `/lib64/ld-linux-x86-64.so.2`, so generic Linux binaries (language
+  servers and extensions Zed downloads, prebuilt tools) run as on a
+  regular distro.
 
-### Adding containers (`#containers`)
+`sql` also runs Postgres inside the container (`postStartCommand:
+pg-start`): socket in `/tmp`, database `app`, user `dev`, no password;
+its data lives in a Podman volume per project (`pgdata-<repo>`), so it
+survives rebuilding the container.
 
-`containers` is an add-on, not a language: it drops a single
-`containers.nix` next to the `devenv.nix` you already have. Import it
-there:
+`c` has gcc, make, cmake and gdb but no clangd: it would bring ~1.5 GiB
+of libclang/libllvm, and Zed downloads the latest clangd into the
+container by itself.
 
-```sh
-nix flake init -t nexos#containers
-# devenv.nix:  imports = [ ./containers.nix ];
-```
-
-It gives the project its **own rootless Podman** (`podman`,
-`podman-compose`, and `DOCKER_HOST` pointing at a project-scoped API
-socket), with images/containers/networks stored under
-`.devenv/state/podman` — not shared with other projects or with the
-machine-wide rootless Podman. Its lifetime is the shell's: when the last
-shell that activated it goes away (`devenv shell` exited, terminal closed,
-or — with direnv — that shell `cd`'d out of the project), a watchdog stops
-every container and kills the API service and the rootless pause process.
-`containers-guard status` shows what is up; `containers-guard down` tears
-it down on demand.
-
-Image pulls go through a deny-by-default Podman signature policy:
-`containersGuard.allowedImages` lists the registry repositories a project
-may pull (optionally requiring a cosign key), and
-`containersGuard.allowArchiveLoad = true` permits `podman load` for base
-images verified another way (e.g. a Nix store path signed by
-cache.nixos.org) while keeping every registry closed.
+To try an image without Zed: `devc-load rust`, then
+`podman run --rm -it --userns=keep-id localhost/nexos/devcontainer-rust`.
+After a rebuild that updates Zed, `devc-load` with no arguments refreshes
+every nexos image Podman already has. To add a tool to a language, add it
+to that image in `devcontainers/images.nix` and rebuild.
 
 ## Verifying before you trust it on real hardware
 

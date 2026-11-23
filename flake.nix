@@ -70,41 +70,44 @@
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, disko, noctalia-greeter, ... }@inputs: {
-    # Per-language devShells for henrique's actual project repos (not
-    # this one) -- `nix flake init -t .#<name>` drops in a devenv.nix +
-    # devenv.yaml + .envrc so direnv auto-activates the right
-    # compiler/LSP/formatter (and services like postgres, when needed)
-    # per project, instead of installing every language globally via
-    # home-manager. See modules/home/neovim.nix, which expects these
-    # LSP binaries on PATH rather than at a fixed store path.
+    # Dev containers for henrique's project repos (not this one): `nix
+    # flake init -t nexos#<name>` drops in a .devcontainer/devcontainer.json
+    # whose image is built here (devcontainers/images.nix) and loaded into
+    # rootless Podman on demand by devc-load (modules/home/devcontainers.nix).
+    # Zed opens the project inside it; toolchains and language servers
+    # live in the container, never on the host.
     templates = {
+      base = {
+        path = ./templates/base;
+        description = "Dev container: shell, git and coreutils only";
+      };
       rust = {
         path = ./templates/rust;
-        description = "Rust devShell: rustc, cargo, rust-analyzer, clippy, rustfmt";
+        description = "Dev container: rustc, cargo, rust-analyzer, clippy, rustfmt";
       };
       python = {
         path = ./templates/python;
-        description = "Python devShell: python3, basedpyright, ruff";
+        description = "Dev container: python3, uv, basedpyright, ruff";
       };
       c = {
         path = ./templates/c;
-        description = "C devShell: gcc, clang-tools (clangd), gnumake, gdb";
+        description = "Dev container: gcc, make, cmake, gdb (Zed fetches clangd itself)";
       };
       sql = {
         path = ./templates/sql;
-        description = "SQL devShell: sqls language server";
+        description = "Dev container: Postgres (in the container) and sqls";
       };
       web = {
         path = ./templates/web;
-        description = "JavaScript/TypeScript devShell: node, typescript, typescript-language-server, eslint, prettier";
-      };
-      # Add-on, not a standalone env: drops containers.nix next to an
-      # existing devenv.nix, which then needs `imports = [ ./containers.nix ];`.
-      containers = {
-        path = ./templates/containers;
-        description = "Add-on: rootless Podman scoped to the project, killed when the devenv shell is left";
+        description = "Dev container: node, typescript, typescript-language-server, eslint, prettier";
       };
     };
+
+    # The images, built by `devc-load <name>` (each is a script that
+    # streams the image into `podman load`).
+    packages.x86_64-linux = nixpkgs.lib.mapAttrs' (name: img:
+      nixpkgs.lib.nameValuePair "devcontainer-${name}" img)
+      (import ./devcontainers/images.nix { pkgs = nixpkgs.legacyPackages.x86_64-linux; });
 
     nixosConfigurations =
       let

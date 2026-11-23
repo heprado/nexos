@@ -25,7 +25,7 @@
     trusted-users = [ "root" "@wheel" ];
   };
 
-  # Short alias for this flake itself, so the per-language devShell
+  # Short alias for this flake itself, so the per-language dev container
   # templates (see flake.nix's `templates` output) can be pulled with
   # `nix flake init -t nexos#rust` instead of the full repo path.
   nix.registry.nexos.flake = self;

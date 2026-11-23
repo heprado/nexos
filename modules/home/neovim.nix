@@ -11,9 +11,9 @@
     withPython3 = false;
 
     # Deliberately no extraPackages for language LSPs/toolchains here --
-    # those come from each project's own devShell (see the flake
-    # `templates` output and modules/home/dev.nix), so a project only
-    # pulls in exactly the languages it actually uses.
+    # toolchains live in each project's dev container (see the flake
+    # `templates` output and devcontainers/images.nix), so the host only
+    # carries the editor itself.
     plugins = with pkgs.vimPlugins; [
       nvim-lspconfig
       blink-cmp
@@ -85,10 +85,10 @@
       })
 
       -- LSP servers. Binaries are intentionally referenced by name only
-      -- (never a nix store path) -- they resolve via PATH from whichever
-      -- per-project devShell direnv has activated (see flake `templates`
-      -- output). If no devShell is active for a given language, that one
-      -- LSP just won't start; everything else in this config still works.
+      -- (never a nix store path) -- they resolve via PATH, which has them
+      -- inside a project's dev container (see flake `templates` output).
+      -- Where a server isn't on PATH, that one LSP just won't start;
+      -- everything else in this config still works.
       vim.lsp.config("*", {
         capabilities = require("blink.cmp").get_lsp_capabilities(),
       })
