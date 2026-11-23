@@ -218,8 +218,11 @@ let
         # icon glyphs that only exist in Nerd Font builds, and those glyphs are
         # sized/baselined to sit in exactly one terminal cell only within the
         # patched font itself. A separate fallback font for just the icons
-        # tends to misalign cell width/baseline instead.
-        font=JetBrainsMono Nerd Font:size=13
+        # tends to misalign cell width/baseline instead. Noto Sans Mono's Nerd
+        # build (packaged below) to match the system-wide Noto defaults.
+        # It has no italic face: italics are fontconfig's synthetic slant
+        # (90-synthetic.conf adds a shear matrix, which fcft applies).
+        font=NotoSansM Nerd Font:size=13
       '';
 
       # GTK/Qt theming backends the noctalia gtk3/gtk4/qt/kcolorscheme
@@ -237,6 +240,13 @@ let
         # icon glyphs (nvim-web-devicons, lualine, etc. in neovim.nix) rendered
         # as tofu boxes.
         pkgs.nerd-fonts.jetbrains-mono
+        # "NotoSansM Nerd Font", the font foot.ini (above) uses. Only its four
+        # normal-width weights (~10 MB): nerd-fonts.noto ships every Noto
+        # family/width patched, 1.1 GB, and none of the rest is used.
+        (pkgs.runCommand "nerd-fonts-noto-sans-mono" { } ''
+          install -Dm444 -t $out/share/fonts/truetype \
+            ${pkgs.nerd-fonts.noto}/share/fonts/truetype/NerdFonts/Noto/NotoSansMNerdFont-{Regular,Medium,SemiBold,Bold}.ttf
+        '')
         pkgs.vlc
         pkgs.btop
         pkgs.hyfetch
@@ -748,6 +758,21 @@ in
 
   # pkgs.helium, for modules/home/helium.nix.
   nixpkgs.overlays = [ inputs.helium-flake.overlays.default ];
+
+  # Fallback coverage for scripts no other installed font has (e.g. Egyptian
+  # hieroglyphs like U+13124 𓄤 nefer) -- the same Noto family Android ships.
+  # Browsers pick these up through fontconfig fallback; no per-app font
+  # setting needed.
+  fonts.packages = [ pkgs.noto-fonts ];
+
+  # Noto as the generic families too, instead of fontconfig's DejaVu default.
+  # Fallback to the per-script Noto files above works either way; this
+  # changes what plain Latin UI/web text looks like.
+  fonts.fontconfig.defaultFonts = {
+    sansSerif = [ "Noto Sans" ];
+    serif = [ "Noto Serif" ];
+    monospace = [ "Noto Sans Mono" ];
+  };
 
   # Backend dconf needs to actually apply GTK theme settings (see
   # desktopHome above's dconf.settings for henrique's GTK theme).
