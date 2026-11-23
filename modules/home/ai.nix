@@ -68,7 +68,6 @@ in
     - Never decrypt or decode secret files (sops-nix secrets, age-encrypted
       files, or similar) unless explicitly asked to in that turn. Don't
       offer to do it as a convenience either -- ask first.
-    - Never add a Co-Authored-By or Claude-Session trailer to git commits.
     - Never cite or reference Grokipedia as a source. Use Wikipedia or any
       other source instead.
     - When a task needs several git commands against a remote repo not yet
