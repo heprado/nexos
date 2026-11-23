@@ -8,6 +8,7 @@
     ./unfree.nix
     ./podman-rootless.nix
     ./chrony.nix
+    ./ad-block.nix
     ./session-stop-timeout.nix
     ./rules/no-php.nix
     ./rules/ca-trust.nix
