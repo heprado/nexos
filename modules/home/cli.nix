@@ -40,6 +40,9 @@ let
         b="" dim="" red="" green="" yellow="" r=""
       fi
       step() { printf '%s>%s %s%s%s\n' "$b$green" "$r" "$b" "$1" "$r"; }
+      # errexit would otherwise end nfu without a word (most commands send
+      # their stderr to a file or /dev/null).
+      trap 'printf "\n%serror:%s nfu stopped at line %s: %s\n" "$b$red" "$r" "$LINENO" "$BASH_COMMAND" >&2' ERR
 
       if [ "''${1:-}" = apply ]; then
         if [ ! -f "$candidate" ]; then
@@ -146,13 +149,19 @@ let
         mkdir -p "$cache"
         if [ ! -f "$times" ]; then
           printf '%s  Adding up past compile times per input (once per lock)...%s' "$dim" "$r"
-          nix eval --json --impure --expr "
-            let f = builtins.getFlake \"git+file://$flake\"; in
-            builtins.mapAttrs
-              (n: i: map (p: (builtins.tryEval (p.pname or (builtins.parseDrvName p.name).name)).value or null)
-                (builtins.attrValues (i.packages.$(uname -m)-linux or { })))
-              (builtins.removeAttrs f.inputs [ \"self\" \"nixpkgs\" ])" 2> /dev/null \
-            | jq -r 'to_entries[] | .key as $k | .value[] | select(. != null) | "\($k)\t\(.)"' > "$tmp/owners"
+          # One eval per input: an input whose packages don't evaluate
+          # (home-manager's docs against a newer nixpkgs, say -- tryEval
+          # can't catch a missing attribute) only loses its own row, its
+          # times going to nixpkgs, instead of killing nfu.
+          : > "$tmp/owners"
+          for name in "''${inputs[@]}"; do
+            [ "$name" != nixpkgs ] || continue
+            nix eval --json --impure --expr "
+              let i = (builtins.getFlake \"git+file://$flake\").inputs.\"$name\"; in
+              map (p: (builtins.tryEval (p.pname or (builtins.parseDrvName p.name).name)).value or null)
+                (builtins.attrValues (i.packages.$(uname -m)-linux or { }))" 2> /dev/null \
+              | jq -r --arg k "$name" '.[] | select(. != null) | "\($k)\t\(.)"' >> "$tmp/owners" || true
+          done
           drv=$(nix eval --raw "$flake#nixosConfigurations.$host.config.system.build.toplevel.drvPath" 2> /dev/null)
           nix derivation show -r "$drv" 2> /dev/null | jq -r '.derivations[] | .name' | sort -u > "$tmp/closure"
           awk -F '\t' -v reports="$reports" -v closure="$tmp/closure" '
