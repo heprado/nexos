@@ -6,7 +6,7 @@
     ../../modules/home/cli.nix
     ../../modules/home/ai.nix
     ../../modules/home/neovim.nix
-    ../../modules/home/zsh.nix
+    ../../modules/home/bash.nix
   ];
 
   home.stateVersion = "24.05";

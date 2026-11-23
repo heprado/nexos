@@ -30,8 +30,6 @@
   # `nix flake init -t nexos#rust` instead of the full repo path.
   nix.registry.nexos.flake = self;
 
-  programs.zsh.enable = true;
-
   # Hex dumps (`xxd file`, `xxd -r` to patch back), on every host and for
   # root too.
   environment.systemPackages = [ pkgs.xxd ];
@@ -45,7 +43,7 @@
   ];
 
   # `nh clean` runs as a periodic systemd service, and `nh os switch`/etc.
-  # (see the `nrs`-style aliases in modules/home/zsh.nix) know which flake
+  # (see the `nrs`-style commands in modules/home/cli.nix) know which flake
   # to build via NH_OS_FLAKE, set from `flake` below.
   programs.nh = {
     enable = true;

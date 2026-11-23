@@ -1,7 +1,7 @@
 # Commands
 
 The rebuild commands this config installs (`modules/home/cli.nix`). They are
-commands, not zsh aliases, so they work from any shell, script or coding
+commands, not shell aliases, so they work from any shell, script or coding
 agent. `nh` finds this flake via `programs.nh.flake` and the host by
 hostname, so they're the same on caixa and marvin. Extra arguments pass
 through to `nh` (e.g. `nrs --update`, `nrb --show-trace`).

@@ -17,7 +17,7 @@
   nexos.unfree = [ "claude-code" ];
   users.users.henrique = {
     isNormalUser = true;
-    shell = pkgs.zsh;
+    shell = pkgs.bashInteractive;
     # dialout: rw access to /dev/ttyUSB*/ttyACM* serial devices, needed to
     # flash the ESP32 in ~/codigos/clipesp via espflash/probe-rs.
     # Deliberately NOT in wheel: no sudo, so nothing running as henrique

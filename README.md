@@ -58,7 +58,7 @@ nexos/
       helium.nix                 # Helium browser
       neovim.nix                 # declarative Neovim: LSP client, treesitter, telescope, etc.
       zed.nix                    # Zed editor (launched as `IDE`)
-      zsh.nix                    # zsh, prompt, eza
+      bash.nix                   # bash, prompt, eza
 
   users/
     henrique/
