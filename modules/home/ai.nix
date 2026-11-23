@@ -108,5 +108,12 @@ in
       Never leave a `result` link in a repo: `nix build` other outputs
       with `--no-link --print-out-paths` (`--no-out-link` for the legacy
       `nix-build`), or `-o` into a scratch directory.
+    - Nix build failures and nixpkgs questions: read the nixpkgs the flake
+      pins, already in the store, not GitHub -- it is the exact revision
+      the system was built from. Its path, from the flake's directory:
+      `nix eval --raw --impure --expr '(builtins.getFlake (toString
+      ./.)).inputs.nixpkgs.outPath'`. Use `nix log <drv>` for the failure,
+      `nix derivation show` / `nix why-depends` for the derivation, and
+      the package's `.nix` file in that store path for the fix.
   '';
 }
