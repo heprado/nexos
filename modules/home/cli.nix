@@ -3,14 +3,20 @@ let
   # nh finds the flake via programs.nh.flake (modules/nixos/common.nix) and
   # the output via this machine's hostname, so the same commands are right
   # on caixa and marvin. It shows what changed (added/removed/updated
-  # packages) after building, and asks for sudo itself only to activate --
-  # use `nrs`, not `sudo nrs`. Commands rather than zsh aliases so they
-  # also work from bash, scripts and coding agents; extra arguments pass
+  # packages) after building, and elevates itself only to activate --
+  # use `nrs`, not `run0 nrs`. Commands rather than shell aliases so they
+  # also work from scripts and coding agents; extra arguments pass
   # through to nh (e.g. `nrs --update`, `nrb --show-trace`).
+  #
+  # Elevation goes through run0 (polkit, root's password): henrique isn't
+  # in wheel, and nh's auto mode would try sudo first.
   nhOs = name: action: pkgs.writeShellApplication {
     inherit name;
     runtimeInputs = [ osConfig.programs.nh.package ];
-    text = ''exec nh os ${action} "$@"'';
+    text = ''
+      export NH_ELEVATION_STRATEGY="''${NH_ELEVATION_STRATEGY:-/run/current-system/sw/bin/run0}"
+      exec nh os ${action} "$@"
+    '';
   };
 
   # `nfu` (nix flake update) tries an update without touching the repo: it

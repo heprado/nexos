@@ -96,7 +96,7 @@ On both machines:
 - **Disk** (declared with [disko](https://github.com/nix-community/disko), passphrase asked at boot on the Plymouth splash):
   - **marvin**: LUKS-encrypted btrfs, subvolumes for `/`, `/home`, `/nix`, plus a btrfs-native swapfile.
   - **caixa**: ZFS pool `zroot` with native encryption (aes-256-gcm) on the pool root, datasets for `/`, `/home`, `/nix`, `/var/lib/db` (8K records, for databases; k3s' `db` StorageClass lives there) and a 1G `reserved`, swap on its own partition re-keyed randomly each boot. One disk today; ZFS so more can join as an array later (`zpool attach` for a mirror). See `machines/caixa/zfs.nix`.
-- **User**: `henrique` (sudo/wheel).
+- **User**: `henrique` (not in wheel: no sudo; root via `su` or `run0`, asking root's password).
 - **Podman**: rootless and daemonless, `docker` aliased to it; a per-user Docker-compatible API socket starts on demand.
 - **Secrets**: managed with [sops-nix](https://github.com/Mic92/sops-nix) + `age`; see `secrets/README.md` for the full secrets workflow (rotating keys, adding new secrets, etc).
 

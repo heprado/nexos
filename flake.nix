@@ -223,9 +223,9 @@
               activate="nix-env -p /nix/var/nix/profiles/system --set $out && $out/bin/switch-to-configuration switch"
               echo "==> $host: activating $out"
               if [ "$host" = "$here" ]; then
-                sudo sh -c "$activate" || failed+=("$host")
+                run0 sh -c "$activate" || failed+=("$host")
               else
-                ssh -t "$host" sudo sh -c "'$activate'" || failed+=("$host")
+                ssh -t "$host" run0 sh -c "'$activate'" || failed+=("$host")
               fi
             done
 
